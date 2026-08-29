@@ -1,10 +1,10 @@
 """Integration-ish tests for App.tick wiring with fake client/services."""
+# pylint: disable=missing-class-docstring,protected-access,unnecessary-lambda,import-outside-toplevel
 
 import math
 
-import pytest
-
 import dbus_pump.main as main_mod
+import pytest
 from dbus_pump import config as cfg
 from dbus_pump.control import ValveController
 from dbus_pump.main import App

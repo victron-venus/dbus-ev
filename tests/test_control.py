@@ -1,5 +1,5 @@
+# pylint: disable=missing-module-docstring,missing-class-docstring,redefined-outer-name
 import pytest
-
 from dbus_pump.control import MODE_AUTO, MODE_OFF, MODE_ON, ValveController
 
 
