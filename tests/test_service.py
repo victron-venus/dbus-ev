@@ -9,7 +9,20 @@ def make_ev_services():
 
 def test_service_name():
     s = make_ev_services()
-    assert s.ev.service_name == "com.victronenergy.evcharger.22"
+    # D-Bus bus names forbid digits after the last dot; instance lives in
+    # /DeviceInstance, suffix is textual.
+    assert s.ev.service_name == "com.victronenergy.evcharger.ha"
+
+
+def test_service_name_custom_suffix():
+    s = EVEvices(
+        ev_instance=22,
+        version="0.1.0",
+        product_name="dbus-ev",
+        product_id=0x1234,
+        bus_suffix="ttyO1",
+    )
+    assert s.ev.service_name == "com.victronenergy.evcharger.ttyO1"
 
 
 def test_identity_paths_present():
@@ -30,6 +43,29 @@ def test_identity_paths_present():
         assert p in s.ev.items, f"EV service missing {p}"
     assert s.ev.items["/DeviceInstance"] == 22
     assert s.ev.items["/ProductId"] == 0x1234
+
+
+def test_vrm_evcharger_paths_present():
+    """VRM Portal requires these standard EV charger paths to render the tile."""
+    s = make_ev_services()
+    for p in (
+        "/Status",
+        "/Mode",
+        "/StartStop",
+        "/Current",
+        "/SetCurrent",
+        "/MaxCurrent",
+        "/Ac/Power",
+        "/Ac/Energy/Forward",
+        "/Ac/L1/Power",
+        "/Ac/L2/Power",
+        "/Ac/L3/Power",
+        "/ChargingTime",
+        "/Session/Energy",
+        "/NrOfPhases",
+        "/Position",
+    ):
+        assert p in s.ev.items, f"VRM evcharger path missing: {p}"
 
 
 def test_update_soc_publishes():
