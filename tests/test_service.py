@@ -9,7 +9,7 @@ def make_ev_services():
 
 def test_service_name():
     s = make_ev_services()
-    assert s.ev.service_name == "com.victronenergy.ev22"
+    assert s.ev.service_name == "com.victronenergy.evcharger.22"
 
 
 def test_identity_paths_present():

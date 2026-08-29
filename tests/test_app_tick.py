@@ -70,6 +70,12 @@ class FakeServices:
     def update_at_site(self, at_site):
         self.items["/AtSite"] = at_site
 
+    def update_ac_power(self, power):
+        self.items["/Ac/Power"] = power
+
+    def update_current(self, current):
+        self.items["/Current"] = current
+
 
 BASE = {"soc": 50.0, "ok": True}
 

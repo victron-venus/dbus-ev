@@ -69,6 +69,8 @@ class App:
             self.services.update_latitude(snapshot.get("latitude"))
             self.services.update_longitude(snapshot.get("longitude"))
             self.services.update_at_site(snapshot.get("at_site"))
+            self.services.update_ac_power(snapshot.get("power"))
+            self.services.update_current(snapshot.get("current"))
 
         _write_heartbeat()
         return True
@@ -88,6 +90,8 @@ def build_app() -> App:
         latitude_entity=config.HA_LATITUDE_ENTITY,
         longitude_entity=config.HA_LONGITUDE_ENTITY,
         at_site_entity=config.HA_AT_SITE_ENTITY,
+        current_entity=config.HA_CURRENT_ENTITY,
+        power_entity=config.HA_POWER_ENTITY,
         timeout=config.HA_TIMEOUT,
     )
     services = EVEvices(
@@ -138,6 +142,9 @@ def main() -> int:
             "/VIN",
             "/BatteryCapacity",
             "/ChargingState",
+            "/Status",
+            "/Ac/Power",
+            "/Current",
             "/Odometer",
             "/RangeToGo",
             "/Position/Latitude",

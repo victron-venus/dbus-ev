@@ -31,6 +31,8 @@ def make_client(**kw):
         "latitude_entity": "sensor.latitude",
         "longitude_entity": "sensor.longitude",
         "at_site_entity": "sensor.at_site",
+        "current_entity": "sensor.current",
+        "power_entity": "sensor.power",
         "timeout": 3.0,
     }
     defaults.update(kw)
@@ -77,14 +79,16 @@ def test_build_template_contains_entities():
         "sensor.latitude",
         "sensor.longitude",
         "sensor.at_site",
+        "sensor.current",
+        "sensor.power",
     )
-    assert "'soc': states('sensor.soc')" in t
+    assert "\"soc\": states('sensor.soc')" in t
     # Optional entities use ternary (x if cond else y) inside the dict literal
     assert (
-        "'target_soc': states('sensor.target_soc') | string if 'sensor.target_soc' != '' else none"
+        "\"target_soc\": states('sensor.target_soc') | string if 'sensor.target_soc' != '' else none"
         in t
     )
-    assert "'vin': states('sensor.vin') | string if 'sensor.vin' != '' else ''" in t
+    assert "\"vin\": states('sensor.vin') | string if 'sensor.vin' != '' else ''" in t
 
 
 def test_build_template_empty_optional_entities():
@@ -100,12 +104,14 @@ def test_build_template_empty_optional_entities():
         "",
         "",
         "",
+        "",
+        "",
     )
-    assert "'soc': states('sensor.soc')" in t
+    assert "\"soc\": states('sensor.soc')" in t
     # Empty target_soc -> ternary takes the else branch (none).
-    assert "'target_soc': states('') | string if '' != '' else none" in t
+    assert "\"target_soc\": states('') | string if '' != '' else none" in t
     # Non-empty entity id (sensor.vin) selects the states() branch.
-    assert "'vin': states('sensor.vin') | string if 'sensor.vin' != '' else ''" in t
+    assert "\"vin\": states('sensor.vin') | string if 'sensor.vin' != '' else ''" in t
 
 
 def test_is_ha_entity_recognizes_domain_object_id():
@@ -131,9 +137,11 @@ def test_build_template_static_vin_emits_literal():
         "",
         "",
         "",
+        "",
+        "",
     )
     # Literal branch selected, no states() call for VIN.
-    assert "'vin': states('') | string if '' != '' else '4JGDM0EB0PA123456'" in t
+    assert "\"vin\": states('') | string if '' != '' else '4JGDM0EB0PA123456'" in t
     assert "states('4JGDM0EB0PA123456')" not in t
 
 
@@ -150,9 +158,12 @@ def test_build_template_entity_vin_uses_states():
         "",
         "",
         "",
+        "",
+        "",
     )
     assert (
-        "'vin': states('sensor.mercedes_vin') | string if 'sensor.mercedes_vin' != '' else ''" in t
+        "\"vin\": states('sensor.mercedes_vin') | string if 'sensor.mercedes_vin' != '' else ''"
+        in t
     )
 
 
@@ -166,6 +177,8 @@ def test_build_template_renders_in_jinja():
         "sensor.soc",
         "",
         "4JGDM0EB0PA123456",
+        "",
+        "",
         "",
         "",
         "",
@@ -321,6 +334,8 @@ def test_unconfigured_client_shortcircuits(post):
         latitude_entity="",
         longitude_entity="",
         at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     r = c.poll()
     assert r["ok"] is False

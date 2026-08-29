@@ -1,14 +1,39 @@
 # Venus OS D-Bus exporter for the VEHICLE
 
-This service exports vehicle (EV) data from Home Assistant to the Venus OS D-Bus service under `com.victronenergy.ev<N>` (no dot before instance: D-Bus well-known names don't allow digits after a dot)
+This service exports vehicle (EV) data from Home Assistant to the Venus OS
+D-Bus service under the **standard EV charger bus name** so the VRM Portal
+recognises it (bus-name prefix is what VRM uses to classify devices):
+
+    com.victronenergy.evcharger.<N>
+
+The dot-separated form is the same one `dbus-evcharger` uses. The previous
+bus name `com.victronenergy.ev<N>` (no dot) was invisible to VRM.
 
 ## Exported properties
+
+Standard EV charger paths (required for VRM dashboard rendering):
+
+- `/Status` - int (0=disconnected, 1=connected, 2=charging, 3=charged, 4=waiting_for_sun)
+- `/Ac/Power` - W (vehicle-side AC power)
+- `/Ac/L1/Power` - W (single-phase)
+- `/Ac/L1/Voltage` - V
+- `/Ac/L1/Current` - A
+- `/Ac/Energy/Forward` - kWh
+- `/Current` - A
+- `/SetCurrent` - A setpoint (read-only here)
+- `/NrOfPhases` - 1
+- `/Position` - 0 (AC Output)
+- `/PositionIsAdjustable` - 0
+- `/IsGenericEnergyMeter` - 0
+
+Vehicle-specific paths (project extension, not part of the evcharger
+standard):
 
 - `/Soc` - State of charge (%)
 - `/TargetSoc` - Target state of charge (%)
 - `/VIN` - Vehicle identification number
 - `/BatteryCapacity` - Battery capacity (kWh)
-- `/ChargingState` - Charging state (string)
+- `/ChargingState` - Raw HA charging_status string (e.g. "3")
 - `/Odometer` - Odometer (km)
 - `/RangeToGo` - Range to go (km)
 - `/Position/Latitude` - Latitude (degrees)
