@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Deploy dbus-pump to Venus OS
+# Deploy dbus-ev to Venus OS
 #
 # Packs the local repository (minus VCS/CI/cache cruft), streams it to the
 # device and runs the repo's own self-update script (update.sh) there, so all
@@ -18,18 +18,18 @@ set -e
 
 SSH_HOST="${1:-Cerbo}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DEPLOY_DIR="/data/.dbus-pump-deploy"
+DEPLOY_DIR="/data/.dbus-ev-deploy"
 SEPARATOR="=============================================="
 
 echo "$SEPARATOR"
-echo "  Deploying dbus-pump to Venus OS"
+echo "  Deploying dbus-ev to Venus OS"
 echo "$SEPARATOR"
 echo "SSH Host: $SSH_HOST"
 echo ""
 
 # Check local syntax before shipping (fail fast on the dev machine)
 echo ">>> Checking Python syntax..."
-python3 -m py_compile "$SCRIPT_DIR"/dbus_pump/*.py
+python3 -m py_compile "$SCRIPT_DIR"/dbus_ev/*.py
 echo "    Syntax OK"
 
 # Package the repo and run update.sh on the device. `set -e` on the remote
@@ -51,9 +51,9 @@ tar \
     -czf - -C "$SCRIPT_DIR" . \
     | ssh "$SSH_HOST" "set -e; rm -rf $DEPLOY_DIR; mkdir -p $DEPLOY_DIR; \
         tar -xz -C $DEPLOY_DIR --strip-components=1; \
-        rm -f /run/dbus-pump/heartbeat; \
+        rm -f /run/dbus-ev/heartbeat; \
         PUSH_LOCAL_CONFIG=1 sh $DEPLOY_DIR/update.sh; \
-        waited=0; while [ \$waited -lt 15 ] && ! [ -f /run/dbus-pump/heartbeat ]; do sleep 1; waited=\$((waited + 1)); done; \
+        waited=0; while [ \$waited -lt 15 ] && ! [ -f /run/dbus-ev/heartbeat ]; do sleep 1; waited=\$((waited + 1)); done; \
         rm -rf $DEPLOY_DIR"
 
 # Wait for supervise to bring the service back up (svc -u is async)
@@ -61,7 +61,7 @@ echo ">>> Service status:"
 STATUS=""
 for i in $(seq 1 15); do
     sleep 1
-    if STATUS="$(ssh "$SSH_HOST" "svstat /service/dbus-pump 2>&1")"; then
+    if STATUS="$(ssh "$SSH_HOST" "svstat /service/dbus-ev 2>&1")"; then
         printf '%s\n' "$STATUS"
         break
     fi
@@ -71,8 +71,8 @@ done
 # The service dir must be a symlink into the install tree. A real directory
 # here means stale code got resurrected (legacy /opt copy or boot-order race)
 # and will keep running no matter what update.sh installs elsewhere.
-if ! ssh "$SSH_HOST" "test -L /service/dbus-pump"; then
-    echo "ERROR: /service/dbus-pump is not a symlink - split-brain install" >&2
+if ! ssh "$SSH_HOST" "test -L /service/dbus-ev"; then
+    echo "ERROR: /service/dbus-ev is not a symlink - split-brain install" >&2
     exit 1
 fi
 

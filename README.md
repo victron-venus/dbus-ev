@@ -36,3 +36,22 @@ The service uses the `vedbus` package which is available on Venus OS.
 ## License
 
 MIT
+
+## Install
+
+Via SetupHelper PackageManager (GUI v1): drop the repo in `/data/dbus-ev`
+(must contain `version` + `setup`). Then Settings → PackageManager → install,
+or:
+
+```sh
+/data/dbus-ev/setup install
+/data/dbus-ev/setup uninstall
+```
+
+`gitHubInfo` is `victron-venus:latest`. Device-local `local_config.py` is not overwritten.
+
+```sh
+./deploy.sh          # streams repo to Cerbo, runs update.sh there
+./restart.sh         # restart the service only
+ssh cerbo 'tail -f /var/log/dbus-ev/current'
+```
