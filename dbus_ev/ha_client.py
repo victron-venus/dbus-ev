@@ -28,7 +28,9 @@ TEMPLATE_BODY = """{{ {
   "range_to_go": states('@RANGE_TO_GO@') | string if '@RANGE_TO_GO@' != '' else none,
   "latitude": states('@LATITUDE@') | string if '@LATITUDE@' != '' else none,
   "longitude": states('@LONGITUDE@') | string if '@LONGITUDE@' != '' else none,
-  "at_site": states('@AT_SITE@') | string if '@AT_SITE@' != '' else none
+  "at_site": states('@AT_SITE@') | string if '@AT_SITE@' != '' else none,
+  "current": states('@CURRENT@') | string if '@CURRENT@' != '' else none,
+  "power": states('@POWER@') | string if '@POWER@' != '' else none
 } | to_json }}"""
 
 
@@ -96,6 +98,8 @@ def build_template(
     latitude_entity: str,
     longitude_entity: str,
     at_site_entity: str,
+    current_entity: str,
+    power_entity: str,
 ) -> str:
     # Static VIN: emit as Jinja string literal (no HA lookup).
     # Entity id: emit states() call (HA lookup).
@@ -118,6 +122,8 @@ def build_template(
         .replace("@LATITUDE@", latitude_entity or "")
         .replace("@LONGITUDE@", longitude_entity or "")
         .replace("@AT_SITE@", at_site_entity or "")
+        .replace("@CURRENT@", current_entity or "")
+        .replace("@POWER@", power_entity or "")
     )
 
 
@@ -138,6 +144,8 @@ class HaClient:
         latitude_entity: str,
         longitude_entity: str,
         at_site_entity: str,
+        current_entity: str,
+        power_entity: str,
         timeout: float = 3.0,
         breaker: CircuitBreaker | None = None,
     ) -> None:
@@ -152,6 +160,8 @@ class HaClient:
         self.latitude_entity = latitude_entity
         self.longitude_entity = longitude_entity
         self.at_site_entity = at_site_entity
+        self.current_entity = current_entity
+        self.power_entity = power_entity
         self.timeout = timeout
         self.breaker = breaker or CircuitBreaker()
         # Last-known-good snapshot, served while HA is unreachable.
@@ -166,6 +176,8 @@ class HaClient:
             "latitude": None,
             "longitude": None,
             "at_site": None,
+            "current": None,
+            "power": None,
         }
         self._template = build_template(
             soc_entity,
@@ -178,6 +190,8 @@ class HaClient:
             latitude_entity,
             longitude_entity,
             at_site_entity,
+            current_entity,
+            power_entity,
         )
         self._configured = bool(base_url and token)
         self._session = requests.Session()
@@ -249,6 +263,8 @@ class HaClient:
             latitude = to_float(data.get("latitude"))
             longitude = to_float(data.get("longitude"))
             at_site = state_is_on(data.get("at_site"))
+            current = to_float(data.get("current"))
+            power = to_float(data.get("power"))
 
             result.update(
                 soc=soc,
@@ -261,6 +277,8 @@ class HaClient:
                 latitude=latitude,
                 longitude=longitude,
                 at_site=at_site,
+                current=current,
+                power=power,
                 ok=soc is not None,  # Consider OK if we got at least SOC
             )
             self.last_known = {
@@ -276,6 +294,8 @@ class HaClient:
                     "latitude",
                     "longitude",
                     "at_site",
+                    "current",
+                    "power",
                 )
             }
             self.breaker.record_success()

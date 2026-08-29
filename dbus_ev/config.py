@@ -46,6 +46,8 @@ HA_RANGE_TO_GO_ENTITY: str = str(_get("HA_RANGE_TO_GO_ENTITY", ""))
 HA_LATITUDE_ENTITY: str = str(_get("HA_LATITUDE_ENTITY", ""))
 HA_LONGITUDE_ENTITY: str = str(_get("HA_LONGITUDE_ENTITY", ""))
 HA_AT_SITE_ENTITY: str = str(_get("HA_AT_SITE_ENTITY", ""))
+HA_CURRENT_ENTITY: str = str(_get("HA_CURRENT_ENTITY", ""))
+HA_POWER_ENTITY: str = str(_get("HA_POWER_ENTITY", ""))
 
 # --- D-Bus identity -----------------------------------------------------------
 DEVICE_INSTANCE: int = int(_get("DEVICE_INSTANCE", 22))

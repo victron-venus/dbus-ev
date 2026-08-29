@@ -1,8 +1,13 @@
 """D-Bus service registration for EV (Venus OS).
 
-Registers one service:
-  com.victronenergy.ev<N> - EV state from HA (no dot before instance: D-Bus
-    well-known names don't allow digits after a dot)
+Registers one service under the standard EV charger bus name so VRM Portal
+recognises it (bus-name pattern is what VRM uses to identify device classes):
+  com.victronenergy.evcharger.<N>  - EV state from HA
+
+Vehicle metrics (/Soc, /TargetSoc, /VIN, /Odometer, /RangeToGo, /Position/*,
+/AtSite) are exposed alongside the standard EV charger paths (/Status,
+/Ac/Power, /Current, /SetCurrent) so VRM renders the device in its
+dashboard.
 
 Off-GX (tests / dev laptop) a NullDbusService stand-in is used so the module
 imports cleanly without velib_python/dbus.
@@ -49,6 +54,9 @@ class NullDbusService:
     def __getitem__(self, path):
         return self.items[path]
 
+    def get(self, path, default=None):
+        return self.items.get(path, default)
+
     def __delitem__(self, path):
         del self.items[path]
 
@@ -79,6 +87,39 @@ def _identity_paths(
     svc.add_path("/Connected", 1)
 
 
+# --- EV charger status (int) — VRM/CCGX expects these integer values -----------
+STATUS_DISCONNECTED = 0
+STATUS_CONNECTED = 1
+STATUS_CHARGING = 2
+STATUS_CHARGED = 3
+STATUS_WAITING_FOR_SUN = 4
+
+
+# Map an HA `charging_status` string ("0".."N") to an int status code.
+# Unknown / unavailable -> None (path left absent).
+_CHARGING_STATUS_FROM_STRING = {
+    "0": STATUS_DISCONNECTED,
+    "1": STATUS_CONNECTED,
+    "2": STATUS_CHARGING,
+    "3": STATUS_CHARGED,
+}
+
+
+def _parse_charging_status(raw: object) -> int | None:
+    """Coerce a free-form HA state (string/int) to a charger status int.
+
+    Accepts numeric codes as strings ("0".."3") — the mbapi2020 integration
+    exposes `charging_status` as a stringified integer. Anything else
+    (including "unknown"/"unavailable"/None) returns None.
+    """
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s or s.lower() in ("none", "unknown", "unavailable"):
+        return None
+    return _CHARGING_STATUS_FROM_STRING.get(s)
+
+
 class EVEvices:
     """Owns the EV D-Bus service and its writable paths."""
 
@@ -89,18 +130,38 @@ class EVEvices:
         product_name: str,
         product_id: int,
     ) -> None:
-        bus_name = f"com.victronenergy.ev{ev_instance}"
+        # Standard EV charger bus name — VRM Portal uses the bus-name prefix
+        # to classify devices, so `com.victronenergy.ev.<N>` was invisible
+        # in the device list. Use the same prefix as dbus-evcharger.
+        bus_name = f"com.victronenergy.evcharger.{ev_instance}"
         self.ev = _make_service(bus_name)
         _identity_paths(self.ev, product_name, version, product_name, ev_instance, "Home Assistant")
         # Override ProductId with the provided one
         self.ev["/ProductId"] = product_id
 
-        # EV properties (read-only for now)
+        # --- standard EV charger paths (required by VRM for the dashboard) ---
+        # AC measurement (vehicle-side: what is flowing into the car). We
+        # only have HA-derived state here, not live AC telemetry, so these
+        # stay at 0 unless a power/current entity is wired up.
+        self.ev.add_path("/Status", STATUS_DISCONNECTED)
+        self.ev.add_path("/NrOfPhases", 1)
+        self.ev.add_path("/Position", 0)  # 0 = AC Output (grid/inverter -> car)
+        self.ev.add_path("/PositionIsAdjustable", 0)
+        self.ev.add_path("/IsGenericEnergyMeter", 0)
+        self.ev.add_path("/Ac/Power", 0)  # W
+        self.ev.add_path("/Ac/Energy/Forward", 0)  # kWh
+        self.ev.add_path("/Ac/L1/Power", 0)
+        self.ev.add_path("/Ac/L1/Voltage", 0)
+        self.ev.add_path("/Ac/L1/Current", 0)
+        self.ev.add_path("/Current", 0)  # A
+        self.ev.add_path("/SetCurrent", 0)  # A setpoint (read-only here)
+
+        # --- vehicle-specific paths (not standard EV charger paths) ----------
         self.ev.add_path("/Soc", None)
         self.ev.add_path("/TargetSoc", None)
         self.ev.add_path("/VIN", None)
         self.ev.add_path("/BatteryCapacity", None)
-        self.ev.add_path("/ChargingState", None)
+        self.ev.add_path("/ChargingState", None)  # raw HA value (string)
         self.ev.add_path("/Odometer", None)
         self.ev.add_path("/RangeToGo", None)
         self.ev.add_path("/Position/Latitude", None)
@@ -124,7 +185,21 @@ class EVEvices:
         self.ev["/BatteryCapacity"] = capacity
 
     def update_charging_state(self, state: str | None) -> None:
+        """Set both the raw HA string and the int /Status VRM expects."""
         self.ev["/ChargingState"] = state
+        status = _parse_charging_status(state)
+        if status is not None:
+            self.ev["/Status"] = status
+
+    def update_ac_power(self, power_w: float | None) -> None:
+        if power_w is not None:
+            self.ev["/Ac/Power"] = power_w
+            self.ev["/Ac/L1/Power"] = power_w  # single-phase assumption
+
+    def update_current(self, current_a: float | None) -> None:
+        if current_a is not None:
+            self.ev["/Current"] = current_a
+            self.ev["/Ac/L1/Current"] = current_a
 
     def update_odometer(self, odometer: float | None) -> None:
         self.ev["/Odometer"] = odometer

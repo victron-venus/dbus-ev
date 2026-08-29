@@ -27,6 +27,8 @@ HA_RANGE_TO_GO_ENTITY = os.getenv("HA_RANGE_TO_GO_ENTITY", "sensor.mercedes_rang
 HA_LATITUDE_ENTITY = os.getenv("HA_LATITUDE_ENTITY", "sensor.mercedes_latitude")
 HA_LONGITUDE_ENTITY = os.getenv("HA_LONGITUDE_ENTITY", "sensor.mercedes_longitude")
 HA_AT_SITE_ENTITY = os.getenv("HA_AT_SITE_ENTITY", "binary_sensor.mercedes_at_site")
+HA_CURRENT_ENTITY = os.getenv("HA_CURRENT_ENTITY", "")
+HA_POWER_ENTITY = os.getenv("HA_POWER_ENTITY", "")
 
 # --- Device instance ------------------------------------------------------
 # Set via local_config.py or environment

@@ -31,6 +31,8 @@ def make_client(**kw):
         "latitude_entity": "sensor.latitude",
         "longitude_entity": "sensor.longitude",
         "at_site_entity": "sensor.at_site",
+        "current_entity": "sensor.current",
+        "power_entity": "sensor.power",
         "timeout": 3.0,
     }
     defaults.update(kw)
@@ -77,6 +79,8 @@ def test_build_template_contains_entities():
         "sensor.latitude",
         "sensor.longitude",
         "sensor.at_site",
+        "sensor.current",
+        "sensor.power",
     )
     assert "\"soc\": states('sensor.soc')" in t
     # Optional entities use ternary (x if cond else y) inside the dict literal
@@ -93,6 +97,8 @@ def test_build_template_empty_optional_entities():
         "sensor.soc",
         "",
         "sensor.vin",
+        "",
+        "",
         "",
         "",
         "",
@@ -131,6 +137,8 @@ def test_build_template_static_vin_emits_literal():
         "",
         "",
         "",
+        "",
+        "",
     )
     # Literal branch selected, no states() call for VIN.
     assert "\"vin\": states('') | string if '' != '' else '4JGDM0EB0PA123456'" in t
@@ -143,6 +151,8 @@ def test_build_template_entity_vin_uses_states():
         "sensor.soc",
         "",
         "sensor.mercedes_vin",
+        "",
+        "",
         "",
         "",
         "",
@@ -167,6 +177,8 @@ def test_build_template_renders_in_jinja():
         "sensor.soc",
         "",
         "4JGDM0EB0PA123456",
+        "",
+        "",
         "",
         "",
         "",
@@ -322,6 +334,8 @@ def test_unconfigured_client_shortcircuits(post):
         latitude_entity="",
         longitude_entity="",
         at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     r = c.poll()
     assert r["ok"] is False
