@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 # VIN: @VIN_ENTITY@ replaced with entity id or empty (entity check).
 # @VIN_VALUE@ replaced with literal JSON string or empty (static value).
 TEMPLATE_BODY = """{{ {
-  'soc': states('@SOC@') | string,
-  'target_soc': states('@TARGET_SOC@') | string if '@TARGET_SOC@' != '' else none,
-  'vin': states('@VIN_ENTITY@') | string if '@VIN_ENTITY@' != '' else '@VIN_VALUE@',
-  'battery_capacity': states('@BATTERY_CAPACITY@') | string if '@BATTERY_CAPACITY@' != '' else none,
-  'charging_state': states('@CHARGING_STATE@') | string if '@CHARGING_STATE@' != '' else none,
-  'odometer': states('@ODOMETER@') | string if '@ODOMETER@' != '' else none,
-  'range_to_go': states('@RANGE_TO_GO@') | string if '@RANGE_TO_GO@' != '' else none,
-  'latitude': states('@LATITUDE@') | string if '@LATITUDE@' != '' else none,
-  'longitude': states('@LONGITUDE@') | string if '@LONGITUDE@' != '' else none,
-  'at_site': states('@AT_SITE@') | string if '@AT_SITE@' != '' else none
+  "soc": states('@SOC@') | string,
+  "target_soc": states('@TARGET_SOC@') | string if '@TARGET_SOC@' != '' else none,
+  "vin": states('@VIN_ENTITY@') | string if '@VIN_ENTITY@' != '' else '@VIN_VALUE@',
+  "battery_capacity": states('@BATTERY_CAPACITY@') | string if '@BATTERY_CAPACITY@' != '' else none,
+  "charging_state": states('@CHARGING_STATE@') | string if '@CHARGING_STATE@' != '' else none,
+  "odometer": states('@ODOMETER@') | string if '@ODOMETER@' != '' else none,
+  "range_to_go": states('@RANGE_TO_GO@') | string if '@RANGE_TO_GO@' != '' else none,
+  "latitude": states('@LATITUDE@') | string if '@LATITUDE@' != '' else none,
+  "longitude": states('@LONGITUDE@') | string if '@LONGITUDE@' != '' else none,
+  "at_site": states('@AT_SITE@') | string if '@AT_SITE@' != '' else none
 } | to_json }}"""
 
 
@@ -37,7 +37,7 @@ class HomeAssistantError(Exception):
 
 
 class HomeAssistantAPIError(HomeAssistantError):
-    pass
+    """Raised when HA returns a non-2xx response to /api/template."""
 
 
 class CircuitBreaker:
@@ -122,6 +122,8 @@ def build_template(
 
 
 class HaClient:
+    """Batch-fetch EV entities from HA /api/template with last-known fallback."""
+
     def __init__(
         self,
         base_url: str,
