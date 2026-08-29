@@ -14,17 +14,21 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Jinja template sent to /api/template. Tokens are replaced literally.
+# Use ternary operator (x if cond else y) inside {{ }} — Jinja2 doesn't allow
+# bare {% if %} blocks inside expression delimiters.
+# VIN: @VIN_ENTITY@ replaced with entity id or empty (entity check).
+# @VIN_VALUE@ replaced with literal JSON string or empty (static value).
 TEMPLATE_BODY = """{{ {
   'soc': states('@SOC@') | string,
-  'target_soc': states('@TARGET_SOC@') | string,
-  'vin': states('@VIN@') | string,
-  'battery_capacity': states('@BATTERY_CAPACITY@') | string,
-  'charging_state': states('@CHARGING_STATE@') | string,
-  'odometer': states('@ODOMETER@') | string,
-  'range_to_go': states('@RANGE_TO_GO@') | string,
-  'latitude': states('@LATITUDE@') | string,
-  'longitude': states('@LONGITUDE@') | string,
-  'at_site': states('@AT_SITE@') | string
+  'target_soc': states('@TARGET_SOC@') | string if '@TARGET_SOC@' != '' else none,
+  'vin': states('@VIN_ENTITY@') | string if '@VIN_ENTITY@' != '' else '@VIN_VALUE@',
+  'battery_capacity': states('@BATTERY_CAPACITY@') | string if '@BATTERY_CAPACITY@' != '' else none,
+  'charging_state': states('@CHARGING_STATE@') | string if '@CHARGING_STATE@' != '' else none,
+  'odometer': states('@ODOMETER@') | string if '@ODOMETER@' != '' else none,
+  'range_to_go': states('@RANGE_TO_GO@') | string if '@RANGE_TO_GO@' != '' else none,
+  'latitude': states('@LATITUDE@') | string if '@LATITUDE@' != '' else none,
+  'longitude': states('@LONGITUDE@') | string if '@LONGITUDE@' != '' else none,
+  'at_site': states('@AT_SITE@') | string if '@AT_SITE@' != '' else none
 } | to_json }}"""
 
 
@@ -76,6 +80,11 @@ def state_is_on(state: Any) -> bool | None:
     return s in ("on", "true", "yes")
 
 
+def _is_ha_entity(value: str) -> bool:
+    """Return True if value looks like an HA entity id (domain.object_id)."""
+    return bool(value) and "." in value
+
+
 def build_template(
     soc_entity: str,
     target_soc_entity: str,
@@ -88,17 +97,27 @@ def build_template(
     longitude_entity: str,
     at_site_entity: str,
 ) -> str:
+    # Static VIN: emit as Jinja string literal (no HA lookup).
+    # Entity id: emit states() call (HA lookup).
+    if _is_ha_entity(vin_entity):
+        vin_entity_token = vin_entity
+        vin_value_token = ""
+    else:
+        vin_entity_token = ""
+        # Escape single quote (Jinja uses '' to escape) and backslash.
+        vin_value_token = vin_entity.replace("\\", "\\\\").replace("'", "''") if vin_entity else ""
     return (
         TEMPLATE_BODY.replace("@SOC@", soc_entity)
-        .replace("@TARGET_SOC@", target_soc_entity)
-        .replace("@VIN@", vin_entity)
-        .replace("@BATTERY_CAPACITY@", battery_capacity_entity)
-        .replace("@CHARGING_STATE@", charging_state_entity)
-        .replace("@ODOMETER@", odometer_entity)
-        .replace("@RANGE_TO_GO@", range_to_go_entity)
-        .replace("@LATITUDE@", latitude_entity)
-        .replace("@LONGITUDE@", longitude_entity)
-        .replace("@AT_SITE@", at_site_entity)
+        .replace("@TARGET_SOC@", target_soc_entity or "")
+        .replace("@VIN_ENTITY@", vin_entity_token)
+        .replace("@VIN_VALUE@", vin_value_token)
+        .replace("@BATTERY_CAPACITY@", battery_capacity_entity or "")
+        .replace("@CHARGING_STATE@", charging_state_entity or "")
+        .replace("@ODOMETER@", odometer_entity or "")
+        .replace("@RANGE_TO_GO@", range_to_go_entity or "")
+        .replace("@LATITUDE@", latitude_entity or "")
+        .replace("@LONGITUDE@", longitude_entity or "")
+        .replace("@AT_SITE@", at_site_entity or "")
     )
 
 
@@ -158,22 +177,7 @@ class HaClient:
             longitude_entity,
             at_site_entity,
         )
-        self._configured = all(
-            (
-                base_url,
-                token,
-                soc_entity,
-                target_soc_entity,
-                vin_entity,
-                battery_capacity_entity,
-                charging_state_entity,
-                odometer_entity,
-                range_to_go_entity,
-                latitude_entity,
-                longitude_entity,
-                at_site_entity,
-            )
-        )
+        self._configured = bool(base_url and token)
         self._session = requests.Session()
         if token:
             self._session.headers.update(
@@ -199,7 +203,7 @@ class HaClient:
         result = dict(self.last_known)
         result["ok"] = False
         if not self._configured:
-            self._log_error_throttled("HA client not configured (local_config.py missing?)")
+            self._log_error_throttled("HA client not configured (HA_URL or HA_TOKEN empty)")
             return result
         if self.breaker.is_open:
             return result
@@ -212,27 +216,36 @@ class HaClient:
             if resp.status_code != 200:
                 raise HomeAssistantAPIError(f"/api/template HTTP {resp.status_code}")
             data = json.loads(resp.text)
+
             # Helper to convert string to float or None
-            def to_float(s: str | None) -> float | None:
+            def to_float(s: Any) -> float | None:
                 if s is None:
                     return None
-                s = s.strip()
-                if s == "":
+                s = str(s).strip()
+                if s == "" or s.lower() in ("none", "unknown", "unavailable"):
                     return None
                 try:
                     return float(s)
                 except ValueError:
                     return None
 
-            soc = to_float(str(data.get("soc", "")).strip())
-            target_soc = to_float(str(data.get("target_soc", "")).strip())
-            vin = str(data.get("vin", "")).strip() or None
-            battery_capacity = to_float(str(data.get("battery_capacity", "")).strip())
-            charging_state = str(data.get("charging_state", "")).strip() or None
-            odometer = to_float(str(data.get("odometer", "")).strip())
-            range_to_go = to_float(str(data.get("range_to_go", "")).strip())
-            latitude = to_float(str(data.get("latitude", "")).strip())
-            longitude = to_float(str(data.get("longitude", "")).strip())
+            def to_str(s: Any) -> str | None:
+                if s is None:
+                    return None
+                s = str(s).strip()
+                if s == "" or s.lower() in ("none", "unknown", "unavailable"):
+                    return None
+                return s
+
+            soc = to_float(data.get("soc"))
+            target_soc = to_float(data.get("target_soc"))
+            vin = to_str(data.get("vin"))
+            battery_capacity = to_float(data.get("battery_capacity"))
+            charging_state = to_str(data.get("charging_state"))
+            odometer = to_float(data.get("odometer"))
+            range_to_go = to_float(data.get("range_to_go"))
+            latitude = to_float(data.get("latitude"))
+            longitude = to_float(data.get("longitude"))
             at_site = state_is_on(data.get("at_site"))
 
             result.update(

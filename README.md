@@ -1,6 +1,6 @@
 # Venus OS D-Bus exporter for the VEHICLE
 
-This service exports vehicle (EV) data from Home Assistant to the Venus OS D-Bus service under `com.victronenergy.ev`.
+This service exports vehicle (EV) data from Home Assistant to the Venus OS D-Bus service under `com.victronenergy.ev<N>` (no dot before instance: D-Bus well-known names don't allow digits after a dot)
 
 ## Exported properties
 

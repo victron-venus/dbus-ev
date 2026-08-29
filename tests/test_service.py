@@ -1,82 +1,101 @@
-from dbus_pump.service import NullDbusService, WaterSystemServices
+"""Tests for EVEvices D-Bus service registration and update methods."""
+
+from dbus_ev.service import EVEvices, NullDbusService
 
 
-def build(**kw):
-    kw.setdefault("on_pump_mode", lambda m: None)
-    kw.setdefault("on_valve_mode", lambda m: None)
-    return WaterSystemServices(
-        tank_instance=21,
-        pump_startstop_instance=1,
-        valve_startstop_instance=2,
-        version="0.1.0",
-        **kw,
-    )
+def make_ev_services():
+    return EVEvices(ev_instance=22, version="0.1.0", product_name="dbus-ev", product_id=0x1234)
 
 
-def test_service_names():
-    s = build()
-    assert s.tank.service_name == "com.victronenergy.tank.ha_tank21"
-    assert s.pump.service_name == "com.victronenergy.pump.startstop1"
-    assert s.valve.service_name == "com.victronenergy.pump.startstop2"
+def test_service_name():
+    s = make_ev_services()
+    assert s.ev.service_name == "com.victronenergy.ev22"
 
 
 def test_identity_paths_present():
-    s = build()
-    for svc in (s.tank, s.pump, s.valve):
-        for p in (
-            "/Mgmt/ProcessName",
-            "/DeviceInstance",
-            "/ProductId",
-            "/ProductName",
-            "/CustomName",
-            "/Connected",
-            "/Serial",
-        ):
-            assert p in svc.items, f"{svc.service_name} missing {p}"
+    s = make_ev_services()
+    for p in (
+        "/Mgmt/ProcessName",
+        "/Mgmt/ProcessVersion",
+        "/Mgmt/Connection",
+        "/DeviceInstance",
+        "/ProductName",
+        "/ProductId",
+        "/FirmwareVersion",
+        "/HardwareVersion",
+        "/Serial",
+        "/CustomName",
+        "/Connected",
+    ):
+        assert p in s.ev.items, f"EV service missing {p}"
+    assert s.ev.items["/DeviceInstance"] == 22
+    assert s.ev.items["/ProductId"] == 0x1234
 
 
-def test_tank_fluid_type_fresh_water():
-    s = build()
-    assert s.tank.items["/FluidType"] == 1
+def test_update_soc_publishes():
+    s = make_ev_services()
+    s.update_soc(75.5)
+    assert s.ev["/Soc"] == 75.5
 
 
-def test_update_tank_level_and_remaining():
-    s = build()
-    s.capacity_m3 = 2.0
-    s.update_tank_level(50.0)
-    assert s.tank.items["/Level"] == 50.0
-    assert s.tank.items["/Remaining"] == 1.0
-    assert s.tank.items["/Status"] == 0
-    s.update_tank_level(None)
-    assert s.tank.items["/Level"] is None
-    assert s.tank.items["/Status"] == 4
+def test_update_target_soc_publishes():
+    s = make_ev_services()
+    s.update_target_soc(80.0)
+    assert s.ev["/TargetSoc"] == 80.0
 
 
-def test_capacity_from_constructor_published():
-    s = build(capacity_m3=0.387)  # 387 L
-    assert s.tank.items["/Capacity"] == 0.387
+def test_update_vin_publishes():
+    s = make_ev_services()
+    s.update_vin("WBA12345")
+    assert s.ev["/VIN"] == "WBA12345"
 
 
-def test_remaining_fallback_capacity_times_level():
-    s = build(capacity_m3=0.387)
-    s.update_tank_level(100.0)
-    assert s.tank.items["/Remaining"] == 0.387
+def test_update_battery_capacity_publishes():
+    s = make_ev_services()
+    s.update_battery_capacity(80.0)
+    assert s.ev["/BatteryCapacity"] == 80.0
 
 
-def test_explicit_remaining_overrides_derivation():
-    # level % is not volume-proportional when the sensor has a dead zone;
-    # HA-computed liters must win.
-    s = build(capacity_m3=0.387)
-    s.update_tank_level(50.0, remaining_m3=0.15)
-    assert s.tank.items["/Remaining"] == 0.15
+def test_update_charging_state_publishes():
+    s = make_ev_services()
+    s.update_charging_state("charging")
+    assert s.ev["/ChargingState"] == "charging"
 
 
-def test_device_state_update():
-    s = build()
-    s.update_device_state("pump", True)
-    assert s.pump.items["/State"] == 1
-    s.update_device_state("valve", False)
-    assert s.valve.items["/State"] == 0
+def test_update_odometer_publishes():
+    s = make_ev_services()
+    s.update_odometer(12345.0)
+    assert s.ev["/Odometer"] == 12345.0
+
+
+def test_update_range_to_go_publishes():
+    s = make_ev_services()
+    s.update_range_to_go(200.0)
+    assert s.ev["/RangeToGo"] == 200.0
+
+
+def test_update_latitude_publishes():
+    s = make_ev_services()
+    s.update_latitude(37.7749)
+    assert s.ev["/Position/Latitude"] == 37.7749
+
+
+def test_update_longitude_publishes():
+    s = make_ev_services()
+    s.update_longitude(-122.4194)
+    assert s.ev["/Position/Longitude"] == -122.4194
+
+
+def test_update_at_site_publishes():
+    s = make_ev_services()
+    s.update_at_site(True)
+    assert s.ev["/AtSite"] is True
+
+
+def test_set_connected_does_not_raise():
+    s = make_ev_services()
+    s.set_connected(True)
+    s.set_connected(False)
 
 
 def test_null_service_onchange_fires():
@@ -89,19 +108,40 @@ def test_null_service_onchange_fires():
     assert seen == [2]
 
 
-def test_set_mode_quietly_does_not_fire_callback():
+def test_null_service_setitem_fires_callback_with_path():
     seen = []
-    s = build(on_valve_mode=lambda m: seen.append(m))
-    s.set_mode_quietly("valve", 2)
-    assert seen == []
-    assert s.valve.items["/Mode"] == 2
+
+    def cb(p, v):
+        seen.append((p, v))
+
+    svc = NullDbusService("test")
+    svc.add_path("/Level", 0.0, onchangecallback=cb)
+    svc["/Level"] = 50.0
+    assert seen == [("/Level", 50.0)]
 
 
-def test_connected_propagates_to_all():
-    s = build()
-    s.set_connected(False)
-    assert s.tank.items["/Connected"] == 0
-    assert s.pump.items["/Connected"] == 0
-    assert s.valve.items["/Connected"] == 0
-    s.set_connected(True)
-    assert s.valve.items["/Connected"] == 1
+def test_null_service_add_path_without_callback():
+    svc = NullDbusService("test")
+    svc.add_path("/Foo", 1)
+    svc["/Foo"] = 2
+    assert svc["/Foo"] == 2
+
+
+def test_null_service_getitem_raises_keyerror():
+    svc = NullDbusService("test")
+    try:
+        svc["/Missing"]
+    except KeyError:
+        return
+    raise AssertionError("Expected KeyError")
+
+
+def test_null_service_delitem():
+    svc = NullDbusService("test")
+    svc.add_path("/Foo", 1)
+    del svc["/Foo"]
+    try:
+        svc["/Foo"]
+    except KeyError:
+        return
+    raise AssertionError("Expected KeyError after delete")

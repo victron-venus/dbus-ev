@@ -18,7 +18,9 @@ HA_TOKEN = os.getenv("HA_TOKEN", "")
 HA_SOC_ENTITY = os.getenv("HA_SOC_ENTITY", "sensor.mercedes_soc")
 HA_TARGET_SOC_ENTITY = os.getenv("HA_TARGET_SOC_ENTITY", "sensor.mercedes_target_soc")
 HA_VIN_ENTITY = os.getenv("HA_VIN_ENTITY", "sensor.mercedes_vin")
-HA_BATTERY_CAPACITY_ENTITY = os.getenv("HA_BATTERY_CAPACITY_ENTITY", "sensor.mercedes_battery_capacity")
+HA_BATTERY_CAPACITY_ENTITY = os.getenv(
+    "HA_BATTERY_CAPACITY_ENTITY", "sensor.mercedes_battery_capacity"
+)
 HA_CHARGING_STATE_ENTITY = os.getenv("HA_CHARGING_STATE_ENTITY", "sensor.mercedes_charging_state")
 HA_ODOMETER_ENTITY = os.getenv("HA_ODOMETER_ENTITY", "sensor.mercedes_odometer")
 HA_RANGE_TO_GO_ENTITY = os.getenv("HA_RANGE_TO_GO_ENTITY", "sensor.mercedes_range_to_go")
