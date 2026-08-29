@@ -49,7 +49,8 @@ HA_AT_SITE_ENTITY: str = str(_get("HA_AT_SITE_ENTITY", ""))
 
 # --- D-Bus identity -----------------------------------------------------------
 DEVICE_INSTANCE: int = int(_get("DEVICE_INSTANCE", 22))
-PRODUCT_NAME = "dbus-ev"
+PRODUCT_NAME: str = str(_get("PRODUCT_NAME", "dbus-ev"))
+PRODUCT_ID: int = int(_get("PRODUCT_ID", 0))
 SOFTWARE_VERSION = _read_version()
 
 # --- Control logic ------------------------------------------------------------

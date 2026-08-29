@@ -1,2 +1,2 @@
 #!/bin/sh
-ssh Cerbo 'svc -t /service/dbus-pump'
+ssh Cerbo 'svc -t /service/dbus-ev'

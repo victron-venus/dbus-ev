@@ -1,7 +1,8 @@
 """D-Bus service registration for EV (Venus OS).
 
 Registers one service:
-  com.victronenergy.ev.<N> - EV state from HA
+  com.victronenergy.ev<N> - EV state from HA (no dot before instance: D-Bus
+    well-known names don't allow digits after a dot)
 
 Off-GX (tests / dev laptop) a NullDbusService stand-in is used so the module
 imports cleanly without velib_python/dbus.
@@ -58,7 +59,7 @@ def _make_service(service_name: str):
         # and a single connection can register that object path only once.
         import dbus
 
-        return VeDbusService(service_name, bus=dbus.SystemBus(private=True))
+        return VeDbusService(service_name, bus=dbus.SystemBus(private=True), register=False)
     return NullDbusService(service_name)
 
 
@@ -88,11 +89,9 @@ class EVEvices:
         product_name: str,
         product_id: int,
     ) -> None:
-        bus_name = f"com.victronenergy.ev.{ev_instance}"
+        bus_name = f"com.victronenergy.ev{ev_instance}"
         self.ev = _make_service(bus_name)
-        _identity_paths(
-            self.ev, product_name, version, product_name, ev_instance, "Home Assistant"
-        )
+        _identity_paths(self.ev, product_name, version, product_name, ev_instance, "Home Assistant")
         # Override ProductId with the provided one
         self.ev["/ProductId"] = product_id
 
@@ -107,6 +106,10 @@ class EVEvices:
         self.ev.add_path("/Position/Latitude", None)
         self.ev.add_path("/Position/Longitude", None)
         self.ev.add_path("/AtSite", None)
+
+        # Register after all mandatory paths are added.
+        if VEDBUS_AVAILABLE:
+            self.ev.register()
 
     def update_soc(self, soc: float | None) -> None:
         self.ev["/Soc"] = soc
