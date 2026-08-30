@@ -2,7 +2,13 @@
 
 Registers one service under the standard EV charger bus name so VRM Portal
 recognises it (bus-name pattern is what VRM uses to identify device classes):
-  com.victronenergy.evcharger.<N>  - EV state from HA
+  com.victronenergy.evcharger.<suffix>  - EV state from HA
+
+Where ``<suffix>`` is a textual identifier (port, serial, or fixed token) —
+D-Bus bus names forbid digits after the last dot, so the integer instance
+goes ONLY in the `/DeviceInstance` property, not in the bus name. This
+matches the Victron convention used by dbus-modbus-client
+(`com.victronenergy.evcharger.ttyO1`, `com.victronenergy.vebus.ttyO1`).
 
 Vehicle metrics (/Soc, /TargetSoc, /VIN, /Odometer, /RangeToGo, /Position/*,
 /AtSite) are exposed alongside the standard EV charger paths (/Status,
@@ -129,11 +135,12 @@ class EVEvices:
         version: str,
         product_name: str,
         product_id: int,
+        bus_suffix: str = "ha",
     ) -> None:
-        # Standard EV charger bus name — VRM Portal uses the bus-name prefix
-        # to classify devices, so `com.victronenergy.ev.<N>` was invisible
-        # in the device list. Use the same prefix as dbus-evcharger.
-        bus_name = f"com.victronenergy.evcharger.{ev_instance}"
+        # D-Bus bus names forbid digits after the last dot. The integer
+        # instance lives in /DeviceInstance; the bus suffix is textual —
+        # matches Victron convention (ttyO1, ttyUSB0, ha, etc.).
+        bus_name = f"com.victronenergy.evcharger.{bus_suffix}"
         self.ev = _make_service(bus_name)
         _identity_paths(self.ev, product_name, version, product_name, ev_instance, "Home Assistant")
         # Override ProductId with the provided one
@@ -148,13 +155,20 @@ class EVEvices:
         self.ev.add_path("/Position", 0)  # 0 = AC Output (grid/inverter -> car)
         self.ev.add_path("/PositionIsAdjustable", 0)
         self.ev.add_path("/IsGenericEnergyMeter", 0)
+        self.ev.add_path("/Mode", 0)  # 0=Manual, 1=Auto, 2=Scheduled
+        self.ev.add_path("/StartStop", 0)  # 0=Disabled, 1=Enabled
         self.ev.add_path("/Ac/Power", 0)  # W
         self.ev.add_path("/Ac/Energy/Forward", 0)  # kWh
         self.ev.add_path("/Ac/L1/Power", 0)
+        self.ev.add_path("/Ac/L2/Power", 0)
+        self.ev.add_path("/Ac/L3/Power", 0)
         self.ev.add_path("/Ac/L1/Voltage", 0)
         self.ev.add_path("/Ac/L1/Current", 0)
         self.ev.add_path("/Current", 0)  # A
         self.ev.add_path("/SetCurrent", 0)  # A setpoint (read-only here)
+        self.ev.add_path("/MaxCurrent", 16)  # A — VRM expects it present
+        self.ev.add_path("/ChargingTime", 0)  # s — current session
+        self.ev.add_path("/Session/Energy", 0)  # kWh — current session
 
         # --- vehicle-specific paths (not standard EV charger paths) ----------
         self.ev.add_path("/Soc", None)
