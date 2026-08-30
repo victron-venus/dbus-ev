@@ -1,6 +1,6 @@
 """Integration-ish tests for App.tick wiring with fake client/services."""
 
-from dbus_ev.main import App
+from dbus_ev.main import VEHICLE_PROPS, App
 
 
 class FakeClient:
@@ -23,18 +23,7 @@ class FakeServices:
 
     def __init__(self, snapshot):
         self.items = {}
-        for path in (
-            "/Soc",
-            "/TargetSoc",
-            "/VIN",
-            "/BatteryCapacity",
-            "/ChargingState",
-            "/Odometer",
-            "/RangeToGo",
-            "/Position/Latitude",
-            "/Position/Longitude",
-            "/AtSite",
-        ):
+        for path in VEHICLE_PROPS:
             self.items[path] = snapshot.get(path)
 
     def set_connected(self, connected):
@@ -153,6 +142,18 @@ def test_tick_remaining_falls_back_to_capacity_derivation(monkeypatch):
     monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
     app = build_app(dict(BASE))
     app.tick()
+
+
+def test_tick_publishes_static_battery_capacity(monkeypatch):
+    """When HA_BATTERY_CAPACITY_ENTITY is a static literal (no dot),
+    it should be published as-is to /BatteryCapacity."""
+    monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
+    monkeypatch.setattr("dbus_ev.main.config.HA_BATTERY_CAPACITY_ENTITY", "118")
+    monkeypatch.setattr("dbus_ev.main.config.BATTERY_CAPACITY_KWH", None)
+    snap = dict(BASE, battery_capacity=None)
+    app = build_app(snap)
+    app.tick()
+    assert app.services.items["/BatteryCapacity"] == "118"
 
 
 def test_tick_stale_publishes_invalid_level(monkeypatch):

@@ -4,14 +4,21 @@ from dbus_ev.service import EVEvices, NullDbusService
 
 
 def make_ev_services():
-    return EVEvices(ev_instance=22, version="0.1.0", product_name="dbus-ev", product_id=0x1234)
+    return EVEvices(
+        ev_instance=22,
+        version="0.1.0",
+        product_name="dbus-ev",
+        product_id=0x1234,
+        connection="evcharger:40",
+        bus_suffix="ha",
+    )
 
 
 def test_service_name():
     s = make_ev_services()
     # D-Bus bus names forbid digits after the last dot; instance lives in
     # /DeviceInstance, suffix is textual.
-    assert s.ev.service_name == "com.victronenergy.evcharger.ha"
+    assert s.ev.service_name == "com.victronenergy.ev.ha"
 
 
 def test_service_name_custom_suffix():
@@ -20,9 +27,10 @@ def test_service_name_custom_suffix():
         version="0.1.0",
         product_name="dbus-ev",
         product_id=0x1234,
+        connection="evcharger:40",
         bus_suffix="ttyO1",
     )
-    assert s.ev.service_name == "com.victronenergy.evcharger.ttyO1"
+    assert s.ev.service_name == "com.victronenergy.ev.ttyO1"
 
 
 def test_identity_paths_present():
@@ -45,8 +53,20 @@ def test_identity_paths_present():
     assert s.ev.items["/ProductId"] == 0x1234
 
 
-def test_vrm_evcharger_paths_present():
-    """VRM Portal requires these standard EV charger paths to render the tile."""
+def test_connection_evcharger_format():
+    s = make_ev_services()
+    assert s.ev.items["/Mgmt/Connection"] == "evcharger:40"
+
+
+def test_vehicle_paths_present():
+    """Per Venus dbus wiki for com.victronenergy.ev."""
+    s = make_ev_services()
+    for p in EVEvices.VEHICLE_PROPS:
+        assert p in s.ev.items, f"Vehicle path missing: {p}"
+
+
+def test_evcharger_paths_absent():
+    """Ensure evcharger-only paths are NOT present (dropped per spec)."""
     s = make_ev_services()
     for p in (
         "/Status",
@@ -55,17 +75,15 @@ def test_vrm_evcharger_paths_present():
         "/Current",
         "/SetCurrent",
         "/MaxCurrent",
-        "/Ac/Power",
         "/Ac/Energy/Forward",
-        "/Ac/L1/Power",
         "/Ac/L2/Power",
         "/Ac/L3/Power",
         "/ChargingTime",
         "/Session/Energy",
         "/NrOfPhases",
-        "/Position",
+        "/Position",  # vehicle uses /Position/Latitude + /Position/Longitude
     ):
-        assert p in s.ev.items, f"VRM evcharger path missing: {p}"
+        assert p not in s.ev.items, f"evcharger path should be absent: {p}"
 
 
 def test_update_soc_publishes():
@@ -94,8 +112,8 @@ def test_update_battery_capacity_publishes():
 
 def test_update_charging_state_publishes():
     s = make_ev_services()
-    s.update_charging_state("charging")
-    assert s.ev["/ChargingState"] == "charging"
+    s.update_charging_state(3)  # charging
+    assert s.ev["/ChargingState"] == 3
 
 
 def test_update_odometer_publishes():
