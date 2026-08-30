@@ -1,14 +1,13 @@
-"""D-Bus service registration for EV vehicle (Venus OS).
+"""D-Bus service registration for EV (Venus OS).
 
 Registers one service under the standard EV bus name per the Venus dbus wiki:
   com.victronenergy.ev.<suffix>
 
 Where ``<suffix>`` is a textual identifier (port, serial, or fixed token) —
 D-Bus bus names forbid digits after the last dot, so the integer instance
-goes ONLY in the `/DeviceInstance` property, not in the bus name.
-
-/Mgmt/Connection names the EVCS the vehicle is plugged into:
-  evcharger:<instance>  e.g. evcharger:40
+goes ONLY in the `/DeviceInstance` property, not in the bus name. This
+matches the Victron convention used by dbus-modbus-client
+(`com.victronenergy.evcharger.ttyO1`, `com.victronenergy.vebus.ttyO1`).
 
 Vehicle paths exposed: /Soc, /TargetSoc, /VIN, /BatteryCapacity, /ChargingState,
 /Odometer, /RangeToGo, /Position/Latitude, /Position/Longitude, /AtSite.
@@ -90,23 +89,47 @@ def _identity_paths(
     svc.add_path("/Connected", 1)
 
 
+# VRM/CCGX expects these integer values on /Status.
+STATUS_DISCONNECTED = 0
+STATUS_CONNECTED = 1
+STATUS_CHARGING = 2
+STATUS_CHARGED = 3
+STATUS_WAITING_FOR_SUN = 4
+
+
+# D-Bus paths exposed on the EV service. Single source of truth — avoid
+# string duplication by referencing these constants in update_*() methods.
+PATH_SOC = "/Soc"
+PATH_TARGET_SOC = "/TargetSoc"
+PATH_VIN = "/VIN"
+PATH_BATTERY_CAPACITY = "/BatteryCapacity"
+PATH_CHARGING_STATE = "/ChargingState"
+PATH_ODOMETER = "/Odometer"
+PATH_RANGE_TO_GO = "/RangeToGo"
+PATH_LATITUDE = "/Position/Latitude"
+PATH_LONGITUDE = "/Position/Longitude"
+PATH_AT_SITE = "/AtSite"
+PATH_AC_POWER = "/Ac/Power"
+PATH_AC_L1_POWER = "/Ac/L1/Power"
+
+
 class EVEvices:
     """Owns the EV D-Bus service and its writable paths."""
 
     # Vehicle properties exposed on the EV D-Bus service (single source of truth).
     VEHICLE_PROPS: typing.ClassVar[tuple[str, ...]] = (
-        "/Soc",
-        "/TargetSoc",
-        "/VIN",
-        "/BatteryCapacity",
-        "/ChargingState",
-        "/Odometer",
-        "/RangeToGo",
-        "/Position/Latitude",
-        "/Position/Longitude",
-        "/AtSite",
-        "/Ac/Power",  # vehicle-side AC power (W)
-        "/Ac/L1/Power",  # single-phase assumption
+        PATH_SOC,
+        PATH_TARGET_SOC,
+        PATH_VIN,
+        PATH_BATTERY_CAPACITY,
+        PATH_CHARGING_STATE,
+        PATH_ODOMETER,
+        PATH_RANGE_TO_GO,
+        PATH_LATITUDE,
+        PATH_LONGITUDE,
+        PATH_AT_SITE,
+        PATH_AC_POWER,  # vehicle-side AC power (W)
+        PATH_AC_L1_POWER,  # single-phase assumption
     )
 
     def __init__(
@@ -135,38 +158,54 @@ class EVEvices:
         # Override ProductId with the provided one
         self.ev["/ProductId"] = product_id
 
+        # --- standard EV charger paths (required by VRM for the dashboard) ---
+        self.ev.add_path("/Status", STATUS_DISCONNECTED)
+        self.ev.add_path("/NrOfPhases", 1)
+        self.ev.add_path("/Position", 0)  # 0 = AC Output (grid/inverter -> car)
+        self.ev.add_path("/PositionIsAdjustable", 0)
+        self.ev.add_path("/IsGenericEnergyMeter", 0)
+        self.ev.add_path("/Mode", 0)  # 0=Manual, 1=Auto, 2=Scheduled
+        self.ev.add_path("/StartStop", 0)  # 0=Disabled, 1=Enabled
+        self.ev.add_path(PATH_AC_POWER, 0)  # W
+        self.ev.add_path("/Ac/Energy/Forward", 0)  # kWh
+        self.ev.add_path(PATH_AC_L1_POWER, 0)
+        self.ev.add_path("/Ac/L2/Power", 0)
+        self.ev.add_path("/Ac/L3/Power", 0)
+        self.ev.add_path("/Ac/L1/Voltage", 0)
+        self.ev.add_path("/Ac/L1/Current", 0)
+        self.ev.add_path("/Current", 0)  # A
+        self.ev.add_path("/SetCurrent", 0)  # A setpoint (read-only here)
+        self.ev.add_path("/MaxCurrent", 16)  # A — VRM expects it present
+        self.ev.add_path("/ChargingTime", 0)  # s — current session
+        self.ev.add_path("/Session/Energy", 0)  # kWh — current session
+
         # --- vehicle-specific paths (per Venus dbus wiki for com.victronenergy.ev) ---
-        self.ev.add_path("/Soc", None)
-        self.ev.add_path("/TargetSoc", None)
-        self.ev.add_path("/VIN", None)
-        self.ev.add_path("/BatteryCapacity", None)
-        # Initial value None with valuetype=int - see if type is registered correctly
-        self.ev.add_path("/ChargingState", None, valuetype=int, writeable=True)
-        self.ev.add_path("/Odometer", None)
-        self.ev.add_path("/RangeToGo", None)
-        self.ev.add_path("/Position/Latitude", None)
-        self.ev.add_path("/Position/Longitude", None)
-        self.ev.add_path("/AtSite", None)
-        # AC charging telemetry (vehicle-side). Most HA EV integrations
-        # expose power in kW; /Ac/Power on D-Bus is W, so we convert.
-        self.ev.add_path("/Ac/Power", 0)  # W
-        self.ev.add_path("/Ac/L1/Power", 0)  # W (single-phase assumption)
+        self.ev.add_path(PATH_SOC, None)
+        self.ev.add_path(PATH_TARGET_SOC, None)
+        self.ev.add_path(PATH_VIN, None)
+        self.ev.add_path(PATH_BATTERY_CAPACITY, None)
+        self.ev.add_path(PATH_CHARGING_STATE, None)  # Venus wiki enum int
+        self.ev.add_path(PATH_ODOMETER, None)
+        self.ev.add_path(PATH_RANGE_TO_GO, None)
+        self.ev.add_path(PATH_LATITUDE, None)
+        self.ev.add_path(PATH_LONGITUDE, None)
+        self.ev.add_path(PATH_AT_SITE, None)
 
         # Register after all mandatory paths are added.
         if VEDBUS_AVAILABLE:
             self.ev.register()
 
     def update_soc(self, soc: float | None) -> None:
-        self.ev["/Soc"] = soc
+        self.ev[PATH_SOC] = soc
 
     def update_target_soc(self, target_soc: float | None) -> None:
-        self.ev["/TargetSoc"] = target_soc
+        self.ev[PATH_TARGET_SOC] = target_soc
 
     def update_vin(self, vin: str | None) -> None:
-        self.ev["/VIN"] = vin
+        self.ev[PATH_VIN] = vin
 
     def update_battery_capacity(self, capacity: float | None) -> None:
-        self.ev["/BatteryCapacity"] = capacity
+        self.ev[PATH_BATTERY_CAPACITY] = capacity
 
     def update_charging_state(self, state: int | None) -> None:
         """Set the Victron enum int.
@@ -177,37 +216,36 @@ class EVEvices:
         as a STRING variant and the GUI shows "Unknown".
         """
         if VEDBUS_AVAILABLE:
-            self.ev["/ChargingState"] = None if state is None else dbus.Int32(int(state))
+            self.ev[PATH_CHARGING_STATE] = None if state is None else dbus.Int32(int(state))
         else:
-            self.ev["/ChargingState"] = state
+            self.ev[PATH_CHARGING_STATE] = state
 
     def update_odometer(self, odometer: float | None) -> None:
-        self.ev["/Odometer"] = odometer
+        self.ev[PATH_ODOMETER] = odometer
 
     def update_range_to_go(self, range_: float | None) -> None:
-        self.ev["/RangeToGo"] = range_
+        self.ev[PATH_RANGE_TO_GO] = range_
 
     def update_latitude(self, latitude: float | None) -> None:
-        self.ev["/Position/Latitude"] = latitude
+        self.ev[PATH_LATITUDE] = latitude
 
     def update_longitude(self, longitude: float | None) -> None:
-        self.ev["/Position/Longitude"] = longitude
+        self.ev[PATH_LONGITUDE] = longitude
 
     def update_at_site(self, at_site: bool | None) -> None:
-        self.ev["/AtSite"] = at_site
+        self.ev[PATH_AT_SITE] = at_site
 
     def update_ac_power(self, power_w: float | None) -> None:
         """Publish AC power (W) on /Ac/Power and /Ac/L1/Power."""
         if power_w is None:
             return
-        self.ev["/Ac/Power"] = power_w
-        self.ev["/Ac/L1/Power"] = power_w
+        self.ev[PATH_AC_POWER] = power_w
+        self.ev[PATH_AC_L1_POWER] = power_w
 
-    def update_current(self, current_a: float | None) -> None:
+    def update_current(self, _current_a: float | None) -> None:
         """No-op for EV service (no /Current path on the D-Bus wiki).
         Kept for compatibility with the HA client / app tick contract.
         """
-        return
 
     def set_connected(self, connected: bool) -> None:
         """Not used in EV service, but kept for compatibility with App."""

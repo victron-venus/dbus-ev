@@ -307,32 +307,27 @@ def test_poll_failure_serves_last_known(post):
 
 
 @patch("dbus_ev.ha_client.requests.Session.post")
-def test_circuit_breaker_opens_and_resets(post):
+def test_circuit_breaker_opens_and_resets(post, monkeypatch):
     clock = FakeClock()
     breaker = CircuitBreaker(threshold=3, reset_timeout=60.0)
+    monkeypatch.setattr(ha_client_mod.time, "monotonic", lambda: clock.t)
 
-    real_monotonic = ha_client_mod.time.monotonic
-    ha_client_mod.time.monotonic = lambda: clock.t
-
-    try:
-        post.side_effect = ReqConnError("down")
-        c = make_client(breaker=breaker)
-        for _ in range(3):
-            c.poll()
-        assert breaker.is_open is True
-        calls_before = post.call_count
+    post.side_effect = ReqConnError("down")
+    c = make_client(breaker=breaker)
+    for _ in range(3):
         c.poll()
-        assert post.call_count == calls_before
+    assert breaker.is_open is True
+    calls_before = post.call_count
+    c.poll()
+    assert post.call_count == calls_before
 
-        clock.advance(61)
-        assert breaker.is_open is False
-        post.side_effect = None
-        post.return_value = template_response()
-        r = c.poll()
-        assert r["ok"] is True
-        assert breaker.is_open is False
-    finally:
-        ha_client_mod.time.monotonic = real_monotonic
+    clock.advance(61)
+    assert breaker.is_open is False
+    post.side_effect = None
+    post.return_value = template_response()
+    r = c.poll()
+    assert r["ok"] is True
+    assert breaker.is_open is False
 
 
 @patch("dbus_ev.ha_client.requests.Session.post")

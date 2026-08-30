@@ -53,9 +53,27 @@ def test_identity_paths_present():
     assert s.ev.items["/ProductId"] == 0x1234
 
 
-def test_connection_evcharger_format():
+def test_vrm_evcharger_paths_present():
+    """VRM Portal requires these standard EV charger paths to render the tile."""
     s = make_ev_services()
-    assert s.ev.items["/Mgmt/Connection"] == "evcharger:40"
+    for p in (
+        "/Status",
+        "/Mode",
+        "/StartStop",
+        "/Current",
+        "/SetCurrent",
+        "/MaxCurrent",
+        "/Ac/Power",
+        "/Ac/Energy/Forward",
+        "/Ac/L1/Power",
+        "/Ac/L2/Power",
+        "/Ac/L3/Power",
+        "/ChargingTime",
+        "/Session/Energy",
+        "/NrOfPhases",
+        "/Position",
+    ):
+        assert p in s.ev.items, f"VRM evcharger path missing: {p}"
 
 
 def test_vehicle_paths_present():
@@ -65,25 +83,9 @@ def test_vehicle_paths_present():
         assert p in s.ev.items, f"Vehicle path missing: {p}"
 
 
-def test_evcharger_paths_absent():
-    """Ensure evcharger-only paths are NOT present (dropped per spec)."""
+def test_connection_evcharger_format():
     s = make_ev_services()
-    for p in (
-        "/Status",
-        "/Mode",
-        "/StartStop",
-        "/Current",
-        "/SetCurrent",
-        "/MaxCurrent",
-        "/Ac/Energy/Forward",
-        "/Ac/L2/Power",
-        "/Ac/L3/Power",
-        "/ChargingTime",
-        "/Session/Energy",
-        "/NrOfPhases",
-        "/Position",  # vehicle uses /Position/Latitude + /Position/Longitude
-    ):
-        assert p not in s.ev.items, f"evcharger path should be absent: {p}"
+    assert s.ev.items["/Mgmt/Connection"] == "evcharger:40"
 
 
 def test_update_soc_publishes():
