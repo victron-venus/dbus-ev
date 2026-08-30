@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Polling --------------------------------------------------------------
-POLL_INTERVAL = float(os.getenv("POLL_INTERVAL", "5.0"))
+POLL_INTERVAL = float(os.getenv("POLL_INTERVAL", "15.0"))
 SENSOR_STALE_TIMEOUT = float(os.getenv("SENSOR_STALE_TIMEOUT", "15.0"))
 
 # --- Home Assistant -------------------------------------------------------
@@ -30,9 +30,13 @@ HA_AT_SITE_ENTITY = os.getenv("HA_AT_SITE_ENTITY", "binary_sensor.mercedes_at_si
 HA_CURRENT_ENTITY = os.getenv("HA_CURRENT_ENTITY", "")
 HA_POWER_ENTITY = os.getenv("HA_POWER_ENTITY", "")
 
-# --- Device instance ------------------------------------------------------
-# Set via local_config.py or environment
+# --- D-Bus identity ------------------------------------------------------
+# Integer instance (stays in /DeviceInstance only, not in bus name)
 DEVICE_INSTANCE = int(os.getenv("DEVICE_INSTANCE", "0"))
+# Instance of the EVCS the vehicle is plugged into (exposed as evcharger:<n>)
+EVCHARGER_INSTANCE = int(os.getenv("EVCHARGER_INSTANCE", "40"))
+# Textual bus-name suffix (D-Bus forbids digits after the last dot)
+BUS_SUFFIX = os.getenv("BUS_SUFFIX", "ha")
 
 # --- Software -------------------------------------------------------------
 SOFTWARE_VERSION = "0.0.0"  # overridden by version file
