@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Default POLL_INTERVAL unified to 15.0s (was 2.0 in package, 5.0 in example)
+
 ### Added
 - `TANK_CAPACITY_LITERS` config → `/Capacity` on the tank service; GUIv2 now
   renders the gauge in liters.
