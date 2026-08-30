@@ -13,6 +13,9 @@ from dbus_ev.service import VEDBUS_AVAILABLE, EVEvices
 
 logger = logging.getLogger("dbus-ev")
 
+# Re-export from service for tests that import VEHICLE_PROPS from main.
+VEHICLE_PROPS = EVEvices.VEHICLE_PROPS
+
 
 def _now() -> float:
     return time.monotonic()
@@ -21,7 +24,7 @@ def _now() -> float:
 def _write_heartbeat() -> None:
     try:
         os.makedirs(os.path.dirname(config.HEARTBEAT_FILE), exist_ok=True)
-        with open(config.HEARTBEAT_FILE, "w") as f:
+        with open(config.HEARTBEAT_FILE, "w", encoding="utf-8") as f:
             f.write(str(int(time.time())))
     except OSError as exc:  # /run may be read-only off-device
         logger.debug("heartbeat write failed: %s", exc)
@@ -36,6 +39,8 @@ def _setup_logging(debug: bool) -> None:
 
 
 class App:
+    """HA <-> D-Bus bridge controller."""
+
     def __init__(self, client: HaClient, services: EVEvices) -> None:
         self.client = client
         self.services = services
@@ -62,15 +67,25 @@ class App:
             self.services.update_soc(snapshot.get("soc"))
             self.services.update_target_soc(snapshot.get("target_soc"))
             self.services.update_vin(snapshot.get("vin"))
-            self.services.update_battery_capacity(snapshot.get("battery_capacity"))
+            # Battery capacity precedence: HA sensor value -> HA_BATTERY_CAPACITY_ENTITY
+            # if it's a static literal (no "." so not an entity id) ->
+            # BATTERY_CAPACITY_KWH static config.
+            battery_capacity = snapshot.get("battery_capacity")
+            if battery_capacity is None and config.HA_BATTERY_CAPACITY_ENTITY:
+                if "." not in config.HA_BATTERY_CAPACITY_ENTITY:
+                    battery_capacity = config.HA_BATTERY_CAPACITY_ENTITY
+                else:
+                    battery_capacity = config.BATTERY_CAPACITY_KWH
+            if battery_capacity is not None:
+                self.services.update_battery_capacity(battery_capacity)
             self.services.update_charging_state(snapshot.get("charging_state"))
             self.services.update_odometer(snapshot.get("odometer"))
             self.services.update_range_to_go(snapshot.get("range_to_go"))
             self.services.update_latitude(snapshot.get("latitude"))
             self.services.update_longitude(snapshot.get("longitude"))
             self.services.update_at_site(snapshot.get("at_site"))
-            self.services.update_ac_power(snapshot.get("power"))
-            self.services.update_current(snapshot.get("current"))
+            power = snapshot.get("power")
+            self.services.update_ac_power(power)
 
         _write_heartbeat()
         return True
@@ -99,13 +114,15 @@ def build_app() -> App:
         version=config.SOFTWARE_VERSION,
         product_name=config.PRODUCT_NAME,
         product_id=config.PRODUCT_ID,
+        connection=f"evcharger:{config.EVCHARGER_INSTANCE}",
+        bus_suffix=config.BUS_SUFFIX,
     )
     app = App(client, services)
     return app
 
 
 def serve(app: App) -> None:
-    from gi.repository import GLib  # provided by Venus OS python env
+    from gi.repository import GLib  # pylint: disable=C0415  # provided by Venus OS python env
 
     GLib.timeout_add(app.loop_interval_ms, app.tick)
     mainloop = GLib.MainLoop()
@@ -136,21 +153,7 @@ def main() -> int:
         app = build_app()
         app.tick()
         # Print the EV service properties
-        for prop in [
-            "/Soc",
-            "/TargetSoc",
-            "/VIN",
-            "/BatteryCapacity",
-            "/ChargingState",
-            "/Status",
-            "/Ac/Power",
-            "/Current",
-            "/Odometer",
-            "/RangeToGo",
-            "/Position/Latitude",
-            "/Position/Longitude",
-            "/AtSite",
-        ]:
+        for prop in VEHICLE_PROPS:
             value = app.services.ev.get(prop, None)
             print(prop, value)
         return 0
@@ -158,7 +161,7 @@ def main() -> int:
     if not VEDBUS_AVAILABLE:
         logger.error("vedbus/dbus not available - run on the Cerbo GX")
         return 1
-    from dbus.mainloop.glib import DBusGMainLoop
+    from dbus.mainloop.glib import DBusGMainLoop  # pylint: disable=C0415
 
     # Must run before any VeDbusService is created (services export onto the
     # default main loop).

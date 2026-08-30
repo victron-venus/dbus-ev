@@ -1,1 +1,3 @@
-"""dbus-ev - HA-backed EV bridge for Victron Venus OS."""
+"""DBus EV integration module."""
+
+__version__ = "0.1.0"

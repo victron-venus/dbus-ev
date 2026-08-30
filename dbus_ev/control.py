@@ -17,6 +17,8 @@ MODE_OFF = 2
 
 
 class ValveController:
+    """Valve/pump control with auto mode and fail-safe."""
+
     def __init__(
         self,
         start_value: float,

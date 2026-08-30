@@ -87,7 +87,66 @@ def _is_ha_entity(value: str) -> bool:
     return bool(value) and "." in value
 
 
+# HA charging-state strings -> Victron /ChargingState enum.
+#
+# The mbapi2020 integration (custom_components/mbapi2020) delivers its
+# CHARGINGSTATUS enum as a numeric state string. That enum is INVERTED
+# relative to the Venus wiki: mbapi2020's "0" = Charging, "3" = Unplugged,
+# while Venus wiki's "0" = Not charging, "3" = Charging. We translate
+# mbapi2020 values to Venus wiki values so /ChargingState is semantically
+# correct on the D-Bus side.
+#
+# Full mapping (mbapi2020 CHARGINGSTATUS -> Venus wiki /ChargingState):
+#   0  CHARGINGSTATUS_CHARGING                          -> 3    Charging
+#   1  CHARGINGSTATUS_END_OF_CHARGE                      -> 244  Sustain
+#   2  CHARGINGSTATUS_CHARGE_BREAK                       -> 250  Blocked
+#   3  CHARGINGSTATUS_CHARGE_CABLE_UNPLUGGED             -> 0    Not charging
+#   4  CHARGINGSTATUS_CHARGING_ERROR                     -> 255  Unavailable
+#   5  CHARGINGSTATUS_SLOW_CHARGING                      -> 3    Charging
+#   6  CHARGINGSTATUS_FAST_CHARGING                      -> 3    Charging
+#   7  CHARGINGSTATUS_DISCHARGING                        -> 256  Discharging
+#   8  CHARGINGSTATUS_NO_CHARGING                        -> 0    Not charging
+#   9  CHARGINGSTATUS_SLOW_CHARGING_AFTER_REACHING...    -> 3    Charging
+#  10  CHARGINGSTATUS_CHARGING_AFTER_REACHING...         -> 3    Charging
+#  11  CHARGINGSTATUS_FAST_CHARGING_AFTER_REACHING...    -> 3    Charging
+#  12  CHARGINGSTATUS_COMMUNICATION_WITH_EVSE_ACTIVE...  -> 244  Sustain
+#  13  CHARGINGSTATUS_AC_CHARGING_ACTIVE                 -> 3    Charging
+#  14  CHARGINGSTATUS_DC_CHARGING_ACTIVE                 -> 3    Charging
+#  15  CHARGINGSTATUS_SOH_BATTERY_CALIBRATION_ACTIVE     -> 244  Sustain
+#  16  CHARGINGSTATUS_UNKNOWN                            -> 255  Unavailable
+_CHARGING_STATE_MAP: dict[str, int] = {
+    "0": 3,  # mbapi2020 CHARGING -> Venus Charging
+    "1": 244,  # mbapi2020 END_OF_CHARGE -> Venus Sustain
+    "2": 250,  # mbapi2020 CHARGE_BREAK -> Venus Blocked
+    "3": 0,  # mbapi2020 UNPLUGGED -> Venus Not charging
+    "4": 255,  # mbapi2020 CHARGING_ERROR -> Venus Unavailable
+    "5": 3,  # mbapi2020 SLOW_CHARGING -> Venus Charging
+    "6": 3,  # mbapi2020 FAST_CHARGING -> Venus Charging
+    "7": 256,  # mbapi2020 DISCHARGING -> Venus Discharging
+    "8": 0,  # mbapi2020 NO_CHARGING -> Venus Not charging
+    "9": 3,  # mbapi2020 SLOW_CHARGING_AFTER... -> Venus Charging
+    "10": 3,  # mbapi2020 CHARGING_AFTER... -> Venus Charging
+    "11": 3,  # mbapi2020 FAST_CHARGING_AFTER... -> Venus Charging
+    "12": 244,  # mbapi2020 COMMUNICATION_NO_ENERGY -> Venus Sustain
+    "13": 3,  # mbapi2020 AC_CHARGING_ACTIVE -> Venus Charging
+    "14": 3,  # mbapi2020 DC_CHARGING_ACTIVE -> Venus Charging
+    "15": 244,  # mbapi2020 SOH_CALIBRATION -> Venus Sustain
+    "16": 255,  # mbapi2020 UNKNOWN -> Venus Unavailable
+}
+
+
+def map_charging_state(state: str | None) -> int | None:
+    """Map an HA charging-state string to the Victron enum."""
+    if state is None:
+        return None
+    key = state.strip().lower()
+    if key in ("unavailable", "unknown"):
+        return 255
+    return _CHARGING_STATE_MAP.get(key, state)
+
+
 def build_template(
+    *,
     soc_entity: str,
     target_soc_entity: str,
     vin_entity: str,
@@ -134,6 +193,7 @@ class HaClient:
         self,
         base_url: str,
         token: str,
+        *,
         soc_entity: str,
         target_soc_entity: str,
         vin_entity: str,
@@ -150,6 +210,7 @@ class HaClient:
         breaker: CircuitBreaker | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
+        self.token = token
         self.soc_entity = soc_entity
         self.target_soc_entity = target_soc_entity
         self.vin_entity = vin_entity
@@ -180,18 +241,18 @@ class HaClient:
             "power": None,
         }
         self._template = build_template(
-            soc_entity,
-            target_soc_entity,
-            vin_entity,
-            battery_capacity_entity,
-            charging_state_entity,
-            odometer_entity,
-            range_to_go_entity,
-            latitude_entity,
-            longitude_entity,
-            at_site_entity,
-            current_entity,
-            power_entity,
+            soc_entity=soc_entity,
+            target_soc_entity=target_soc_entity,
+            vin_entity=vin_entity,
+            battery_capacity_entity=battery_capacity_entity,
+            charging_state_entity=charging_state_entity,
+            odometer_entity=odometer_entity,
+            range_to_go_entity=range_to_go_entity,
+            latitude_entity=latitude_entity,
+            longitude_entity=longitude_entity,
+            at_site_entity=at_site_entity,
+            current_entity=current_entity,
+            power_entity=power_entity,
         )
         self._configured = bool(base_url and token)
         self._session = requests.Session()
@@ -201,11 +262,50 @@ class HaClient:
             )
         self._last_error_log = 0.0
 
+    def _get_entity_attributes(self, entity_id: str) -> dict[str, Any] | None:
+        """Fetch attributes for a single entity, including unit_of_measurement."""
+        if not entity_id:
+            return None
+        try:
+            resp = self._session.get(
+                f"{self.base_url}/api/states/{entity_id}",
+                timeout=self.timeout,
+            )
+            if resp.status_code != 200:
+                return None
+            data = json.loads(resp.text)
+            return data.get("attributes", {})
+        except (requests.exceptions.RequestException, json.JSONDecodeError):
+            return None
+
     def _log_error_throttled(self, msg: str) -> None:
         now = time.monotonic()
         if now - self._last_error_log >= 60.0:
             self._last_error_log = now
             logger.error(msg)
+
+    def _normalize_unit(
+        self,
+        value: float | None,
+        entity: str,
+        unit_map: dict[str, float],
+        accepted: set[str],
+    ) -> float | None:
+        """Convert a numeric value from HA unit to Venus unit.
+
+        Warns (publishing raw) when the entity's unit_of_measurement is neither
+        in unit_map nor in accepted. HA reports power in kW; /Ac/Power is W.
+        Odometer/range-to-go may be miles; wiki expects km.
+        """
+        if value is None or not entity:
+            return value
+        attrs = self._get_entity_attributes(entity) or {}
+        u = str(attrs.get("unit_of_measurement", "")).lower()
+        if u in unit_map:
+            return value * unit_map[u]
+        if u not in accepted:
+            logger.warning("entity %s has unknown unit %r, publishing raw", entity, u)
+        return value
 
     def poll(self) -> dict[str, Any]:
         """Fetch EV states.
@@ -257,7 +357,7 @@ class HaClient:
             target_soc = to_float(data.get("target_soc"))
             vin = to_str(data.get("vin"))
             battery_capacity = to_float(data.get("battery_capacity"))
-            charging_state = to_str(data.get("charging_state"))
+            charging_state = map_charging_state(to_str(data.get("charging_state")))
             odometer = to_float(data.get("odometer"))
             range_to_go = to_float(data.get("range_to_go"))
             latitude = to_float(data.get("latitude"))
@@ -265,6 +365,28 @@ class HaClient:
             at_site = state_is_on(data.get("at_site"))
             current = to_float(data.get("current"))
             power = to_float(data.get("power"))
+
+            # Normalize units from HA unit_of_measurement to what the
+            # Venus dbus wiki expects. HA reports power in kW; /Ac/Power is
+            # W. Odometer/range-to-go may be miles; wiki expects km.
+            power = self._normalize_unit(
+                power,
+                self.power_entity,
+                {"kw": 1000.0},
+                {"kw", "w", "watt"},
+            )
+            odometer = self._normalize_unit(
+                odometer,
+                self.odometer_entity,
+                {"mi": 1.609344, "mile": 1.609344, "miles": 1.609344},
+                {"mi", "mile", "miles", "km", "kilometer", "kilometre", "kilo"},
+            )
+            range_to_go = self._normalize_unit(
+                range_to_go,
+                self.range_to_go_entity,
+                {"mi": 1.609344, "mile": 1.609344, "miles": 1.609344},
+                {"mi", "mile", "miles", "km", "kilometer", "kilometre", "kilo"},
+            )
 
             result.update(
                 soc=soc,

@@ -1,12 +1,34 @@
+"""Integration tests for HA EV client and DBus service wiring.
+
+Run: pytest tests/test_ha_client.py -v --cov=dbus_ev
+"""
+
 import json
 from unittest.mock import MagicMock, patch
 
 import pytest
+from requests.exceptions import ConnectionError as ReqConnError
+from requests.exceptions import Timeout
 
-from dbus_ev.ha_client import CircuitBreaker, HaClient, _is_ha_entity, build_template, state_is_on
+from dbus_ev import ha_client as ha_client_mod
+from dbus_ev.ha_client import (
+    CircuitBreaker,
+    HaClient,
+    _is_ha_entity,
+    build_template,
+    map_charging_state,
+    state_is_on,
+)
+
+try:
+    from jinja2 import Environment
+except ImportError:  # pragma: no cover - jinja2 optional
+    Environment = None
 
 
 class FakeClock:
+    """Fake monotonic clock for tests (starts at 1000.0)."""
+
     def __init__(self):
         self.t = 1000.0
 
@@ -40,6 +62,7 @@ def make_client(**kw):
 
 
 def template_response(
+    *,
     soc="42.0",
     target_soc="80",
     vin="123456789",
@@ -69,18 +92,18 @@ def template_response(
 
 def test_build_template_contains_entities():
     t = build_template(
-        "sensor.soc",
-        "sensor.target_soc",
-        "sensor.vin",
-        "sensor.battery_capacity",
-        "sensor.charging_state",
-        "sensor.odometer",
-        "sensor.range_to_go",
-        "sensor.latitude",
-        "sensor.longitude",
-        "sensor.at_site",
-        "sensor.current",
-        "sensor.power",
+        soc_entity="sensor.soc",
+        target_soc_entity="sensor.target_soc",
+        vin_entity="sensor.vin",
+        battery_capacity_entity="sensor.battery_capacity",
+        charging_state_entity="sensor.charging_state",
+        odometer_entity="sensor.odometer",
+        range_to_go_entity="sensor.range_to_go",
+        latitude_entity="sensor.latitude",
+        longitude_entity="sensor.longitude",
+        at_site_entity="sensor.at_site",
+        current_entity="sensor.current",
+        power_entity="sensor.power",
     )
     assert "\"soc\": states('sensor.soc')" in t
     # Optional entities use ternary (x if cond else y) inside the dict literal
@@ -94,18 +117,18 @@ def test_build_template_contains_entities():
 def test_build_template_empty_optional_entities():
     """Empty optional entities produce 'none' literal in template."""
     t = build_template(
-        "sensor.soc",
-        "",
-        "sensor.vin",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        soc_entity="sensor.soc",
+        target_soc_entity="",
+        vin_entity="sensor.vin",
+        battery_capacity_entity="",
+        charging_state_entity="",
+        odometer_entity="",
+        range_to_go_entity="",
+        latitude_entity="",
+        longitude_entity="",
+        at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     assert "\"soc\": states('sensor.soc')" in t
     # Empty target_soc -> ternary takes the else branch (none).
@@ -127,18 +150,18 @@ def test_is_ha_entity_recognizes_domain_object_id():
 def test_build_template_static_vin_emits_literal():
     """VIN without domain.object_id -> JSON string literal, no states() call."""
     t = build_template(
-        "sensor.soc",
-        "",
-        "4JGDM0EB0PA123456",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        soc_entity="sensor.soc",
+        target_soc_entity="",
+        vin_entity="4JGDM0EB0PA123456",
+        battery_capacity_entity="",
+        charging_state_entity="",
+        odometer_entity="",
+        range_to_go_entity="",
+        latitude_entity="",
+        longitude_entity="",
+        at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     # Literal branch selected, no states() call for VIN.
     assert "\"vin\": states('') | string if '' != '' else '4JGDM0EB0PA123456'" in t
@@ -148,18 +171,18 @@ def test_build_template_static_vin_emits_literal():
 def test_build_template_entity_vin_uses_states():
     """VIN with domain.object_id -> states() call (HA lookup)."""
     t = build_template(
-        "sensor.soc",
-        "",
-        "sensor.mercedes_vin",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        soc_entity="sensor.soc",
+        target_soc_entity="",
+        vin_entity="sensor.mercedes_vin",
+        battery_capacity_entity="",
+        charging_state_entity="",
+        odometer_entity="",
+        range_to_go_entity="",
+        latitude_entity="",
+        longitude_entity="",
+        at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     assert (
         "\"vin\": states('sensor.mercedes_vin') | string if 'sensor.mercedes_vin' != '' else ''"
@@ -170,22 +193,21 @@ def test_build_template_entity_vin_uses_states():
 def test_build_template_renders_in_jinja():
     """Rendered template must parse in real Jinja2 — proves the expression
     is well-formed (the fix for /api/template 400)."""
-    jinja2 = pytest.importorskip("jinja2")
-    from jinja2 import Environment
-
+    pytest.importorskip("jinja2")
+    assert Environment is not None
     t = build_template(
-        "sensor.soc",
-        "",
-        "4JGDM0EB0PA123456",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
+        soc_entity="sensor.soc",
+        target_soc_entity="",
+        vin_entity="4JGDM0EB0PA123456",
+        battery_capacity_entity="",
+        charging_state_entity="",
+        odometer_entity="",
+        range_to_go_entity="",
+        latitude_entity="",
+        longitude_entity="",
+        at_site_entity="",
+        current_entity="",
+        power_entity="",
     )
     # Parse-only: if Jinja can compile the rendered template, HA's Jinja
     # (a strict subset) will accept it. HA's `states`/`to_json` filters
@@ -278,8 +300,6 @@ def test_poll_failure_serves_last_known(post):
     first = c.poll()
     assert first["ok"] is True
 
-    from requests.exceptions import Timeout
-
     post.side_effect = Timeout("boom")
     second = c.poll()
     assert second["ok"] is False
@@ -287,36 +307,27 @@ def test_poll_failure_serves_last_known(post):
 
 
 @patch("dbus_ev.ha_client.requests.Session.post")
-def test_circuit_breaker_opens_and_resets(post):
+def test_circuit_breaker_opens_and_resets(post, monkeypatch):
     clock = FakeClock()
     breaker = CircuitBreaker(threshold=3, reset_timeout=60.0)
+    monkeypatch.setattr(ha_client_mod.time, "monotonic", lambda: clock.t)
 
-    import dbus_ev.ha_client as mod
-
-    real_monotonic = mod.time.monotonic
-    mod.time.monotonic = lambda: clock.t
-
-    try:
-        from requests.exceptions import ConnectionError as ReqConnError
-
-        post.side_effect = ReqConnError("down")
-        c = make_client(breaker=breaker)
-        for _ in range(3):
-            c.poll()
-        assert breaker.is_open is True
-        calls_before = post.call_count
+    post.side_effect = ReqConnError("down")
+    c = make_client(breaker=breaker)
+    for _ in range(3):
         c.poll()
-        assert post.call_count == calls_before
+    assert breaker.is_open is True
+    calls_before = post.call_count
+    c.poll()
+    assert post.call_count == calls_before
 
-        clock.advance(61)
-        assert breaker.is_open is False
-        post.side_effect = None
-        post.return_value = template_response()
-        r = c.poll()
-        assert r["ok"] is True
-        assert breaker.is_open is False
-    finally:
-        mod.time.monotonic = real_monotonic
+    clock.advance(61)
+    assert breaker.is_open is False
+    post.side_effect = None
+    post.return_value = template_response()
+    r = c.poll()
+    assert r["ok"] is True
+    assert breaker.is_open is False
 
 
 @patch("dbus_ev.ha_client.requests.Session.post")
@@ -339,5 +350,31 @@ def test_unconfigured_client_shortcircuits(post):
     )
     r = c.poll()
     assert r["ok"] is False
-    assert c._configured is False
+    assert not c.base_url or not c.token
     assert post.call_count == 0
+
+
+def test_map_charging_state():
+    # In this setup the HA mbapi2020 integration delivers numeric state strings
+    # that are INVERTED relative to the Venus wiki /ChargingState enum.
+    # Venus wiki: 0=Not charging, 3=Charging, 250=Blocked, 255=Unavailable, etc.
+    # mbapi2020: 0=Charging, 3=Unplugged, etc.
+    assert map_charging_state("0") == 3  # CHARGING -> Venus Charging
+    assert map_charging_state("2") == 250  # CHARGE_BREAK -> Venus Blocked
+    assert map_charging_state("3") == 0  # UNPLUGGED -> Venus Not charging
+    assert map_charging_state("4") == 255  # CHARGING_ERROR -> Venus Unavailable
+    assert map_charging_state("5") == 3  # SLOW_CHARGING -> Venus Charging
+    assert map_charging_state("6") == 3  # FAST_CHARGING -> Venus Charging
+    assert map_charging_state("7") == 256  # DISCHARGING -> Venus Discharging
+    assert map_charging_state("8") == 0  # NO_CHARGING -> Venus Not charging
+    assert map_charging_state("10") == 3  # CHARGING_AFTER_TRIP -> Venus Charging
+    assert map_charging_state("12") == 244  # COMM_NO_ENERGY -> Venus Sustain
+    assert map_charging_state("13") == 3  # AC_CHARGING_ACTIVE -> Venus Charging
+    assert map_charging_state("14") == 3  # DC_CHARGING_ACTIVE -> Venus Charging
+    assert map_charging_state("16") == 255  # UNKNOWN -> Venus Unavailable
+    # Case-insensitive numeric passthrough
+    assert map_charging_state("  0  ") == 3
+    # Unknown string passes through unchanged (should never happen live)
+    assert map_charging_state("foo") == "foo"
+    # None -> None
+    assert map_charging_state(None) is None
