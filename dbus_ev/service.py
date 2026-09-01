@@ -166,11 +166,11 @@ class EVEvices:
         self.ev.add_path("/IsGenericEnergyMeter", 0)
         self.ev.add_path("/Mode", 0)  # 0=Manual, 1=Auto, 2=Scheduled
         self.ev.add_path("/StartStop", 0)  # 0=Disabled, 1=Enabled
-        self.ev.add_path(PATH_AC_POWER, 0)  # W
+        self.ev.add_path(PATH_AC_POWER, 0, "i")  # W (INT32 — evcharger wiki)
         self.ev.add_path("/Ac/Energy/Forward", 0)  # kWh
-        self.ev.add_path(PATH_AC_L1_POWER, 0)
-        self.ev.add_path("/Ac/L2/Power", 0)
-        self.ev.add_path("/Ac/L3/Power", 0)
+        self.ev.add_path(PATH_AC_L1_POWER, 0, "i")
+        self.ev.add_path("/Ac/L2/Power", 0, "i")
+        self.ev.add_path("/Ac/L3/Power", 0, "i")
         self.ev.add_path("/Ac/L1/Voltage", 0)
         self.ev.add_path("/Ac/L1/Current", 0)
         self.ev.add_path("/Current", 0)  # A
@@ -236,11 +236,20 @@ class EVEvices:
         self.ev[PATH_AT_SITE] = at_site
 
     def update_ac_power(self, power_w: float | None) -> None:
-        """Publish AC power (W) on /Ac/Power and /Ac/L1/Power."""
+        """Publish AC power (W) on /Ac/Power and /Ac/L1/Power.
+
+        Wrap in dbus.Int32 so it's published as a D-Bus INT32 variant;
+        the GUI reads /Ac/Power as INT32. Without the wrap, the value
+        is sent as a DOUBLE or STRING variant and GUIv2 shows 0.
+        """
         if power_w is None:
             return
-        self.ev[PATH_AC_POWER] = power_w
-        self.ev[PATH_AC_L1_POWER] = power_w
+        if VEDBUS_AVAILABLE:
+            p = dbus.Int32(int(power_w))
+        else:
+            p = int(power_w)
+        self.ev[PATH_AC_POWER] = p
+        self.ev[PATH_AC_L1_POWER] = p
 
     def update_current(self, _current_a: float | None) -> None:
         """No-op for EV service (no /Current path on the D-Bus wiki).
