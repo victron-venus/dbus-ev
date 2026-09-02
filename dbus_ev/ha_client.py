@@ -296,6 +296,8 @@ class HaClient:
         Warns (publishing raw) when the entity's unit_of_measurement is neither
         in unit_map nor in accepted. HA reports power in kW; /Ac/Power is W.
         Odometer/range-to-go may be miles; wiki expects km.
+        When unit_of_measurement is missing or unknown, assumes kW for power
+        and returns raw value for other quantities.
         """
         if value is None or not entity:
             return value
@@ -303,7 +305,18 @@ class HaClient:
         u = str(attrs.get("unit_of_measurement", "")).lower()
         if u in unit_map:
             return value * unit_map[u]
-        if u not in accepted:
+        # HA template API returns state without unit; attributes fetch may fail.
+        # For power: assume kW when unit is absent or unrecognized.
+        # ponytail: false positive if entity reports in W, add per-entity override.
+        if not u or u not in accepted:
+            # Power-specific fallback: assume kW -> W.
+            if "kw" in unit_map:
+                logger.debug(
+                    "entity %s has no/unknown unit %r, assuming kW -> W",
+                    entity,
+                    u,
+                )
+                return value * unit_map["kw"]
             logger.warning("entity %s has unknown unit %r, publishing raw", entity, u)
         return value
 

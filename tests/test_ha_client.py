@@ -354,6 +354,103 @@ def test_unconfigured_client_shortcircuits(post):
     assert post.call_count == 0
 
 
+@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("dbus_ev.ha_client.requests.Session.get")
+def test_poll_power_no_unit_assumes_kw(get, post):
+    """Power sensor without unit_of_measurement: assume kW -> W.
+
+    HA template API returns state without unit; attributes fetch may fail.
+    Power sensors (mbapi2020) report kW; Venus /Ac/Power expects W.
+    """
+    post.return_value = template_response(soc="42.0")
+    # Attributes fetch returns no unit_of_measurement.
+    get.return_value = MagicMock(status_code=200, text=json.dumps({"attributes": {}}))
+    c = make_client()
+    r = c.poll()
+    assert r["ok"] is True
+    assert r["power"] is None  # template_response has no power key, so power=None
+
+
+@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("dbus_ev.ha_client.requests.Session.get")
+def test_poll_power_kw_to_w_conversion(get, post):
+    """Power=9.5 kW from HA -> 9500 W on D-Bus."""
+    payload = {
+        "soc": "42.0",
+        "target_soc": "none",
+        "vin": "123456789",
+        "battery_capacity": "none",
+        "charging_state": "none",
+        "odometer": "none",
+        "range_to_go": "none",
+        "latitude": "none",
+        "longitude": "none",
+        "at_site": "none",
+        "current": "none",
+        "power": "9.5",
+    }
+    post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
+    get.return_value = MagicMock(status_code=200, text=json.dumps({"attributes": {}}))
+    c = make_client()
+    r = c.poll()
+    assert r["ok"] is True
+    assert r["power"] == 9500.0  # 9.5 kW * 1000 = 9500 W
+
+
+@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("dbus_ev.ha_client.requests.Session.get")
+def test_poll_power_explicit_kw_unit(get, post):
+    """Power sensor with unit_of_measurement=kW -> converted to W."""
+    payload = {
+        "soc": "42.0",
+        "target_soc": "none",
+        "vin": "123456789",
+        "battery_capacity": "none",
+        "charging_state": "none",
+        "odometer": "none",
+        "range_to_go": "none",
+        "latitude": "none",
+        "longitude": "none",
+        "at_site": "none",
+        "current": "none",
+        "power": "9.5",
+    }
+    post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
+    get.return_value = MagicMock(
+        status_code=200, text=json.dumps({"attributes": {"unit_of_measurement": "kW"}})
+    )
+    c = make_client()
+    r = c.poll()
+    assert r["power"] == 9500.0
+
+
+@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("dbus_ev.ha_client.requests.Session.get")
+def test_poll_power_w_unit_no_conversion(get, post):
+    """Power sensor with unit_of_measurement=W -> published as-is (W)."""
+    payload = {
+        "soc": "42.0",
+        "target_soc": "none",
+        "vin": "123456789",
+        "battery_capacity": "none",
+        "charging_state": "none",
+        "odometer": "none",
+        "range_to_go": "none",
+        "latitude": "none",
+        "longitude": "none",
+        "at_site": "none",
+        "current": "none",
+        "power": "9500",
+    }
+    post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
+    get.return_value = MagicMock(
+        status_code=200, text=json.dumps({"attributes": {"unit_of_measurement": "W"}})
+    )
+    c = make_client()
+    r = c.poll()
+    assert r["power"] == 9500.0
+
+
 def test_map_charging_state():
     # In this setup the HA mbapi2020 integration delivers numeric state strings
     # that are INVERTED relative to the Venus wiki /ChargingState enum.
