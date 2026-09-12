@@ -9,6 +9,12 @@ recognises it (bus-name prefix is what VRM uses to classify devices):
 The dot-separated form is the same one `dbus-evcharger` uses. The previous
 bus name `com.victronenergy.ev<N>` (no dot) was invisible to VRM.
 
+<!-- ci-release-process:start -->
+## Release process
+
+See the [release strategy](RELEASING.md) for validation, nightly, beta, RC and stable promotion rules, and the [operator runbook](docs/release-workflow.md) for local commands.
+<!-- ci-release-process:end -->
+
 ## Exported properties
 
 Standard EV charger paths (required for VRM dashboard rendering):

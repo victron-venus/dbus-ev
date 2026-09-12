@@ -1,0 +1,18 @@
+{
+  "name": "dbus-ev",
+  "include": [
+    "dbus_ev",
+    "config.py",
+    "setup",
+    "update.sh",
+    "restart.sh",
+    "services",
+    "gitHubInfo",
+    "version",
+    "local_config.example.py",
+    "pyproject.toml",
+    "uv.lock",
+    "README.md",
+    "LICENSE"
+  ]
+}
