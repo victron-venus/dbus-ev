@@ -100,7 +100,7 @@ def run_update(layout, source=None):
         env=layout.env,
         capture_output=True,
         text=True,
-        timeout=20,
+        timeout=45,
         check=False,
     )
 
