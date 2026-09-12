@@ -67,17 +67,15 @@ class App:
             self.services.update_soc(snapshot.get("soc"))
             self.services.update_target_soc(snapshot.get("target_soc"))
             self.services.update_vin(snapshot.get("vin"))
-            # Battery capacity precedence: HA sensor value -> HA_BATTERY_CAPACITY_ENTITY
-            # if it's a static literal (no "." so not an entity id) ->
-            # BATTERY_CAPACITY_KWH static config.
+            # Prefer the live sensor, then a legacy numeric literal, then the
+            # configured static capacity. Decimal literals are valid too.
             battery_capacity = snapshot.get("battery_capacity")
-            if battery_capacity is None and config.HA_BATTERY_CAPACITY_ENTITY:
-                if "." not in config.HA_BATTERY_CAPACITY_ENTITY:
-                    battery_capacity = config.HA_BATTERY_CAPACITY_ENTITY
-                else:
+            if battery_capacity is None:
+                try:
+                    battery_capacity = float(config.HA_BATTERY_CAPACITY_ENTITY)
+                except (TypeError, ValueError):
                     battery_capacity = config.BATTERY_CAPACITY_KWH
-            if battery_capacity is not None:
-                self.services.update_battery_capacity(battery_capacity)
+            self.services.update_battery_capacity(battery_capacity)
             self.services.update_charging_state(snapshot.get("charging_state"))
             self.services.update_odometer(snapshot.get("odometer"))
             self.services.update_range_to_go(snapshot.get("range_to_go"))

@@ -145,15 +145,14 @@ def test_tick_remaining_falls_back_to_capacity_derivation(monkeypatch):
 
 
 def test_tick_publishes_static_battery_capacity(monkeypatch):
-    """When HA_BATTERY_CAPACITY_ENTITY is a static literal (no dot),
-    it should be published as-is to /BatteryCapacity."""
+    """Static literals must remain numeric for VRM configuration rounding."""
     monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
     monkeypatch.setattr("dbus_ev.main.config.HA_BATTERY_CAPACITY_ENTITY", "118")
     monkeypatch.setattr("dbus_ev.main.config.BATTERY_CAPACITY_KWH", None)
     snap = dict(BASE, battery_capacity=None)
     app = build_app(snap)
     app.tick()
-    assert app.services.items["/BatteryCapacity"] == "118"
+    assert app.services.items["/BatteryCapacity"] == 118.0
 
 
 def test_tick_stale_publishes_invalid_level(monkeypatch):
@@ -162,3 +161,21 @@ def test_tick_stale_publishes_invalid_level(monkeypatch):
     app = build_app(snap)
     app.tick()
     assert app.services.items.get("/Soc") is None
+
+
+def test_tick_decimal_battery_capacity_literal(monkeypatch):
+    monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
+    monkeypatch.setattr("dbus_ev.main.config.HA_BATTERY_CAPACITY_ENTITY", "118.5")
+    monkeypatch.setattr("dbus_ev.main.config.BATTERY_CAPACITY_KWH", 80.0)
+    app = build_app(dict(BASE, battery_capacity=None))
+    app.tick()
+    assert app.services.items["/BatteryCapacity"] == 118.5
+
+
+def test_tick_capacity_falls_back_without_entity(monkeypatch):
+    monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
+    monkeypatch.setattr("dbus_ev.main.config.HA_BATTERY_CAPACITY_ENTITY", "")
+    monkeypatch.setattr("dbus_ev.main.config.BATTERY_CAPACITY_KWH", 80.0)
+    app = build_app(dict(BASE, battery_capacity=None))
+    app.tick()
+    assert app.services.items["/BatteryCapacity"] == 80.0
