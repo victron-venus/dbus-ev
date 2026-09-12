@@ -1,13 +1,9 @@
 # Venus OS D-Bus exporter for the VEHICLE
 
-This service exports vehicle (EV) data from Home Assistant to the Venus OS
-D-Bus service under the **standard EV charger bus name** so the VRM Portal
-recognises it (bus-name prefix is what VRM uses to classify devices):
-
-    com.victronenergy.evcharger.<N>
-
-The dot-separated form is the same one `dbus-evcharger` uses. The previous
-bus name `com.victronenergy.ev<N>` (no dot) was invisible to VRM.
+This service exports vehicle data from Home Assistant as
+`com.victronenergy.ev.<suffix>` (by default `com.victronenergy.ev.ha`).
+The numeric identifier belongs in `/DeviceInstance`; the service suffix is a
+textual identifier. The separate `dbus-evcharger` package exports charger data.
 
 ## Exported properties
 
@@ -26,13 +22,12 @@ Standard EV charger paths (required for VRM dashboard rendering):
 - `/PositionIsAdjustable` - 0
 - `/IsGenericEnergyMeter` - 0
 
-Vehicle-specific paths (project extension, not part of the evcharger
-standard):
+Standard vehicle paths:
 
 - `/Soc` - State of charge (%)
 - `/TargetSoc` - Target state of charge (%)
 - `/VIN` - Vehicle identification number
-- `/BatteryCapacity` - Battery capacity (kWh)
+- `/BatteryCapacity` - finite numeric battery capacity in kWh, or an invalid value if unavailable
 - `/ChargingState` - int (Venus wiki enum: 0=Not charging, 3=Charging, 250=Blocked, 255=Unavailable, 256=Discharging, 244=Sustain, etc.)
 - `/Odometer` - Odometer (km)
 - `/RangeToGo` - Range to go (km)
@@ -109,3 +104,54 @@ or:
 ./restart.sh         # restart the service only
 ssh cerbo 'tail -f /var/log/dbus-ev/current'
 ```
+
+
+## Venus OS installation and recovery
+
+Use the canonical `/data/dbus-ev` directory. Both `setup install`
+(SetupHelper/PackageManager) and the workstation `deploy.sh` call `update.sh`.
+A release is staged under volatile `/tmp` before stopping the service, so
+reinstalling from the installed tree does not delete the update source.
+The updater preserves `local_config.py`; `deploy.sh` deliberately replaces it
+when the workstation has a local copy (`PUSH_LOCAL_`local_config.py`=1`).
+
+Service definitions persist under `/data/dbus-ev/service/dbus-ev`.
+`/service/dbus-ev` is a symlink recreated by `/data/rc.local`, including
+when that script already ends with `exit 0`. The logger recreates its volatile
+`/var/log/dbus-ev` directory and rotates four 25 KB files. Heartbeats
+also live on volatile storage. Runtime data does not require writes to the
+read-only firmware filesystem. Firmware updates can replace system Python
+packages; check dependencies after each update before assuming the service is
+healthy. The installer does not run `pip` or upgrade system packages.
+
+Before installation, check the target interpreter:
+
+```sh
+python3 --version
+python3 -c "import requests, dbus; from gi.repository import GLib"
+```
+
+Verify a running process and its D-Bus data after installation:
+
+```sh
+svstat /service/dbus-ev /service/dbus-ev/log
+readlink /service/dbus-ev
+tail -n 40 /var/log/dbus-ev/current
+```
+
+`deploy.sh` fails if a fresh heartbeat does not appear within 60 seconds or the
+service never reaches `up`. A heartbeat proves the loop is running, not that
+Home Assistant is reachable: also inspect `/Connected` and the log. Restore a
+previous release with its `update.sh`, keeping the device-local configuration.
+The isolated installer regression test covers two consecutive in-place updates,
+configuration preservation, service symlinks, and a boot script ending in `exit 0`.
+
+
+### VRM capacity contract
+
+Venus OS v3.75 rounds `/BatteryCapacity` when uploading EV configuration. A
+string such as `"118"` causes `vrmlogger` to restart with `TypeError`. The bridge
+normalizes numeric configuration strings (including `"118.5"`) to floats and
+publishes invalid, infinite or negative values as unavailable. Capacity selection
+prefers the HA sensor, then a numeric `HA_BATTERY_CAPACITY_ENTITY` literal, then
+`BATTERY_CAPACITY_KWH`. `/Connected` becomes zero when HA data expires.
