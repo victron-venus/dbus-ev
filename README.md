@@ -113,7 +113,7 @@ Use the canonical `/data/dbus-ev` directory. Both `setup install`
 A release is staged under volatile `/tmp` before stopping the service, so
 reinstalling from the installed tree does not delete the update source.
 The updater preserves `local_config.py`; `deploy.sh` deliberately replaces it
-when the workstation has a local copy (`PUSH_LOCAL_`local_config.py`=1`).
+when the workstation has a local copy (`PUSH_LOCAL_CONFIG=1`).
 
 Service definitions persist under `/data/dbus-ev/service/dbus-ev`.
 `/service/dbus-ev` is a symlink recreated by `/data/rc.local`, including
