@@ -17,6 +17,7 @@ imports cleanly without velib_python/dbus.
 """
 
 import logging
+import math
 import typing
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ def _identity_paths(
     svc.add_path("/HardwareVersion", "n/a")
     svc.add_path("/Serial", f"dbev-{instance}")
     svc.add_path("/CustomName", custom_name)
-    svc.add_path("/Connected", 1)
+    svc.add_path("/Connected", 0)
 
 
 # VRM/CCGX expects these integer values on /Status.
@@ -204,8 +205,19 @@ class EVEvices:
     def update_vin(self, vin: str | None) -> None:
         self.ev[PATH_VIN] = vin
 
-    def update_battery_capacity(self, capacity: float | None) -> None:
-        self.ev[PATH_BATTERY_CAPACITY] = capacity
+    def update_battery_capacity(self, capacity: float | str | None) -> None:
+        """Publish a finite number in kWh, including device-local string literals.
+
+        Venus OS vrmlogger rounds this path; a string crashes its config upload.
+        Invalid capacity is represented by the standard invalid D-Bus value.
+        """
+        try:
+            value = float(capacity) if capacity is not None else None
+        except (TypeError, ValueError):
+            value = None
+        if value is not None and (not math.isfinite(value) or value < 0):
+            value = None
+        self.ev[PATH_BATTERY_CAPACITY] = value
 
     def update_charging_state(self, state: int | None) -> None:
         """Set the Victron enum int.
@@ -257,4 +269,5 @@ class EVEvices:
         """
 
     def set_connected(self, connected: bool) -> None:
-        """Not used in EV service, but kept for compatibility with App."""
+        """Reflect HA freshness so stale vehicle readings are not marked live."""
+        self.ev["/Connected"] = int(connected)

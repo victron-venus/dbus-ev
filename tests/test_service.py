@@ -1,5 +1,7 @@
 """Tests for EVEvices D-Bus service registration and update methods."""
 
+import pytest
+
 from dbus_ev.service import EVEvices, NullDbusService
 
 
@@ -201,3 +203,29 @@ def test_null_service_delitem():
     except KeyError:
         return
     raise AssertionError("Expected KeyError after delete")
+
+
+@pytest.mark.parametrize("value", ["118", "118.5", 118, 118.5])
+def test_battery_capacity_is_numeric_for_vrmlogger(value):
+    services = make_ev_services()
+    services.update_battery_capacity(value)
+    capacity = services.ev["/BatteryCapacity"]
+    assert isinstance(capacity, float)
+    # Same operation used by Venus OS vrmlogger for EV configuration.
+    assert round(capacity, 1) == round(float(value), 1)
+
+
+@pytest.mark.parametrize("value", [None, "unknown", "nan", "inf", -1])
+def test_invalid_battery_capacity_is_unavailable(value):
+    services = make_ev_services()
+    services.update_battery_capacity(value)
+    assert services.ev["/BatteryCapacity"] is None
+
+
+def test_connected_reflects_ha_freshness():
+    services = make_ev_services()
+    assert services.ev["/Connected"] == 0
+    services.set_connected(True)
+    assert services.ev["/Connected"] == 1
+    services.set_connected(False)
+    assert services.ev["/Connected"] == 0
