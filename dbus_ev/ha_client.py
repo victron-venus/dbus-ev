@@ -6,6 +6,7 @@ last-known values while HA is unreachable, guarded by a circuit breaker.
 
 import json
 import logging
+import math
 import time
 from typing import Any
 
@@ -30,7 +31,10 @@ TEMPLATE_BODY = """{{ {
   "longitude": states('@LONGITUDE@') | string if '@LONGITUDE@' != '' else none,
   "at_site": states('@AT_SITE@') | string if '@AT_SITE@' != '' else none,
   "current": states('@CURRENT@') | string if '@CURRENT@' != '' else none,
-  "power": states('@POWER@') | string if '@POWER@' != '' else none
+  "power": states('@POWER@') | string if '@POWER@' != '' else none,
+  "power_unit": state_attr('@POWER@', 'unit_of_measurement') if '@POWER@' != '' else none,
+  "odometer_unit": state_attr('@ODOMETER@', 'unit_of_measurement') if '@ODOMETER@' != '' else none,
+  "range_to_go_unit": state_attr('@RANGE_TO_GO@', 'unit_of_measurement') if '@RANGE_TO_GO@' != '' else none
 } | to_json }}"""
 
 
@@ -132,6 +136,11 @@ _CHARGING_STATE_MAP: dict[str, int] = {
     "14": 3,  # mbapi2020 DC_CHARGING_ACTIVE -> Venus Charging
     "15": 244,  # mbapi2020 SOH_CALIBRATION -> Venus Sustain
     "16": 255,  # mbapi2020 UNKNOWN -> Venus Unavailable
+    "charging": 3,
+    "not charging": 0,
+    "discharging": 256,
+    "sustain": 244,
+    "blocked": 250,
 }
 
 
@@ -142,7 +151,7 @@ def map_charging_state(state: str | None) -> int | None:
     key = state.strip().lower()
     if key in ("unavailable", "unknown"):
         return 255
-    return _CHARGING_STATE_MAP.get(key, state)
+    return _CHARGING_STATE_MAP.get(key, 255)
 
 
 def build_template(
@@ -262,21 +271,9 @@ class HaClient:
             )
         self._last_error_log = 0.0
 
-    def _get_entity_attributes(self, entity_id: str) -> dict[str, Any] | None:
-        """Fetch attributes for a single entity, including unit_of_measurement."""
-        if not entity_id:
-            return None
-        try:
-            resp = self._session.get(
-                f"{self.base_url}/api/states/{entity_id}",
-                timeout=self.timeout,
-            )
-            if resp.status_code != 200:
-                return None
-            data = json.loads(resp.text)
-            return data.get("attributes", {})
-        except (requests.exceptions.RequestException, json.JSONDecodeError):
-            return None
+    def close(self) -> None:
+        """Close only after the worker has finished using its HTTP session."""
+        self._session.close()
 
     def _log_error_throttled(self, msg: str) -> None:
         now = time.monotonic()
@@ -290,6 +287,7 @@ class HaClient:
         entity: str,
         unit_map: dict[str, float],
         accepted: set[str],
+        unit: str | None = None,
     ) -> float | None:
         """Convert a numeric value from HA unit to Venus unit.
 
@@ -301,13 +299,11 @@ class HaClient:
         """
         if value is None or not entity:
             return value
-        attrs = self._get_entity_attributes(entity) or {}
-        u = str(attrs.get("unit_of_measurement", "")).lower()
+        u = str(unit or "").lower()
         if u in unit_map:
-            return value * unit_map[u]
-        # HA template API returns state without unit; attributes fetch may fail.
-        # For power: assume kW when unit is absent or unrecognized.
-        # ponytail: false positive if entity reports in W, add per-entity override.
+            converted = value * unit_map[u]
+            return converted if math.isfinite(converted) else None
+        # Preserve the existing power-unit default when HA omits metadata.
         if not u or u not in accepted:
             # Power-specific fallback: assume kW -> W.
             if "kw" in unit_map:
@@ -316,7 +312,8 @@ class HaClient:
                     entity,
                     u,
                 )
-                return value * unit_map["kw"]
+                converted = value * unit_map["kw"]
+                return converted if math.isfinite(converted) else None
             logger.warning("entity %s has unknown unit %r, publishing raw", entity, u)
         return value
 
@@ -345,6 +342,8 @@ class HaClient:
             if resp.status_code != 200:
                 raise HomeAssistantAPIError(f"/api/template HTTP {resp.status_code}")
             data = json.loads(resp.text)
+            if not isinstance(data, dict):
+                raise HomeAssistantAPIError("HA template response must be a JSON object")
 
             # Helper to convert string to float or None
             def to_float(s: Any) -> float | None:
@@ -354,7 +353,8 @@ class HaClient:
                 if s == "" or s.lower() in ("none", "unknown", "unavailable"):
                     return None
                 try:
-                    return float(s)
+                    value = float(s)
+                    return value if math.isfinite(value) else None
                 except ValueError:
                     return None
 
@@ -387,18 +387,21 @@ class HaClient:
                 self.power_entity,
                 {"kw": 1000.0},
                 {"kw", "w", "watt"},
+                data.get("power_unit"),
             )
             odometer = self._normalize_unit(
                 odometer,
                 self.odometer_entity,
                 {"mi": 1.609344, "mile": 1.609344, "miles": 1.609344},
                 {"mi", "mile", "miles", "km", "kilometer", "kilometre", "kilo"},
+                data.get("odometer_unit"),
             )
             range_to_go = self._normalize_unit(
                 range_to_go,
                 self.range_to_go_entity,
                 {"mi": 1.609344, "mile": 1.609344, "miles": 1.609344},
                 {"mi", "mile", "miles", "km", "kilometer", "kilometre", "kilo"},
+                data.get("range_to_go_unit"),
             )
 
             result.update(

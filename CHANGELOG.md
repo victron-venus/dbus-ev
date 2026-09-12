@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.2
+
+- Preserve request-start monotonic freshness so delayed replies cannot renew expired telemetry.
+
+- Keep D-Bus and heartbeat callbacks responsive while one bounded HA worker polls.
+- Include unit metadata in the existing template request, preserving power and distance conversions without extra HTTP reads.
+- Reject non-finite measurements, invalidate missing power, and map unknown charging states to the unavailable enum.
+- Preserve the existing monotonic stale-data timeout, device configuration, and read-only EV behavior.
+- Cover blocked requests, recovery, shutdown ordering, numerical validity, and installer tests from arbitrarily named worktrees.
+
 ## [Unreleased]
 
 ### Changed

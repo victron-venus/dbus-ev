@@ -359,7 +359,7 @@ def test_unconfigured_client_shortcircuits(post):
 def test_poll_power_no_unit_assumes_kw(get, post):
     """Power sensor without unit_of_measurement: assume kW -> W.
 
-    HA template API returns state without unit; attributes fetch may fail.
+    HA template includes unit metadata when available.
     Power sensors (mbapi2020) report kW; Venus /Ac/Power expects W.
     """
     post.return_value = template_response(soc="42.0")
@@ -388,6 +388,7 @@ def test_poll_power_kw_to_w_conversion(get, post):
         "at_site": "none",
         "current": "none",
         "power": "9.5",
+        "power_unit": "kW",
     }
     post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
     get.return_value = MagicMock(status_code=200, text=json.dumps({"attributes": {}}))
@@ -414,6 +415,7 @@ def test_poll_power_explicit_kw_unit(get, post):
         "at_site": "none",
         "current": "none",
         "power": "9.5",
+        "power_unit": "kW",
     }
     post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
     get.return_value = MagicMock(
@@ -441,6 +443,7 @@ def test_poll_power_w_unit_no_conversion(get, post):
         "at_site": "none",
         "current": "none",
         "power": "9500",
+        "power_unit": "W",
     }
     post.return_value = MagicMock(status_code=200, text=json.dumps(payload))
     get.return_value = MagicMock(
@@ -471,7 +474,7 @@ def test_map_charging_state():
     assert map_charging_state("16") == 255  # UNKNOWN -> Venus Unavailable
     # Case-insensitive numeric passthrough
     assert map_charging_state("  0  ") == 3
-    # Unknown string passes through unchanged (should never happen live)
-    assert map_charging_state("foo") == "foo"
+    # Unknown strings must not reach the Int32 D-Bus setter.
+    assert map_charging_state("foo") == 255
     # None -> None
     assert map_charging_state(None) is None

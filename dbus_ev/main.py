@@ -10,6 +10,7 @@ import time
 from dbus_ev import config
 from dbus_ev.ha_client import HaClient
 from dbus_ev.service import VEDBUS_AVAILABLE, EVEvices
+from dbus_ev.worker import PollWorker
 
 logger = logging.getLogger("dbus-ev")
 
@@ -46,22 +47,39 @@ class App:
         self.services = services
         self.last_ok_time: float | None = None
         self.loop_interval_ms = max(250, int(config.POLL_INTERVAL * 1000))
+        self.worker: PollWorker | None = None
 
     def shutdown(self) -> None:
-        # No action needed for EV
-        pass
+        if self.worker is not None:
+            self.worker.stop()
+        else:
+            self.client.close()
 
     # --- main cycle ----------------------------------------------------------
     def tick(self) -> bool:
-        snapshot = self.client.poll()
-        now_ok = snapshot["ok"]
-        if now_ok:
-            self.last_ok_time = _now()
-        ha_reachable = (
+        if self.worker is not None:
+            # The main loop keeps checking freshness even while HA is slow.
+            self._update_connected()
+            self.worker.poll(self.apply_snapshot)
+            _write_heartbeat()
+            return True
+        started_at = _now()
+        return self.apply_snapshot(dict(self.client.poll(), _sample_started_at=started_at))
+
+    def _update_connected(self) -> None:
+        self.services.set_connected(
             self.last_ok_time is not None
             and (_now() - self.last_ok_time) < config.SENSOR_STALE_TIMEOUT
         )
-        self.services.set_connected(ha_reachable)
+
+    def apply_snapshot(self, snapshot) -> bool:
+        """Publish a completed poll on the main loop; dry-run stays synchronous."""
+        now = _now()
+        started_at = snapshot.get("_sample_started_at", now)
+        now_ok = snapshot["ok"] and 0 <= now - started_at < config.SENSOR_STALE_TIMEOUT
+        if now_ok:
+            self.last_ok_time = started_at
+        self._update_connected()
 
         if now_ok:
             self.services.update_soc(snapshot.get("soc"))
@@ -122,6 +140,7 @@ def build_app() -> App:
 def serve(app: App) -> None:
     from gi.repository import GLib  # pylint: disable=C0415  # provided by Venus OS python env
 
+    app.worker = PollWorker(app.client, GLib.idle_add)
     GLib.timeout_add(app.loop_interval_ms, app.tick)
     mainloop = GLib.MainLoop()
 
