@@ -212,7 +212,7 @@ def test_build_template_renders_in_jinja():
     # Parse-only: if Jinja can compile the rendered template, HA's Jinja
     # (a strict subset) will accept it. HA's `states`/`to_json` filters
     # live in HA's env; we don't render here.
-    Environment().parse(t)
+    Environment(autoescape=True).parse(t)
 
 
 @patch("dbus_ev.ha_client.requests.Session.post")
