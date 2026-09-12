@@ -168,3 +168,27 @@ normalizes numeric configuration strings (including `"118.5"`) to floats and
 publishes invalid, infinite or negative values as unavailable. Capacity selection
 prefers the HA sensor, then a numeric `HA_BATTERY_CAPACITY_ENTITY` literal, then
 `BATTERY_CAPACITY_KWH`. `/Connected` becomes zero when HA data expires.
+
+### HA responsiveness and validity
+
+The service runs one HA request at a time in a dedicated worker. D-Bus exports,
+freshness checks and heartbeat updates stay on the GLib main loop; a slow HA
+request cannot queue additional polls or freeze reads of `/Connected`. Completed
+snapshots are applied only on that main loop. Shutdown closes the HTTP session
+after its active request completes, and discards pending publication callbacks.
+Freshness starts at monotonic request acquisition time, not callback delivery;
+a request or queued result older than the configured timeout cannot renew it.
+
+Power and distance units are included in the same template request as their
+values. The existing W/kW and miles/km conversions are preserved, including the
+legacy kW default when power units are absent. There are no separate attribute
+HTTP requests. Non-finite numeric readings are unavailable; unknown charging
+states map to the unavailable enum instead of reaching an integer conversion.
+Invalid power clears both published power paths rather than retaining an older
+measurement. A measured zero remains zero.
+
+`SENSOR_STALE_TIMEOUT` still controls `/Connected` (120 seconds by default).
+Consumers must honor that flag when using last-known vehicle data. A successful
+HA reply proves receipt from HA, not independent freshness of a vehicle's
+upstream integration. Local regressions cover a blocked request, continued main
+loop ticks, expiry, single outstanding work item, recovery and safe shutdown.

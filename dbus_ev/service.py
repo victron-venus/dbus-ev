@@ -254,9 +254,9 @@ class EVEvices:
         the GUI reads /Ac/Power as INT32. Without the wrap, the value
         is sent as a DOUBLE or STRING variant and GUIv2 shows 0.
         """
-        if power_w is None:
-            return
-        if VEDBUS_AVAILABLE:
+        if power_w is None or not math.isfinite(power_w) or not -(2**31) <= power_w < 2**31:
+            p = None
+        elif VEDBUS_AVAILABLE:
             p = dbus.Int32(int(power_w))
         else:
             p = int(power_w)
