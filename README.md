@@ -5,6 +5,12 @@ This service exports vehicle data from Home Assistant as
 The numeric identifier belongs in `/DeviceInstance`; the service suffix is a
 textual identifier. The separate `dbus-evcharger` package exports charger data.
 
+<!-- ci-release-process:start -->
+## Release process
+
+See the [release strategy](RELEASING.md) for validation, nightly, beta, RC and stable promotion rules, and the [operator runbook](docs/release-workflow.md) for local commands.
+<!-- ci-release-process:end -->
+
 ## Exported properties
 
 Standard EV charger paths (required for VRM dashboard rendering):
