@@ -11,10 +11,59 @@
   ],
   "notes": [
     "Hardware-free checks do not validate a live Venus OS device, D-Bus firmware ABI, physical sensors or in-place device upgrades.",
-    "Candidate packaging preserves committed runtime version metadata. Nightly/beta/RC identity is recorded by the release manifest."
+    "Candidate overlays identify beta/nightly packages; RC packages retain the base version so stable promotes the exact verified bytes."
   ],
   "version_file": "version",
   "mode": "release",
   "repository": "victron-venus/dbus-ev",
-  "visibility": "public"
+  "visibility": "public",
+  "versioning": {
+    "schema": 1,
+    "promotion": "promote-bytes",
+    "files": [
+      {
+        "path": "version",
+        "format": "text",
+        "value": "package"
+      },
+      {
+        "path": "pyproject.toml",
+        "format": "toml",
+        "value": "package",
+        "field": "project.version",
+        "ecosystem": "pep440"
+      },
+      {
+        "path": "uv.lock",
+        "format": "uv-lock",
+        "value": "package",
+        "package": "dbus-ev",
+        "ecosystem": "pep440"
+      },
+      {
+        "path": "dbus_ev/__init__.py",
+        "format": "python",
+        "value": "package",
+        "field": "__version__",
+        "ecosystem": "pep440"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "dbus-ev-*.tar.gz",
+        "format": "tar-text",
+        "value": "package",
+        "member": "dbus-ev/version"
+      },
+      {
+        "path": "dbus-ev-*.tar.gz",
+        "format": "tar-toml",
+        "value": "package",
+        "member": "dbus-ev/pyproject.toml",
+        "field": "project.version",
+        "ecosystem": "pep440"
+      }
+    ],
+    "toolkit_revision": "fc404f055bbd72d9355f90d023065273d8016932"
+  }
 }
