@@ -5,6 +5,15 @@ This service exports vehicle data from Home Assistant as
 The numeric identifier belongs in `/DeviceInstance`; the service suffix is a
 textual identifier. The separate `dbus-evcharger` package exports charger data.
 
+## Python runtime
+
+Native Venus OS packages target **Python 3.12.x**. The audited Cerbo on Venus OS
+v3.75 reports Python **3.12.13**; the [official Venus OS v3.79 manifest](https://updates.victronenergy.com/feeds/venus/release/sdk/venus-scarthgap-x86_64-arm-cortexa8hf-neon-toolchain-v3.79.target.manifest)
+also ships 3.12.13. Local development and CI use `.python-version` / Python
+3.12.13. Package metadata accepts 3.12 patch updates and rejects other minor
+versions until they have been validated. Use the firmware's system interpreter
+and its matching D-Bus/GI libraries on the device; do not replace the OS Python.
+
 <!-- ci-release-process:start -->
 ## Release process
 
@@ -55,7 +64,7 @@ Copy `local_config.example.py` to `local_config.py` and set the Home Assistant U
 
 ## Usage
 
-Run the service on the Cerbo GX (or any Venus OS device) with Python 3.11+.
+Run the service on the Cerbo GX (or any Venus OS device) with Python 3.12.x.
 
 The service uses the `vedbus` package which is available on Venus OS.
 
