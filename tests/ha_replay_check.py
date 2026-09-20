@@ -71,10 +71,11 @@ async def main():
             )
             _value = ent.native_value if domain == "sensor" else ent.is_on
             _attrs = ent.extra_state_attributes
-            assert ent.unique_id == vin.lower() + "_" + key
-            matched.append((domain, key))
         except Exception as ex:  # noqa: BLE001 -- report every replay mismatch
             errors.append((key, type(ex).__name__, str(ex)))
+        else:
+            assert ent.unique_id == vin.lower() + "_" + key
+            matched.append((domain, key))
     print(json.dumps({"matched": len(matched), "missing": missing, "errors": errors}))
     assert not missing and not errors
 

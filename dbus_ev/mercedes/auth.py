@@ -18,8 +18,8 @@ async def login(args):
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
             auth = Oauth(session, args.region, store, AppVersionManager(args.region))
-            username = input("Mercedes account email: ").strip()
-            password = getpass.getpass("Mercedes account password: ")
+            username = (await asyncio.to_thread(input, "Mercedes account email: ")).strip()
+            password = await asyncio.to_thread(getpass.getpass, "Mercedes account password: ")
             await auth.async_login_new(username, password)
         print("Authorization saved. Password was not stored.")
     finally:
