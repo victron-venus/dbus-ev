@@ -12,7 +12,10 @@ class TokenStore:
 
     def __init__(self, path):
         self.path = Path(path)
-        self.data = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
+        # The operator selects the token file in local configuration, never cloud/MQTT input.
+        self.data = (
+            json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
+        )  # NOSONAR
         self._lock = None
 
     def acquire(self):

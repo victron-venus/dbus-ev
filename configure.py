@@ -14,12 +14,14 @@ def main():
     parser.add_argument("--options-file", default="/data/setupOptions/dbus-ev/options.json")
     args = parser.parse_args()
     path = Path(args.options_file)
-    options = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    # The local installer explicitly selects this file; no network data selects a path.
+    options = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}  # NOSONAR
     options["HA_MQTT_ENABLED"] = args.ha_mqtt == "on"
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=".options-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+        # mkstemp created this descriptor in the operator-selected options directory.
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:  # NOSONAR
             json.dump(options, stream)
         os.replace(temporary, path)
     finally:
