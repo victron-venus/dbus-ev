@@ -15,7 +15,7 @@ class TokenStore:
         # The operator selects the token file in local configuration, never cloud/MQTT input.
         self.data = (
             json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
-        )  # NOSONAR
+        )  # NOSONAR(S8707)
         self._lock = None
 
     def acquire(self):
