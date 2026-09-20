@@ -13,6 +13,7 @@
     "pyproject.toml",
     "uv.lock",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    ".python-version"
   ]
 }

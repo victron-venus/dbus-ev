@@ -16,7 +16,7 @@ jobs:
     # a step-level `uses` of a workflow_call workflow is rejected by GitHub.
     uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@5b18667880c7a0154b7c7e6686042eff5f47cdb7
     with:
-      python-version: '3.11'
+      python-version: '3.12.13'
       # mypy has pre-existing errors (Venus OS imports without stubs); tracked separately
       run-type-check: false
       coverage-threshold: 60
