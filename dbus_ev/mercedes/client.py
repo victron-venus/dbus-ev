@@ -167,9 +167,15 @@ class MercedesClient:
                     retry = max(retry, 300)
                 except Exception as exc:  # noqa: BLE001 -- malformed cloud frames must reconnect
                     # Do not log tokens, raw frames, account data or HTTP response bodies.
-                    logger.warning("Mercedes connection interrupted (%s)", type(exc).__name__)
-                    if getattr(exc, "status", None) in (401, 403, 429):
+                    status = getattr(exc, "status", None)
+                    if status in (401, 403, 429):
                         retry = max(retry, 300)
+                    logger.warning(
+                        "Mercedes connection interrupted (%s, HTTP %s); retry in %ss",
+                        type(exc).__name__,
+                        status if isinstance(status, int) else "n/a",
+                        retry,
+                    )
                 finally:
                     with self._lock:
                         self._connected = False

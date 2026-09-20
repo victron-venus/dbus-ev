@@ -40,6 +40,12 @@ class MBAPI2020DataUpdateCoordinator(DataUpdateCoordinator):
         self.discovery_callbacks = []
         self._discovery_pending = False
 
+    async def _async_update_data(self):
+        """Answer HA initial/manual refreshes from the last MQTT snapshot only."""
+        # CoordinatorEntity calls this before addition. Reading the cache must not
+        # renew received_at, availability or Mercedes attribute timestamps.
+        return self.data
+
     @property
     def available(self):
         age = time.time() - self.received_at
