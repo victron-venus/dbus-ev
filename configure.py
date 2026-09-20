@@ -15,9 +15,10 @@ def main():
     args = parser.parse_args()
     path = Path(args.options_file)
     # The local installer explicitly selects this file; no network data selects a path.
-    options = (
-        json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    )  # NOSONAR(S8707)
+    options = {}
+    if path.exists():
+        saved = path.read_text(encoding="utf-8")  # NOSONAR(S8707)
+        options = json.loads(saved)
     options["HA_MQTT_ENABLED"] = args.ha_mqtt == "on"
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=".options-", dir=path.parent)
