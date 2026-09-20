@@ -59,6 +59,12 @@ async def main():
     assert coordinator.received_at == previous
     sensor = _create_sensor_if_eligible("soc", SENSORS["soc"], car, coordinator)
     assert sensor is not None
+    # HA calls CoordinatorEntity.async_update before adding a restored entity.
+    # This must succeed without cloud I/O or renewing the snapshot acquisition.
+    cached_data, acquired_at = coordinator.data, coordinator.received_at
+    await sensor.async_update()
+    assert coordinator.data is cached_data
+    assert coordinator.received_at == acquired_at
     sensor._state = sensor._get_car_value(
         sensor._feature_name, sensor._object_name, sensor._attrib_name, None
     )
