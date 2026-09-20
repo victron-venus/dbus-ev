@@ -1,4 +1,5 @@
 #!/bin/sh
 cd /data/dbus-ev || exit 1
+export PYTHONPATH="/data/setupOptions/dbus-ev/python${PYTHONPATH:+:$PYTHONPATH}"
 exec 2>&1
 exec python3 -m dbus_ev

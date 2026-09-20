@@ -16,8 +16,12 @@ dbus_ev.egg-info/
 # Local validation and candidate packaging
 .venv-ci/
 release-dist/
+build/
 bandit-results.json
 # Frozen release overlays and final build staging
 .release-plan.json
 .release-inputs.json
 release-assets/
+runtime-deps/
+mercedes-token*.json
+*.private.json

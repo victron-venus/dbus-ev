@@ -1,0 +1,330 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "சார்ஜிங் செயலில்"
+      },
+      "decklidstatus": {
+        "name": "டெக் மூடி"
+      },
+      "doorlockstatusdecklid": {
+        "name": "டெக் மூடி பூட்டு"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "சார்ஜிங் சக்தி வரம்பு"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "செயலற்றது",
+          "1": "இயல்பான வெப்பமாக்கல்",
+          "2": "இயல்பான காற்றோட்டம்",
+          "3": "கையேடு வெப்பமாக்கல்",
+          "4": "பிந்தைய வெப்பமாக்கல்",
+          "5": "பிந்தைய காற்றோட்டம்",
+          "6": "தானியங்கி வெப்பமாக்கல்"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "திறந்தது",
+          "1": "மூடியது",
+          "2": "மடல் அழுத்தப்பட்டது",
+          "3": "தெரியவில்லை"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "திறந்தது",
+          "1": "மூடியது",
+          "2": "மடல் அழுத்தப்பட்டது",
+          "3": "தெரியவில்லை"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "திறந்தது",
+          "closed": "மூடியது",
+          "pressed": "மடல் அழுத்தப்பட்டது",
+          "unknown": "தெரியவில்லை"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "சார்ஜிங்",
+          "1": "சார்ஜிங் முடிகிறது",
+          "2": "சார்ஜ் இடைவெளி",
+          "3": "துண்டிக்கப்பட்டது",
+          "4": "தோல்வி",
+          "5": "மெதுவான",
+          "6": "வேகமான",
+          "7": "டிஸ்சார்ஜிங்",
+          "8": "சார்ஜ் ஆகவில்லை",
+          "9": "பயண இலக்கை அடைந்த பின் மெதுவான சார்ஜிங்",
+          "10": "பயண இலக்கை அடைந்த பின் சார்ஜிங்",
+          "11": "பயண இலக்கை அடைந்த பின் வேகமான சார்ஜிங்",
+          "12": "இணைக்கப்பட்டது",
+          "13": "AC சார்ஜிங்",
+          "14": "DC சார்ஜிங்",
+          "15": "பேட்டரி அளவுத்திருத்தம் செயலில்",
+          "16": "தெரியவில்லை"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "முடக்கப்பட்டது",
+          "1": "நாள்தோறும்",
+          "2": "வாராந்திர"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "பூட்டப்பட்டது",
+          "1": "அணைக்கப்பட்டது",
+          "2": "துணை",
+          "4": "இயக்கத்தில்",
+          "5": "தொடக்கம்"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "செயலில் இல்லை",
+          "1": "செயலில் இல்லை",
+          "2": "செயலில்"
+        }
+      },
+      "lock": {
+        "state": {
+          "0": "திறக்கப்பட்டது",
+          "1": "உள்பூட்டப்பட்டது",
+          "2": "பூட்டப்பட்டது",
+          "3": "ஓரளவு திறக்கப்பட்டது",
+          "4": "தெரியவில்லை"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "டெக் மூடி",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "கதவு முன் இடது",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "கதவு முன் வலது",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "கதவு பின்புற இடது",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "கதவு பின்புற வலது",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "கதவு பூட்டு முன் இடது",
+            "state": {
+              "false": "பூட்டப்பட்டது",
+              "true": "திறக்கப்பட்டது"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "கதவு பூட்டு முன் வலது",
+            "state": {
+              "false": "பூட்டப்பட்டது",
+              "true": "திறக்கப்பட்டது"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "கதவு பூட்டு பின்புற இடது",
+            "state": {
+              "false": "பூட்டப்பட்டது",
+              "true": "திறக்கப்பட்டது"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "கதவு பூட்டு பின்புற வலது",
+            "state": {
+              "false": "பூட்டப்பட்டது",
+              "true": "திறக்கப்பட்டது"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "எரிவாயு பூட்டு",
+            "state": {
+              "false": "பூட்டப்பட்டது",
+              "true": "திறக்கப்பட்டது"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "எஞ்சின் ஹுட்",
+            "state": {
+              "false": "மூடியது",
+              "true": "திறந்தது"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "ஒட்டுமொத்த கதவு நிலை",
+            "state": {
+              "0": "திறந்தது",
+              "1": "மூடியது",
+              "2": "இல்லாதது",
+              "3": "தெரியவில்லை"
+            }
+          },
+          "sunroofstatus": {
+            "name": "சன்ரூஃப் நிலை",
+            "state": {
+              "0": "மூடியது",
+              "1": "திறந்தது",
+              "2": "உயர்த்தி திறப்பு",
+              "3": "இயங்குகிறது",
+              "4": "அதிர்வு எதிர்ப்பு நிலை",
+              "5": "நழுவும் இடைநிலை",
+              "6": "உயர்த்தும் இடைநிலை",
+              "7": "திறக்கிறது",
+              "8": "மூடுகிறது",
+              "9": "அதிர்வு எதிர்ப்பு உயர்த்துதல்",
+              "10": "இடைநிலை நிலை",
+              "11": "உயர்த்தி திறக்கிறது",
+              "12": "உயர்த்தி மூடுகிறது"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "மூடியது",
+          "1": "திறந்தது",
+          "2": "உயர்த்தி திறப்பு",
+          "3": "இயங்குகிறது",
+          "4": "அதிர்வு எதிர்ப்பு",
+          "5": "நழுவும் இடைநிலை",
+          "6": "உயர்த்தும் இடைநிலை",
+          "7": "திறக்கிறது",
+          "8": "மூடுகிறது",
+          "9": "அதிர்வு எதிர்ப்பு உயர்த்துதல்",
+          "10": "இடைநிலை நிலை",
+          "11": "உயர்த்தி திறக்கிறது",
+          "12": "உயர்த்தி மூடுகிறது"
+        }
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "பச்சை",
+          "1": "மஞ்சள்",
+          "2": "சிவப்பு",
+          "3": "ஆரஞ்சு",
+          "4": "பச்சை/மஞ்சள்"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "எச்சரிக்கை இல்லை",
+          "1": "மென்மையான எச்சரிக்கை",
+          "2": "குறைந்த அழுத்தம்",
+          "3": "காற்றிழப்பு"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "நிலையான",
+          "2": "வீடு",
+          "3": "வேலை",
+          "4": "ஆதரிக்கப்படவில்லை"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "இடைநிலை",
+          "1": "திறந்தது",
+          "2": "மூடியது",
+          "3": "காற்றோட்டம்",
+          "4": "இடைநிலை காற்றோட்டம்",
+          "5": "இயங்குகிறது"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "இடைநிலை",
+          "1": "திறந்தது",
+          "2": "மூடியது",
+          "3": "காற்றோட்டம்",
+          "4": "இடைநிலை காற்றோட்டம்",
+          "5": "இயங்குகிறது"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "இடைநிலை",
+          "1": "திறந்தது",
+          "2": "மூடியது",
+          "3": "காற்றோட்டம்",
+          "4": "இடைநிலை காற்றோட்டம்",
+          "5": "இயங்குகிறது"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "இடைநிலை",
+          "1": "திறந்தது",
+          "2": "மூடியது",
+          "3": "காற்றோட்டம்",
+          "4": "இடைநிலை காற்றோட்டம்",
+          "5": "இயங்குகிறது"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

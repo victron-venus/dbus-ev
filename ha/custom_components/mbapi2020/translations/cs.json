@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Nabíjení aktivní"
+      },
+      "decklidstatus": {
+        "name": "Zavazadlový prostor"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Zámek zavazadlového prostoru"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Limit nabíjecího výkonu"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Neaktivní",
+          "1": "Normální vytápění",
+          "2": "Normální větrání",
+          "3": "Manuální vytápění",
+          "4": "Dodatečné vytápění",
+          "5": "Dodatečné větrání",
+          "6": "Automatické vytápění"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Otevřené",
+          "1": "Zavřené",
+          "2": "Klapka stisknuta",
+          "3": "Neznámé"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Otevřené",
+          "1": "Zavřené",
+          "2": "Klapka stisknuta",
+          "3": "Neznámé"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Otevřené",
+          "closed": "Zavřené",
+          "pressed": "Klapka stisknuta",
+          "unknown": "Neznámé"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "Nabíjení",
+          "1": "Nabíjení ukončeno",
+          "2": "Přestávka nabíjení",
+          "3": "Odpojeno",
+          "4": "Chyba",
+          "5": "Pomalé",
+          "6": "Rychlé",
+          "7": "Vybíjení",
+          "8": "Nenabíjí se",
+          "9": "Pomalé nabíjení po dosažení cíle",
+          "10": "Nabíjení po dosažení cíle",
+          "11": "Rychlé nabíjení po dosažení cíle",
+          "12": "Připojeno",
+          "13": "AC nabíjení",
+          "14": "DC nabíjení",
+          "15": "Kalibrace baterie aktivní",
+          "16": "Neznámé"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Deaktivováno",
+          "1": "Denně",
+          "2": "Týdně"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Zamknuté",
+          "1": "Vypnuté",
+          "2": "Příslušenství",
+          "4": "Zapnuté",
+          "5": "Start"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Neaktivní",
+          "1": "Neaktivní",
+          "2": "Aktivní"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Odemčeno",
+          "1": "Zamčeno interně",
+          "2": "Zamčeno",
+          "3": "Částečně odemčeno",
+          "4": "Neznámé"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Zavazadlový prostor",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Přední levé dveře",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Přední pravé dveře",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Zadní levé dveře",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Zadní pravé dveře",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Zámek předních levých dveří",
+            "state": {
+              "false": "zamčeno",
+              "true": "odemčeno"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Zámek předních pravých dveří",
+            "state": {
+              "false": "zamčeno",
+              "true": "odemčeno"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Zámek zadních levých dveří",
+            "state": {
+              "false": "zamčeno",
+              "true": "odemčeno"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Zámek zadních pravých dveří",
+            "state": {
+              "false": "zamčeno",
+              "true": "odemčeno"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Zámek palivové nádrže",
+            "state": {
+              "false": "zamčeno",
+              "true": "odemčeno"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Kapota",
+            "state": {
+              "false": "zavřené",
+              "true": "otevřené"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Celkový stav dveří",
+            "state": {
+              "0": "otevřené",
+              "1": "zavřené",
+              "2": "neexistující",
+              "3": "neznámé"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Stav střešního okna",
+            "state": {
+              "0": "zavřené",
+              "1": "otevřené",
+              "2": "ventilace otevřená",
+              "3": "v pohybu",
+              "4": "protihluková pozice",
+              "5": "posuvné střední",
+              "6": "zvedání střední",
+              "7": "otevírání",
+              "8": "zavírání",
+              "9": "zvedání protihlukové",
+              "10": "střední poloha",
+              "11": "zvedání otevírání",
+              "12": "zvedání zavírání"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Zavřeno",
+          "1": "Otevřeno",
+          "2": "Otevřená ventilace",
+          "3": "V pohybu",
+          "4": "Protihluková pozice",
+          "5": "Střední posuv",
+          "6": "Střední zvedání",
+          "7": "Otevírání",
+          "8": "Zavírání",
+          "9": "Zvednutí protihlukové",
+          "10": "Střední poloha",
+          "11": "Otevírání ventilace",
+          "12": "Zavírání ventilace"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Zelená",
+          "1": "Žlutá",
+          "2": "Červená",
+          "3": "Oranžová",
+          "4": "Zeleno-žlutá"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Žádné varování",
+          "1": "Mírné varování",
+          "2": "Nízký tlak",
+          "3": "Defekt"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Standardní",
+          "2": "Domov",
+          "3": "Práce",
+          "4": "Nepodporováno"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Mezipoloha",
+          "1": "Otevřeno",
+          "2": "Zavřeno",
+          "3": "Větrání",
+          "4": "Mezipoloha větrání",
+          "5": "V pohybu"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Mezipoloha",
+          "1": "Otevřeno",
+          "2": "Zavřeno",
+          "3": "Větrání",
+          "4": "Mezipoloha větrání",
+          "5": "V pohybu"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Mezipoloha",
+          "1": "Otevřeno",
+          "2": "Zavřeno",
+          "3": "Větrání",
+          "4": "Mezipoloha větrání",
+          "5": "V pohybu"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Mezipoloha",
+          "1": "Otevřeno",
+          "2": "Zavřeno",
+          "3": "Větrání",
+          "4": "Mezipoloha větrání",
+          "5": "V pohybu"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

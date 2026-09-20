@@ -1,0 +1,324 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Заряджання активне"
+      },
+      "decklidstatus": {
+        "name": "Кришка багажника"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Замок кришки багажника"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Обмеження потужності заряджання"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Неактивне",
+          "1": "Звичайне опалення",
+          "2": "Звичайна вентиляція",
+          "3": "Ручне опалення",
+          "4": "Дотопалення",
+          "5": "Довентиляція",
+          "6": "Авто опалення"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Відкрита",
+          "1": "Закрита",
+          "2": "Кришка натиснута",
+          "3": "Невідомо"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Відкрита",
+          "1": "Закрита",
+          "2": "Кришка натиснута",
+          "3": "Невідомо"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "заряджання",
+          "1": "заряджання завершується",
+          "2": "перерва заряджання",
+          "3": "відключено",
+          "4": "помилка",
+          "5": "повільне",
+          "6": "швидке",
+          "7": "розряджання",
+          "8": "не заряджається",
+          "9": "повільне заряджання після досягнення мети поїздки",
+          "10": "заряджання після досягнення мети поїздки",
+          "11": "швидке заряджання після досягнення мети поїздки",
+          "12": "Підключено",
+          "13": "AC заряджання",
+          "14": "DC заряджання",
+          "15": "Калібрування батареї активне",
+          "16": "невідомо"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Вимкнено",
+          "1": "Щоденно",
+          "2": "Щотижнево"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Заблоковано",
+          "1": "Вимкнено",
+          "2": "Аксесуари",
+          "4": "Увімкнено",
+          "5": "Запуск"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Неактивний",
+          "1": "Неактивний",
+          "2": "Активний"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Розблоковано",
+          "1": "Заблоковано внутрішньо",
+          "2": "Заблоковано",
+          "3": "Частково розблоковано",
+          "4": "Невідомо"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Кришка багажника",
+            "state": {
+              "false": "закрита",
+              "true": "відкрита"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Двері передні ліві",
+            "state": {
+              "false": "закриті",
+              "true": "відкриті"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Двері передні праві",
+            "state": {
+              "false": "закриті",
+              "true": "відкриті"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Двері задні ліві",
+            "state": {
+              "false": "закриті",
+              "true": "відкриті"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Двері задні праві",
+            "state": {
+              "false": "закриті",
+              "true": "відкриті"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Замок дверей передніх лівих",
+            "state": {
+              "false": "заблоковано",
+              "true": "розблоковано"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Замок дверей передніх правих",
+            "state": {
+              "false": "заблоковано",
+              "true": "розблоковано"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Замок дверей задніх лівих",
+            "state": {
+              "false": "заблоковано",
+              "true": "розблоковано"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Замок дверей задніх правих",
+            "state": {
+              "false": "заблоковано",
+              "true": "розблоковано"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Замок паливного бака",
+            "state": {
+              "false": "заблоковано",
+              "true": "розблоковано"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Капот",
+            "state": {
+              "false": "закритий",
+              "true": "відкритий"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Загальний стан дверей",
+            "state": {
+              "0": "відкриті",
+              "1": "закриті",
+              "2": "відсутні",
+              "3": "невідомо"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Стан люка",
+            "state": {
+              "0": "закритий",
+              "1": "відкритий",
+              "2": "відкривається з підняттям",
+              "3": "у русі",
+              "4": "положення проти гулу",
+              "5": "проміжне зсувне",
+              "6": "проміжне підняте",
+              "7": "відкривається",
+              "8": "закривається",
+              "9": "піднімається проти гулу",
+              "10": "проміжне положення",
+              "11": "відкривається з підняттям",
+              "12": "закривається з підняттям"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Закритий",
+          "1": "Відкритий",
+          "2": "Відкритий з підняттям",
+          "3": "У русі",
+          "4": "Проти гулу",
+          "5": "Проміжне зсувне",
+          "6": "Проміжне підняте",
+          "7": "Відкривається",
+          "8": "Закривається",
+          "9": "Підняття проти гулу",
+          "10": "Проміжне положення",
+          "11": "Відкривається з підняттям",
+          "12": "Закривається з підняттям"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Зелений",
+          "1": "Жовтий",
+          "2": "Червоний",
+          "3": "Помаранчевий",
+          "4": "Зелено-жовтий"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Без попередження",
+          "1": "Слабке попередження",
+          "2": "Низький тиск",
+          "3": "Здування"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Стандартний",
+          "2": "Дім",
+          "3": "Робота",
+          "4": "Не підтримується"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Проміжне положення",
+          "1": "Відкрито",
+          "2": "Закрито",
+          "3": "Провітрювання",
+          "4": "Проміжне положення провітрювання",
+          "5": "Рухається"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Проміжне положення",
+          "1": "Відкрито",
+          "2": "Закрито",
+          "3": "Провітрювання",
+          "4": "Проміжне положення провітрювання",
+          "5": "Рухається"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Проміжне положення",
+          "1": "Відкрито",
+          "2": "Закрито",
+          "3": "Провітрювання",
+          "4": "Проміжне положення провітрювання",
+          "5": "Рухається"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Проміжне положення",
+          "1": "Відкрито",
+          "2": "Закрито",
+          "3": "Провітрювання",
+          "4": "Проміжне положення провітрювання",
+          "5": "Рухається"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

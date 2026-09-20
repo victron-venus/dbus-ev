@@ -1,0 +1,349 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Charging active"
+      },
+      "decklidstatus": {
+        "name": "Deck lid"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Deck lid lock"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Charging power limit"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Inactive",
+          "1": "Normal heating",
+          "2": "Normal ventilation",
+          "3": "Manual heating",
+          "4": "Post heating",
+          "5": "Post ventilation",
+          "6": "Auto heating"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Open",
+          "1": "Closed",
+          "2": "Flap pressed",
+          "3": "Unknown"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Open",
+          "1": "Closed",
+          "2": "Flap pressed",
+          "3": "Unknown"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Open",
+          "closed": "Closed",
+          "pressed": "Pressed",
+          "unknown": "Unknown"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "charging",
+          "1": "charging ends",
+          "2": "Charge break",
+          "3": "unplugged",
+          "4": "failure",
+          "5": "slow",
+          "6": "fast",
+          "7": "discharging",
+          "8": "not charging",
+          "9": "slow charging after reaching trip target",
+          "10": "charging after reaching trip target",
+          "11": "fast charging after reaching trip target",
+          "12": "Connected",
+          "13": "AC Charging",
+          "14": "DC Charging",
+          "15": "Battery calibration active",
+          "16": "unknown"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Disabled",
+          "1": "Daily",
+          "2": "Weekly"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Locked",
+          "1": "Off",
+          "2": "Accessory",
+          "4": "On",
+          "5": "Start"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Not active",
+          "1": "Not active",
+          "2": "Active"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Unlocked",
+          "1": "Locked int",
+          "2": "Locked",
+          "3": "Partly unlocked",
+          "4": "Unknown"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Deck lid",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Door front left",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Door front right",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Door rear left",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Door rear right",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Door lock front left",
+            "state": {
+              "false": "locked",
+              "true": "unlocked"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Door lock front right",
+            "state": {
+              "false": "locked",
+              "true": "unlocked"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Door lock rear left",
+            "state": {
+              "false": "locked",
+              "true": "unlocked"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Door lock rear right",
+            "state": {
+              "false": "locked",
+              "true": "unlocked"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Gas lock",
+            "state": {
+              "false": "locked",
+              "true": "unlocked"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Engine hood",
+            "state": {
+              "false": "closed",
+              "true": "open"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Door status overall",
+            "state": {
+              "0": "open",
+              "1": "closed",
+              "2": "not existing",
+              "3": "unknown"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Sunroof status",
+            "state": {
+              "0": "closed",
+              "1": "open",
+              "2": "lifting open",
+              "3": "running",
+              "4": "anti-booming position",
+              "5": "sliding intermediate",
+              "6": "lifting intermediate",
+              "7": "opening",
+              "8": "closing",
+              "9": "anti-booming lifting",
+              "10": "intermediate position",
+              "11": "opening lifting",
+              "12": "closing lifting"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Closed",
+          "1": "Open",
+          "2": "Open lifting",
+          "3": "Running",
+          "4": "Anti booming",
+          "5": "Intermediate sliding",
+          "6": "Intermediate lifting",
+          "7": "Opening",
+          "8": "Closing",
+          "9": "Anti booming lifting",
+          "10": "Intermediate position",
+          "11": "Opening lifting",
+          "12": "Closing lifting"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Green",
+          "1": "Yellow",
+          "2": "Red",
+          "3": "Orange",
+          "4": "Green/Yellow"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "No warning",
+          "1": "Soft warning",
+          "2": "Low pressure",
+          "3": "Deflation"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Standard",
+          "2": "Home",
+          "3": "Work",
+          "4": "Not supported"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Intermediate",
+          "1": "Open",
+          "2": "Closed",
+          "3": "Ventilating",
+          "4": "Intermediate ventilating",
+          "5": "Running"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Intermediate",
+          "1": "Open",
+          "2": "Closed",
+          "3": "Ventilating",
+          "4": "Intermediate ventilating",
+          "5": "Running"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Intermediate",
+          "1": "Open",
+          "2": "Closed",
+          "3": "Ventilating",
+          "4": "Intermediate ventilating",
+          "5": "Running"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Intermediate",
+          "1": "Open",
+          "2": "Closed",
+          "3": "Ventilating",
+          "4": "Intermediate ventilating",
+          "5": "Running"
+        }
+      }
+    },
+    "cover": {
+      "windows": {
+        "name": "Windows"
+      },
+      "window_front_left": {
+        "name": "Window front left"
+      },
+      "window_front_right": {
+        "name": "Window front right"
+      },
+      "window_rear_left": {
+        "name": "Window rear left"
+      },
+      "window_rear_right": {
+        "name": "Window rear right"
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

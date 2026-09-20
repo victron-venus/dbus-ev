@@ -24,3 +24,4 @@ repos:
   rev: v3.2.0
   hooks:
   - id: pylint
+    exclude: ^dbus_ev/mercedes/vendor/
