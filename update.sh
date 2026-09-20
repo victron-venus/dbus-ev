@@ -41,8 +41,8 @@ sep() { echo "=== dbus-ev update: $*"; }
 PYTHONPATH="/data/setupOptions/dbus-ev/python${PYTHONPATH:+:$PYTHONPATH}" PYTHONDONTWRITEBYTECODE=1 python3 - "$SRC_DIR" "$INSTALL_DIR" <<'PYTHON'
 import sys
 from pathlib import Path
-if sys.version_info < (3, 11):
-    raise SystemExit("Python 3.11 or newer is required")
+if sys.version_info[:2] != (3, 12):
+    raise SystemExit("Python 3.12.x from Venus OS is required")
 import requests, dbus
 sys.path.insert(0, "/opt/victronenergy/dbus-systemcalc-py/ext/velib_python")
 from gi.repository import GLib
