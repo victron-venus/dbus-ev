@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Lataus aktiivinen"
+      },
+      "decklidstatus": {
+        "name": "Tavaratilan kansi"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Tavaratilan kannen lukko"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Lataustehon raja"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Ei aktiivinen",
+          "1": "Normaali lämmitys",
+          "2": "Normaali tuuletus",
+          "3": "Manuaalinen lämmitys",
+          "4": "Jälkilämmitys",
+          "5": "Jälkituuletus",
+          "6": "Automaattinen lämmitys"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Auki",
+          "1": "Suljettu",
+          "2": "Luukku painettu",
+          "3": "Tuntematon"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Auki",
+          "1": "Suljettu",
+          "2": "Luukku painettu",
+          "3": "Tuntematon"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Auki",
+          "closed": "Suljettu",
+          "pressed": "Luukku painettu",
+          "unknown": "Tuntematon"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "ladataan",
+          "1": "lataus päättyy",
+          "2": "Lataustauko",
+          "3": "irrotettu",
+          "4": "häiriö",
+          "5": "hidas",
+          "6": "nopea",
+          "7": "purkautuu",
+          "8": "ei lataa",
+          "9": "hidas lataus matkatason saavuttamisen jälkeen",
+          "10": "lataus matkatason saavuttamisen jälkeen",
+          "11": "nopea lataus matkatason saavuttamisen jälkeen",
+          "12": "Yhdistetty",
+          "13": "AC-lataus",
+          "14": "DC-lataus",
+          "15": "Akun kalibrointi aktiivinen",
+          "16": "tuntematon"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Pois käytöstä",
+          "1": "Päivittäinen",
+          "2": "Viikoittainen"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Lukittu",
+          "1": "Pois",
+          "2": "Lisälaitteet",
+          "4": "Päällä",
+          "5": "Käynnistys"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Ei aktiivinen",
+          "1": "Ei aktiivinen",
+          "2": "Aktiivinen"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Lukitsematon",
+          "1": "Lukittu sis.",
+          "2": "Lukittu",
+          "3": "Osittain lukitsematon",
+          "4": "Tuntematon"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Tavaratilan kansi",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Vasen etuovi",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Oikea etuovi",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Vasen takaovi",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Oikea takaovi",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Vasemman etuoven lukko",
+            "state": {
+              "false": "lukittu",
+              "true": "lukitsematon"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Oikean etuoven lukko",
+            "state": {
+              "false": "lukittu",
+              "true": "lukitsematon"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Vasemman takaoven lukko",
+            "state": {
+              "false": "lukittu",
+              "true": "lukitsematon"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Oikean takaoven lukko",
+            "state": {
+              "false": "lukittu",
+              "true": "lukitsematon"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Polttoainelukko",
+            "state": {
+              "false": "lukittu",
+              "true": "lukitsematon"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Konepelti",
+            "state": {
+              "false": "suljettu",
+              "true": "auki"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Ovien kokonaistila",
+            "state": {
+              "0": "auki",
+              "1": "suljettu",
+              "2": "ei olemassa",
+              "3": "tuntematon"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Kattoikkunan tila",
+            "state": {
+              "0": "suljettu",
+              "1": "auki",
+              "2": "tuuletusasento auki",
+              "3": "liikkuu",
+              "4": "melunvaimennusasento",
+              "5": "liu'utus välitila",
+              "6": "kallistus välitila",
+              "7": "avautuu",
+              "8": "sulkeutuu",
+              "9": "melunvaimennus kallistettu",
+              "10": "väliasento",
+              "11": "kallistus avautuu",
+              "12": "kallistus sulkeutuu"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Suljettu",
+          "1": "Auki",
+          "2": "Tuuletusasento auki",
+          "3": "Liikkuu",
+          "4": "Melunvaimennus",
+          "5": "Liu'utus välitila",
+          "6": "Kallistus välitila",
+          "7": "Avautuu",
+          "8": "Sulkeutuu",
+          "9": "Melunvaimennus kallistettu",
+          "10": "Väliasento",
+          "11": "Kallistus avautuu",
+          "12": "Kallistus sulkeutuu"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Vihreä",
+          "1": "Keltainen",
+          "2": "Punainen",
+          "3": "Oranssi",
+          "4": "Vihreä/keltainen"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Ei varoitusta",
+          "1": "Lievä varoitus",
+          "2": "Matala paine",
+          "3": "Tyhjentyminen"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Vakio",
+          "2": "Koti",
+          "3": "Työ",
+          "4": "Ei tuettu"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Väliasento",
+          "1": "Auki",
+          "2": "Kiinni",
+          "3": "Tuuletus",
+          "4": "Välituuletusasento",
+          "5": "Liikkuu"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Väliasento",
+          "1": "Auki",
+          "2": "Kiinni",
+          "3": "Tuuletus",
+          "4": "Välituuletusasento",
+          "5": "Liikkuu"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Väliasento",
+          "1": "Auki",
+          "2": "Kiinni",
+          "3": "Tuuletus",
+          "4": "Välituuletusasento",
+          "5": "Liikkuu"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Väliasento",
+          "1": "Auki",
+          "2": "Kiinni",
+          "3": "Tuuletus",
+          "4": "Välituuletusasento",
+          "5": "Liikkuu"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

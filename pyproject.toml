@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dbus-ev"
 version = "0.1.3"
-description = "Home-Assistant-backed EV bridge for Victron Venus OS"
+description = "Unified Mercedes EV and charger bridge for Victron Venus OS and HA MQTT"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12,<3.13"
@@ -14,18 +14,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+mercedes = ["aiohttp>=3.9", "protobuf>=6.31.1,<7", "paho-mqtt>=2.0"]
 dev = [
     "pytest>=8.0",
     "pytest-cov",
     "ruff>=0.9",
+    "aiohttp>=3.9",
+    "protobuf>=6.31.1,<7",
+    "paho-mqtt>=2.0",
 ]
 
-[tool.setuptools]
-packages = ["dbus_ev"]
+[tool.setuptools.packages.find]
+include = ["dbus_ev*"]
+
+[tool.setuptools.package-data]
+"dbus_ev.mercedes.vendor" = ["LICENSE"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["**/proto/**", "build/**"]
+force-exclude = true
+
+[tool.coverage.run]
+omit = ["*/dbus_ev/mercedes/vendor/*"]
 
 [tool.ruff.lint]
 ignore = [
@@ -33,13 +45,25 @@ ignore = [
     "F841",
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"dbus_ev/mercedes/vendor/*.py" = ["BLE001", "DTZ005", "DTZ006", "RUF046", "SIM102"]
+"ha/custom_components/mbapi2020/car.py" = ["DTZ005", "DTZ006", "RUF046"]
+"ha/custom_components/mbapi2020/decoder.py" = ["BLE001", "DTZ005", "RUF046", "SIM102"]
+"ha/custom_components/mbapi2020/entity.py" = ["DTZ006"]
+"ha/custom_components/mbapi2020/sensor.py" = ["DTZ006", "SIM102"]
+
 [tool.pylint.messages_control]
 disable = [
     "E0401",  # Unable to import (Venus OS libs absent off-device)
     "C0103", "C0116", "C0301", "C0413",
     "R0902", "R0903", "R0913", "R0914", "R0915",
     "W0718", "W1203", "W0613",
+    "R0801",  # GX and HA ship independent copies of the pinned upstream decoder
+
 ]
+
+[tool.pylint.typecheck]
+generated-members = [".*_pb2.PushMessage", ".*_pb2.ClientMessage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

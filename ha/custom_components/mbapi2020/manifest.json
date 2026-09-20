@@ -1,0 +1,12 @@
+{
+  "domain": "mbapi2020",
+  "name": "Mercedes via Cerbo MQTT",
+  "version": "1.0.0",
+  "config_flow": true,
+  "integration_type": "hub",
+  "iot_class": "local_push",
+  "dependencies": ["mqtt"],
+  "requirements": [],
+  "documentation": "https://github.com/victron-venus/dbus-ev",
+  "codeowners": []
+}

@@ -1,3 +1,5 @@
+# Load only the dependencies for the selected backend.
+# pylint: disable=import-outside-toplevel
 """Entry point: HA <-> D-Bus EV bridge."""
 
 import argparse
@@ -42,24 +44,37 @@ def _setup_logging(debug: bool) -> None:
 class App:
     """HA <-> D-Bus bridge controller."""
 
-    def __init__(self, client: HaClient, services: EVEvices) -> None:
+    def __init__(self, client, services: EVEvices, *, charger=None, mqtt=None) -> None:
         self.client = client
         self.services = services
         self.last_ok_time: float | None = None
         self.loop_interval_ms = max(250, int(config.POLL_INTERVAL * 1000))
         self.worker: PollWorker | None = None
+        self.charger = charger
+        self.mqtt = mqtt
+        self.latest_snapshot = {"ok": False}
+        self.stale_timeout = (
+            config.MERCEDES_STALE_TIMEOUT
+            if config.DATA_SOURCE == "mercedes"
+            else config.SENSOR_STALE_TIMEOUT
+        )
+        if config.DATA_SOURCE == "mercedes":
+            self.loop_interval_ms = 1000
 
     def shutdown(self) -> None:
         if self.worker is not None:
             self.worker.stop()
         else:
             self.client.close()
+        if self.mqtt:
+            self.mqtt.close()
 
     # --- main cycle ----------------------------------------------------------
     def tick(self) -> bool:
         if self.worker is not None:
             # The main loop keeps checking freshness even while HA is slow.
             self._update_connected()
+            self._update_outputs()
             self.worker.poll(self.apply_snapshot)
             _write_heartbeat()
             return True
@@ -68,18 +83,41 @@ class App:
 
     def _update_connected(self) -> None:
         self.services.set_connected(
-            self.last_ok_time is not None
-            and (_now() - self.last_ok_time) < config.SENSOR_STALE_TIMEOUT
+            self.last_ok_time is not None and 0 <= (_now() - self.last_ok_time) < self.stale_timeout
         )
+
+    def _update_outputs(self):
+        snapshot = dict(self.latest_snapshot)
+        snapshot["ok"] = bool(
+            snapshot.get("ok")
+            and self.last_ok_time is not None
+            and 0 <= _now() - self.last_ok_time < self.stale_timeout
+        )
+        if self.mqtt:
+            self.mqtt.tick(snapshot)
+        if self.charger:
+            self.charger.update(
+                snapshot,
+                self.mqtt.meter() if self.mqtt else None,
+                require_meter=config.CERBO_METER_INSTANCE is not None,
+            )
 
     def apply_snapshot(self, snapshot) -> bool:
         """Publish a completed poll on the main loop; dry-run stays synchronous."""
         now = _now()
-        started_at = snapshot.get("_sample_started_at", now)
-        now_ok = snapshot["ok"] and 0 <= now - started_at < config.SENSOR_STALE_TIMEOUT
+        started_at = snapshot.get(
+            "_source_sample_started_at", snapshot.get("_sample_started_at", now)
+        )
+        now_ok = bool(
+            snapshot["ok"] and started_at is not None and 0 <= now - started_at < self.stale_timeout
+        )
         if now_ok:
             self.last_ok_time = started_at
+        elif config.DATA_SOURCE == "mercedes":
+            self.last_ok_time = None
+        self.latest_snapshot = dict(snapshot, ok=now_ok)
         self._update_connected()
+        self._update_outputs()
 
         if now_ok:
             self.services.update_soc(snapshot.get("soc"))
@@ -108,7 +146,61 @@ class App:
 
 
 def build_app() -> App:
-    client = HaClient(
+    if config.DATA_SOURCE == "mercedes":
+        from dbus_ev.mercedes.client import MercedesClient
+
+        client = MercedesClient(
+            vin=config.MERCEDES_VIN,
+            region=config.MERCEDES_REGION,
+            token_file=config.MERCEDES_TOKEN_FILE,
+            stale_timeout=config.MERCEDES_STALE_TIMEOUT,
+            capacity=config.BATTERY_CAPACITY_KWH,
+            home=(config.HOME_LATITUDE, config.HOME_LONGITUDE, config.HOME_RADIUS_METERS),
+        )
+    elif config.DATA_SOURCE == "ha":
+        client = _build_ha_client()
+    else:
+        raise ValueError("DATA_SOURCE must be 'ha' or 'mercedes'")
+    if config.CHARGER_ENABLED and config.DATA_SOURCE != "mercedes":
+        raise ValueError("The integrated charger requires DATA_SOURCE='mercedes'")
+    mqtt = None
+    if config.HA_MQTT_ENABLED or config.CERBO_METER_INSTANCE is not None:
+        from dbus_ev.cerbo_mqtt import CerboMqtt
+
+        mqtt = CerboMqtt(
+            host=config.CERBO_MQTT_HOST,
+            port=config.CERBO_MQTT_PORT,
+            portal=config.CERBO_PORTAL_ID,
+            publish_ha=config.HA_MQTT_ENABLED,
+            meter_instance=config.CERBO_METER_INSTANCE,
+            meter_ttl=config.CERBO_METER_TTL,
+            username=config.CERBO_MQTT_USERNAME,
+            password=config.CERBO_MQTT_PASSWORD,
+        )
+    charger = None
+    if config.CHARGER_ENABLED:
+        from dbus_ev.charger import Charger
+
+        charger = Charger(
+            instance=config.EVCHARGER_INSTANCE,
+            version=config.SOFTWARE_VERSION,
+            bus_suffix=config.CHARGER_BUS_SUFFIX,
+            phases=config.CHARGER_PHASES,
+            name=config.CHARGER_NAME,
+        )
+    services = EVEvices(
+        ev_instance=config.DEVICE_INSTANCE,
+        version=config.SOFTWARE_VERSION,
+        product_name=config.PRODUCT_NAME,
+        product_id=config.PRODUCT_ID,
+        connection=f"evcharger:{config.EVCHARGER_INSTANCE}",
+        bus_suffix=config.BUS_SUFFIX,
+    )
+    return App(client, services, charger=charger, mqtt=mqtt)
+
+
+def _build_ha_client():
+    return HaClient(
         base_url=config.HA_URL,
         token=config.HA_TOKEN,
         soc_entity=config.HA_SOC_ENTITY,
@@ -125,21 +217,15 @@ def build_app() -> App:
         power_entity=config.HA_POWER_ENTITY,
         timeout=config.HA_TIMEOUT,
     )
-    services = EVEvices(
-        ev_instance=config.DEVICE_INSTANCE,
-        version=config.SOFTWARE_VERSION,
-        product_name=config.PRODUCT_NAME,
-        product_id=config.PRODUCT_ID,
-        connection=f"evcharger:{config.EVCHARGER_INSTANCE}",
-        bus_suffix=config.BUS_SUFFIX,
-    )
-    app = App(client, services)
-    return app
 
 
 def serve(app: App) -> None:
     from gi.repository import GLib  # pylint: disable=C0415  # provided by Venus OS python env
 
+    if hasattr(app.client, "start"):
+        app.client.start()
+    if app.mqtt:
+        app.mqtt.start()
     app.worker = PollWorker(app.client, GLib.idle_add)
     GLib.timeout_add(app.loop_interval_ms, app.tick)
     mainloop = GLib.MainLoop()

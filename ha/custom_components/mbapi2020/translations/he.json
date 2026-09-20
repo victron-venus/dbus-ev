@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "טעינה פעילה"
+      },
+      "decklidstatus": {
+        "name": "מכסה תא מטען"
+      },
+      "doorlockstatusdecklid": {
+        "name": "נעילת מכסה תא מטען"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "מגבלת הספק טעינה"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "לא פעיל",
+          "1": "חימום רגיל",
+          "2": "אוורור רגיל",
+          "3": "חימום ידני",
+          "4": "חימום נוסף",
+          "5": "אוורור נוסף",
+          "6": "חימום אוטומטי"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "פתוח",
+          "1": "סגור",
+          "2": "מכסה לחוץ",
+          "3": "לא ידוע"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "פתוח",
+          "1": "סגור",
+          "2": "מכסה לחוץ",
+          "3": "לא ידוע"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "פתוח",
+          "closed": "סגור",
+          "pressed": "מכסה לחוץ",
+          "unknown": "לא ידוע"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "טוען",
+          "1": "הטעינה מסתיימת",
+          "2": "הפסקת טעינה",
+          "3": "לא מחובר",
+          "4": "תקלה",
+          "5": "טעינה איטית",
+          "6": "טעינה מהירה",
+          "7": "פורק",
+          "8": "לא טוען",
+          "9": "טעינה איטית לאחר הגעה ליעד נסיעה",
+          "10": "טעינה לאחר הגעה ליעד נסיעה",
+          "11": "טעינה מהירה לאחר הגעה ליעד נסיעה",
+          "12": "מחובר",
+          "13": "טעינת AC",
+          "14": "טעינת DC",
+          "15": "כיול סוללה פעיל",
+          "16": "לא ידוע"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "מושבת",
+          "1": "יומי",
+          "2": "שבועי"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "נעול",
+          "1": "כבוי",
+          "2": "אביזרים",
+          "4": "פועל",
+          "5": "התנעה"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "לא פעיל",
+          "1": "לא פעיל",
+          "2": "פעיל"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "לא נעול",
+          "1": "נעול פנימית",
+          "2": "נעול",
+          "3": "נעול חלקית",
+          "4": "לא ידוע"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "מכסה תא מטען",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "דלת קדמית שמאלית",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "דלת קדמית ימנית",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "דלת אחורית שמאלית",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "דלת אחורית ימנית",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "נעילת דלת קדמית שמאלית",
+            "state": {
+              "false": "נעול",
+              "true": "לא נעול"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "נעילת דלת קדמית ימנית",
+            "state": {
+              "false": "נעול",
+              "true": "לא נעול"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "נעילת דלת אחורית שמאלית",
+            "state": {
+              "false": "נעול",
+              "true": "לא נעול"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "נעילת דלת אחורית ימנית",
+            "state": {
+              "false": "נעול",
+              "true": "לא נעול"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "נעילת פתח דלק",
+            "state": {
+              "false": "נעול",
+              "true": "לא נעול"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "מכסה מנוע",
+            "state": {
+              "false": "סגור",
+              "true": "פתוח"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "מצב דלתות כללי",
+            "state": {
+              "0": "פתוח",
+              "1": "סגור",
+              "2": "לא קיים",
+              "3": "לא ידוע"
+            }
+          },
+          "sunroofstatus": {
+            "name": "מצב גג שמש",
+            "state": {
+              "0": "סגור",
+              "1": "פתוח",
+              "2": "אוורור פתוח",
+              "3": "בתנועה",
+              "4": "מיקום נגד רעש",
+              "5": "הזזה ביניים",
+              "6": "הרמה ביניים",
+              "7": "פותח",
+              "8": "סוגר",
+              "9": "הרמה נגד רעש",
+              "10": "מיקום ביניים",
+              "11": "פתיחה בהרמה",
+              "12": "סגירה בהרמה"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "סגור",
+          "1": "פתוח",
+          "2": "אוורור פתוח",
+          "3": "בתנועה",
+          "4": "נגד רעש",
+          "5": "הזזה ביניים",
+          "6": "הרמה ביניים",
+          "7": "פותח",
+          "8": "סוגר",
+          "9": "הרמה נגד רעש",
+          "10": "מיקום ביניים",
+          "11": "פתיחה בהרמה",
+          "12": "סגירה בהרמה"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "ירוק",
+          "1": "צהוב",
+          "2": "אדום",
+          "3": "כתום",
+          "4": "ירוק/צהוב"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "ללא אזהרה",
+          "1": "אזהרה קלה",
+          "2": "לחץ נמוך",
+          "3": "נקר"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "רגיל",
+          "2": "בית",
+          "3": "עבודה",
+          "4": "לא נתמך"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "מצב ביניים",
+          "1": "פתוח",
+          "2": "סגור",
+          "3": "אוורור",
+          "4": "מצב ביניים לאוורור",
+          "5": "בתנועה"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "מצב ביניים",
+          "1": "פתוח",
+          "2": "סגור",
+          "3": "אוורור",
+          "4": "מצב ביניים לאוורור",
+          "5": "בתנועה"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "מצב ביניים",
+          "1": "פתוח",
+          "2": "סגור",
+          "3": "אוורור",
+          "4": "מצב ביניים לאוורור",
+          "5": "בתנועה"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "מצב ביניים",
+          "1": "פתוח",
+          "2": "סגור",
+          "3": "אוורור",
+          "4": "מצב ביניים לאוורור",
+          "5": "בתנועה"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

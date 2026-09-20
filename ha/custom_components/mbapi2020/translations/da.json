@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Opladning aktiv"
+      },
+      "decklidstatus": {
+        "name": "Bagklap"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Bagklaplås"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Ladeeffektgrænse"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Inaktiv",
+          "1": "Normal opvarmning",
+          "2": "Normal ventilation",
+          "3": "Manuel opvarmning",
+          "4": "Efteropvarmning",
+          "5": "Efterventilation",
+          "6": "Automatisk opvarmning"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Åben",
+          "1": "Lukket",
+          "2": "Klap trykket",
+          "3": "Ukendt"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Åben",
+          "1": "Lukket",
+          "2": "Klap trykket",
+          "3": "Ukendt"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Åben",
+          "closed": "Lukket",
+          "pressed": "Klap trykket",
+          "unknown": "Ukendt"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "oplader",
+          "1": "opladning slutter",
+          "2": "Ladepause",
+          "3": "frakoblet",
+          "4": "fejl",
+          "5": "langsom",
+          "6": "hurtig",
+          "7": "aflader",
+          "8": "oplader ikke",
+          "9": "langsom opladning efter nået rejsemål",
+          "10": "opladning efter nået rejsemål",
+          "11": "hurtig opladning efter nået rejsemål",
+          "12": "Tilsluttet",
+          "13": "AC-opladning",
+          "14": "DC-opladning",
+          "15": "Batterikalibrering aktiv",
+          "16": "ukendt"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Deaktiveret",
+          "1": "Daglig",
+          "2": "Ugentlig"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Låst",
+          "1": "Slukket",
+          "2": "Tilbehør",
+          "4": "Tændt",
+          "5": "Start"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Ikke aktiv",
+          "1": "Ikke aktiv",
+          "2": "Aktiv"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Ulåst",
+          "1": "Låst internt",
+          "2": "Låst",
+          "3": "Delvist ulåst",
+          "4": "Ukendt"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Bagklap",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Dør venstre for",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Dør højre for",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Dør venstre bag",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Dør højre bag",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Dørlås venstre for",
+            "state": {
+              "false": "låst",
+              "true": "ulåst"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Dørlås højre for",
+            "state": {
+              "false": "låst",
+              "true": "ulåst"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Dørlås venstre bag",
+            "state": {
+              "false": "låst",
+              "true": "ulåst"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Dørlås højre bag",
+            "state": {
+              "false": "låst",
+              "true": "ulåst"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Tanklåg",
+            "state": {
+              "false": "låst",
+              "true": "ulåst"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Motorhjelm",
+            "state": {
+              "false": "lukket",
+              "true": "åben"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Samlet dørstatus",
+            "state": {
+              "0": "åben",
+              "1": "lukket",
+              "2": "findes ikke",
+              "3": "ukendt"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Soltagsstatus",
+            "state": {
+              "0": "lukket",
+              "1": "åben",
+              "2": "løft åben",
+              "3": "kører",
+              "4": "vindstøjsposition",
+              "5": "glidende mellemposition",
+              "6": "løftende mellemposition",
+              "7": "åbner",
+              "8": "lukker",
+              "9": "vindstøjsløft",
+              "10": "mellemposition",
+              "11": "åbner løft",
+              "12": "lukker løft"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Lukket",
+          "1": "Åben",
+          "2": "Åben løft",
+          "3": "Kører",
+          "4": "Vindstøjsposition",
+          "5": "Glidende mellemposition",
+          "6": "Løftende mellemposition",
+          "7": "Åbner",
+          "8": "Lukker",
+          "9": "Vindstøjsløft",
+          "10": "Mellemposition",
+          "11": "Åbner løft",
+          "12": "Lukker løft"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Grøn",
+          "1": "Gul",
+          "2": "Rød",
+          "3": "Orange",
+          "4": "Grøn/gul"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Ingen advarsel",
+          "1": "Blød advarsel",
+          "2": "Lavt tryk",
+          "3": "Punktering"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Standard",
+          "2": "Hjem",
+          "3": "Arbejde",
+          "4": "Ikke understøttet"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Mellemposition",
+          "1": "Åben",
+          "2": "Lukket",
+          "3": "Ventilerer",
+          "4": "Mellemposition ventilation",
+          "5": "Kører"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Mellemposition",
+          "1": "Åben",
+          "2": "Lukket",
+          "3": "Ventilerer",
+          "4": "Mellemposition ventilation",
+          "5": "Kører"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Mellemposition",
+          "1": "Åben",
+          "2": "Lukket",
+          "3": "Ventilerer",
+          "4": "Mellemposition ventilation",
+          "5": "Kører"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Mellemposition",
+          "1": "Åben",
+          "2": "Lukket",
+          "3": "Ventilerer",
+          "4": "Mellemposition ventilation",
+          "5": "Kører"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

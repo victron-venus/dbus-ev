@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Opladen actief"
+      },
+      "decklidstatus": {
+        "name": "Bagageklep"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Bagageklepslot"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Laadvermogen Limiet"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Inactief",
+          "1": "Normaal verwarmen",
+          "2": "Normale ventilatie",
+          "3": "Handmatig verwarmen",
+          "4": "Naverwarmen",
+          "5": "Naventileren",
+          "6": "Automatisch verwarmen"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Open",
+          "1": "Gesloten",
+          "2": "Klep ingedrukt",
+          "3": "Onbekend"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Open",
+          "1": "Gesloten",
+          "2": "Klep ingedrukt",
+          "3": "Onbekend"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Open",
+          "closed": "Gesloten",
+          "pressed": "Klep ingedrukt",
+          "unknown": "Onbekend"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "Opladen",
+          "1": "Opladen beëindigd",
+          "2": "Oplaadpauze",
+          "3": "Losgekoppeld",
+          "4": "Fout",
+          "5": "Langzaam",
+          "6": "Snel",
+          "7": "Ontladen",
+          "8": "Niet aan het opladen",
+          "9": "Langzaam opladen na bereiken ritdoel",
+          "10": "Opladen na bereiken ritdoel",
+          "11": "Snel opladen na bereiken ritdoel",
+          "12": "Verbonden",
+          "13": "AC opladen",
+          "14": "DC opladen",
+          "15": "Batterijkalibratie actief",
+          "16": "Onbekend"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Uitgeschakeld",
+          "1": "Dagelijks",
+          "2": "Wekelijks"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Vergrendeld",
+          "1": "Uit",
+          "2": "Accessoire",
+          "4": "Aan",
+          "5": "Start"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Niet actief",
+          "1": "Niet actief",
+          "2": "Actief"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Ontgrendeld",
+          "1": "Intern vergrendeld",
+          "2": "Vergrendeld",
+          "3": "Deels ontgrendeld",
+          "4": "Onbekend"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Bagageklep",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Deur voor links",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Deur voor rechts",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Deur achter links",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Deur achter rechts",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Deurslot voor links",
+            "state": {
+              "false": "vergrendeld",
+              "true": "ontgrendeld"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Deurslot voor rechts",
+            "state": {
+              "false": "vergrendeld",
+              "true": "ontgrendeld"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Deurslot achter links",
+            "state": {
+              "false": "vergrendeld",
+              "true": "ontgrendeld"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Deurslot achter rechts",
+            "state": {
+              "false": "vergrendeld",
+              "true": "ontgrendeld"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Tankdopslot",
+            "state": {
+              "false": "vergrendeld",
+              "true": "ontgrendeld"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Motorkap",
+            "state": {
+              "false": "gesloten",
+              "true": "open"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Algemene deurstatus",
+            "state": {
+              "0": "open",
+              "1": "gesloten",
+              "2": "niet aanwezig",
+              "3": "onbekend"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Schuifdak status",
+            "state": {
+              "0": "gesloten",
+              "1": "open",
+              "2": "open gekanteld",
+              "3": "in beweging",
+              "4": "anti-dreunstand",
+              "5": "tussenpositie schuifstand",
+              "6": "tussenpositie kantelstand",
+              "7": "aan het openen",
+              "8": "aan het sluiten",
+              "9": "anti-dreun kantelstand",
+              "10": "tussenpositie",
+              "11": "openen kantelstand",
+              "12": "sluiten kantelstand"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Gesloten",
+          "1": "Open",
+          "2": "Open gekanteld",
+          "3": "In beweging",
+          "4": "Anti-dreunstand",
+          "5": "Tussenpositie schuifstand",
+          "6": "Tussenpositie kantelstand",
+          "7": "Aan het openen",
+          "8": "Aan het sluiten",
+          "9": "Anti-dreunstand kantelstand",
+          "10": "Tussenpositie",
+          "11": "Openen kantelstand",
+          "12": "Sluiten kantelstand"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Groen",
+          "1": "Geel",
+          "2": "Rood",
+          "3": "Oranje",
+          "4": "Groen/geel"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Geen waarschuwing",
+          "1": "Zachte waarschuwing",
+          "2": "Lage druk",
+          "3": "Lekkage"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Standaard",
+          "2": "Thuis",
+          "3": "Werk",
+          "4": "Niet ondersteund"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Tussenpositie",
+          "1": "Open",
+          "2": "Gesloten",
+          "3": "Ventileren",
+          "4": "Tussenpositie ventileren",
+          "5": "In beweging"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Tussenpositie",
+          "1": "Open",
+          "2": "Gesloten",
+          "3": "Ventileren",
+          "4": "Tussenpositie ventileren",
+          "5": "In beweging"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Tussenpositie",
+          "1": "Open",
+          "2": "Gesloten",
+          "3": "Ventileren",
+          "4": "Tussenpositie ventileren",
+          "5": "In beweging"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Tussenpositie",
+          "1": "Open",
+          "2": "Gesloten",
+          "3": "Ventileren",
+          "4": "Tussenpositie ventileren",
+          "5": "In beweging"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

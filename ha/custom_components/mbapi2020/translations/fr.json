@@ -1,0 +1,332 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mercedes via Cerbo MQTT",
+        "description": "Use the existing MQTT connection bridged from Cerbo. No Mercedes credentials are needed in Home Assistant.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "stale_timeout": "Data expiry (seconds)",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)"
+        }
+      },
+      "reconfigure": {
+        "title": "Replace Mercedes cloud connection with Cerbo MQTT",
+        "description": "Keeps existing entities and removes Mercedes credentials from this entry.",
+        "data": {
+          "portal_id": "Cerbo portal ID",
+          "vin": "Vehicle VIN",
+          "vehicle_name": "Vehicle name",
+          "topic_prefix": "MQTT bridge prefix (for example victron/)",
+          "stale_timeout": "Telemetry expiry (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Enter a valid VIN and Cerbo portal ID."
+    },
+    "abort": {
+      "already_configured": "This vehicle is already configured.",
+      "reconfigure_successful": "Cerbo MQTT configured."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "chargingactive": {
+        "name": "Charge en cours"
+      },
+      "decklidstatus": {
+        "name": "Couvercle de coffre"
+      },
+      "doorlockstatusdecklid": {
+        "name": "Serrure du couvercle de coffre"
+      }
+    },
+    "sensor": {
+      "chargingpowerecolimit": {
+        "name": "Limite de puissance de charge"
+      },
+      "auxheatstatus": {
+        "state": {
+          "0": "Inactif",
+          "1": "Chauffage normal",
+          "2": "Ventilation normale",
+          "3": "Chauffage manuel",
+          "4": "Post-chauffage",
+          "5": "Post-ventilation",
+          "6": "Chauffage automatique"
+        }
+      },
+      "chargeflapacstatus": {
+        "state": {
+          "0": "Ouvert",
+          "1": "Ferme",
+          "2": "Trappe pressee",
+          "3": "Inconnu"
+        }
+      },
+      "chargeflapdcstatus": {
+        "state": {
+          "0": "Ouvert",
+          "1": "Ferme",
+          "2": "Trappe pressee",
+          "3": "Inconnu"
+        }
+      },
+      "chargeflapstate": {
+        "state": {
+          "open": "Ouvert",
+          "closed": "Fermée",
+          "pressed": "Trappe pressée",
+          "unknown": "Inconnu"
+        }
+      },
+      "chargingstatus": {
+        "state": {
+          "0": "en charge",
+          "1": "fin de charge",
+          "2": "Pause de charge",
+          "3": "debranche",
+          "4": "erreur",
+          "5": "lente",
+          "6": "rapide",
+          "7": "en decharge",
+          "8": "pas en charge",
+          "9": "charge lente apres avoir atteint l'objectif du trajet",
+          "10": "en charge apres avoir atteint l'objectif du trajet",
+          "11": "charge rapide apres avoir atteint l'objectif du trajet",
+          "12": "Connecte",
+          "13": "Charge CA",
+          "14": "Charge CC",
+          "15": "Calibrage de la batterie en cours",
+          "16": "inconnu"
+        }
+      },
+      "departuretimemode": {
+        "state": {
+          "0": "Desactive",
+          "1": "Quotidien",
+          "2": "Hebdomadaire"
+        }
+      },
+      "ignitionstate": {
+        "state": {
+          "0": "Verrouille",
+          "1": "Eteint",
+          "2": "Accessoire",
+          "4": "Allume",
+          "5": "Demarrage"
+        }
+      },
+      "interiorprotectionsensorstatus": {
+        "state": {
+          "0": "Non actif",
+          "1": "Non actif",
+          "2": "Actif"
+        },
+        "state_attributes": {}
+      },
+      "lock": {
+        "state": {
+          "0": "Deverrouille",
+          "1": "Verrouille int.",
+          "2": "Verrouille",
+          "3": "Partiellement deverrouille",
+          "4": "Inconnu"
+        },
+        "state_attributes": {
+          "decklidstatus": {
+            "name": "Couvercle de coffre",
+            "state": {
+              "false": "ferme",
+              "true": "ouvert"
+            }
+          },
+          "doorstatusfrontleft": {
+            "name": "Porte avant gauche",
+            "state": {
+              "false": "fermee",
+              "true": "ouverte"
+            }
+          },
+          "doorstatusfrontright": {
+            "name": "Porte avant droite",
+            "state": {
+              "false": "fermee",
+              "true": "ouverte"
+            }
+          },
+          "doorstatusrearleft": {
+            "name": "Porte arriere gauche",
+            "state": {
+              "false": "fermee",
+              "true": "ouverte"
+            }
+          },
+          "doorstatusrearright": {
+            "name": "Porte arriere droite",
+            "state": {
+              "false": "fermee",
+              "true": "ouverte"
+            }
+          },
+          "doorlockstatusfrontleft": {
+            "name": "Serrure porte avant gauche",
+            "state": {
+              "false": "verrouillee",
+              "true": "deverrouillee"
+            }
+          },
+          "doorlockstatusfrontright": {
+            "name": "Serrure porte avant droite",
+            "state": {
+              "false": "verrouillee",
+              "true": "deverrouillee"
+            }
+          },
+          "doorlockstatusrearleft": {
+            "name": "Serrure porte arriere gauche",
+            "state": {
+              "false": "verrouillee",
+              "true": "deverrouillee"
+            }
+          },
+          "doorlockstatusrearright": {
+            "name": "Serrure porte arriere droite",
+            "state": {
+              "false": "verrouillee",
+              "true": "deverrouillee"
+            }
+          },
+          "doorlockstatusgas": {
+            "name": "Serrure du reservoir",
+            "state": {
+              "false": "verrouillee",
+              "true": "deverrouillee"
+            }
+          },
+          "enginehoodstatus": {
+            "name": "Capot moteur",
+            "state": {
+              "false": "ferme",
+              "true": "ouvert"
+            }
+          },
+          "doorstatusoverall": {
+            "name": "Etat general des portes",
+            "state": {
+              "0": "ouvert",
+              "1": "ferme",
+              "2": "inexistant",
+              "3": "inconnu"
+            }
+          },
+          "sunroofstatus": {
+            "name": "Etat du toit ouvrant",
+            "state": {
+              "0": "ferme",
+              "1": "ouvert",
+              "2": "ouverture basculante",
+              "3": "en mouvement",
+              "4": "position anti-vibration",
+              "5": "coulissement intermediaire",
+              "6": "basculement intermediaire",
+              "7": "en ouverture",
+              "8": "en fermeture",
+              "9": "basculement anti-vibration",
+              "10": "position intermediaire",
+              "11": "ouverture basculante",
+              "12": "fermeture basculante"
+            }
+          }
+        }
+      },
+      "sunroofstatus": {
+        "state": {
+          "0": "Ferme",
+          "1": "Ouvert",
+          "2": "Ouverture basculante",
+          "3": "En mouvement",
+          "4": "Anti-vibration",
+          "5": "Coulissement intermediaire",
+          "6": "Basculement intermediaire",
+          "7": "En ouverture",
+          "8": "En fermeture",
+          "9": "Basculement anti-vibration",
+          "10": "Position intermediaire",
+          "11": "Ouverture basculante",
+          "12": "Fermeture basculante"
+        },
+        "state_attributes": {}
+      },
+      "starterbatterystate": {
+        "state": {
+          "0": "Vert",
+          "1": "Jaune",
+          "2": "Rouge",
+          "3": "Orange",
+          "4": "Vert/Jaune"
+        }
+      },
+      "tirewarningsrdk": {
+        "state": {
+          "0": "Aucun avertissement",
+          "1": "Avertissement leger",
+          "2": "Pression basse",
+          "3": "Degonflement"
+        }
+      },
+      "selectedchargeprogram": {
+        "state": {
+          "0": "Standard",
+          "2": "Domicile",
+          "3": "Travail",
+          "4": "Non pris en charge"
+        }
+      },
+      "windowstatusrearleft": {
+        "state": {
+          "0": "Position intermédiaire",
+          "1": "Ouvert",
+          "2": "Fermé",
+          "3": "Aération",
+          "4": "Position d'aération intermédiaire",
+          "5": "En mouvement"
+        }
+      },
+      "windowstatusrearright": {
+        "state": {
+          "0": "Position intermédiaire",
+          "1": "Ouvert",
+          "2": "Fermé",
+          "3": "Aération",
+          "4": "Position d'aération intermédiaire",
+          "5": "En mouvement"
+        }
+      },
+      "windowstatusfrontright": {
+        "state": {
+          "0": "Position intermédiaire",
+          "1": "Ouvert",
+          "2": "Fermé",
+          "3": "Aération",
+          "4": "Position d'aération intermédiaire",
+          "5": "En mouvement"
+        }
+      },
+      "windowstatusfrontleft": {
+        "state": {
+          "0": "Position intermédiaire",
+          "1": "Ouvert",
+          "2": "Fermé",
+          "3": "Aération",
+          "4": "Position d'aération intermédiaire",
+          "5": "En mouvement"
+        }
+      }
+    }
+  },
+  "title": "Mercedes via Cerbo MQTT"
+}

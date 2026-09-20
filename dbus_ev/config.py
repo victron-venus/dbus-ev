@@ -4,10 +4,20 @@ Real values live in local_config.py at the repo root (gitignored).
 Falls back to safe defaults when it is missing.
 """
 
+import json
 import logging
 import os
 
 logger = logging.getLogger(__name__)
+
+SETUP_OPTIONS_FILE = os.environ.get(
+    "DBUS_EV_SETUP_OPTIONS", "/data/setupOptions/dbus-ev/options.json"
+)
+try:
+    with open(SETUP_OPTIONS_FILE, encoding="utf-8") as options_file:
+        _setup_options = json.load(options_file)
+except FileNotFoundError:
+    _setup_options = {}
 
 
 try:
@@ -18,6 +28,8 @@ except ImportError:
 
 
 def _get(name: str, default):
+    if name == "HA_MQTT_ENABLED" and name in _setup_options:
+        return _setup_options[name]
     if local_config is not None and hasattr(local_config, name):
         return getattr(local_config, name)
     return default
@@ -74,6 +86,31 @@ POLL_INTERVAL: float = float(_get("POLL_INTERVAL", 15.0))  # s
 
 HEARTBEAT_FILE = "/run/dbus-ev/heartbeat"
 HA_TIMEOUT: float = float(_get("HA_TIMEOUT", 3.0))
+
+# One upstream provider per process; no automatic cloud/HA switching.
+DATA_SOURCE: str = str(_get("DATA_SOURCE", "ha")).lower()
+MERCEDES_VIN: str = str(_get("MERCEDES_VIN", "")).upper()
+MERCEDES_REGION: str = str(_get("MERCEDES_REGION", "Europe"))
+MERCEDES_TOKEN_FILE: str = str(
+    _get("MERCEDES_TOKEN_FILE", "/data/setupOptions/dbus-ev/mercedes-token.json")
+)
+MERCEDES_STALE_TIMEOUT: float = float(_get("MERCEDES_STALE_TIMEOUT", 300.0))
+HOME_LATITUDE = _get("HOME_LATITUDE", None)
+HOME_LONGITUDE = _get("HOME_LONGITUDE", None)
+HOME_RADIUS_METERS = float(_get("HOME_RADIUS_METERS", 150.0))
+
+CHARGER_ENABLED: bool = bool(_get("CHARGER_ENABLED", False))
+CHARGER_BUS_SUFFIX: str = str(_get("CHARGER_BUS_SUFFIX", "charger"))
+CHARGER_NAME: str = str(_get("CHARGER_NAME", "EV Charger"))
+CHARGER_PHASES: int = int(_get("CHARGER_PHASES", 1))
+CERBO_METER_INSTANCE = _get("CERBO_METER_INSTANCE", None)
+CERBO_METER_TTL = float(_get("CERBO_METER_TTL", 15.0))
+HA_MQTT_ENABLED: bool = bool(_get("HA_MQTT_ENABLED", False))
+CERBO_MQTT_HOST = str(_get("CERBO_MQTT_HOST", "127.0.0.1"))
+CERBO_MQTT_PORT = int(_get("CERBO_MQTT_PORT", 1883))
+CERBO_MQTT_USERNAME = str(_get("CERBO_MQTT_USERNAME", ""))
+CERBO_MQTT_PASSWORD = str(_get("CERBO_MQTT_PASSWORD", ""))
+CERBO_PORTAL_ID = str(_get("CERBO_PORTAL_ID", ""))
 
 # Battery capacity in kWh (kWh). Optional: when unset, /BatteryCapacity is
 # not published.

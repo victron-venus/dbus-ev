@@ -28,7 +28,7 @@ fi
 LOCAL_ONLY="local_config.py"
 
 # Runtime items shipped at the repo root and installed at INSTALL_DIR root.
-RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py"
+RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py configure.py ha install-mercedes-deps.sh"
 
 # Flat-file leftovers that must never survive an update (we run `python3 -m
 # dbus_ev`; a stale root main.py would shadow the package).
@@ -38,15 +38,47 @@ sep() { echo "=== dbus-ev update: $*"; }
 
 # Fail before stopping the existing service if the firmware lacks dependencies.
 # Provision packages separately; never modify the system Python during an update.
-PYTHONDONTWRITEBYTECODE=1 python3 - <<'PYTHON'
+PYTHONPATH="/data/setupOptions/dbus-ev/python${PYTHONPATH:+:$PYTHONPATH}" PYTHONDONTWRITEBYTECODE=1 python3 - "$SRC_DIR" "$INSTALL_DIR" <<'PYTHON'
 import sys
-if sys.version_info < (3, 11):
-    raise SystemExit("Python 3.11 or newer is required")
+from pathlib import Path
+if sys.version_info[:2] != (3, 12):
+    raise SystemExit("Python 3.12.x from Venus OS is required")
 import requests, dbus
 sys.path.insert(0, "/opt/victronenergy/dbus-systemcalc-py/ext/velib_python")
 from gi.repository import GLib
 from vedbus import VeDbusService
+# Inspect the configuration that will actually be used, before stopping workers.
+import os
+root = Path(sys.argv[1] if os.environ.get("PUSH_LOCAL_CONFIG") == "1" else sys.argv[2])
+config_file = root / "local_config.py"
+values = {}
+if config_file.exists():
+    exec(compile(config_file.read_text(), str(config_file), "exec"), values)
+if values.get("DATA_SOURCE") == "mercedes":
+    try:
+        import aiohttp, google.protobuf, paho.mqtt.client
+    except ImportError as exc:
+        raise SystemExit("Missing Mercedes dependencies: run install-mercedes-deps.sh first") from exc
 PYTHON
+
+# A second owner must not advertise the same charger. Migration stops/removes
+# the old package's service before enabling CHARGER_ENABLED in this package.
+if [ -e /service/dbus-evcharger ]; then
+    if python3 - "$SRC_DIR" "$INSTALL_DIR" <<'PYTHON'
+import os, sys
+from pathlib import Path
+root = Path(sys.argv[1] if os.environ.get("PUSH_LOCAL_CONFIG") == "1" else sys.argv[2])
+p = root / "local_config.py"
+values = {}
+if p.exists():
+    exec(compile(p.read_text(), str(p), "exec"), values)
+raise SystemExit(0 if values.get("CHARGER_ENABLED") else 1)
+PYTHON
+    then
+        echo "Remove the old /service/dbus-evcharger before enabling the unified charger" >&2
+        exit 1
+    fi
+fi
 
 command -v svc >/dev/null
 command -v svstat >/dev/null

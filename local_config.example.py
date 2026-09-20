@@ -4,6 +4,37 @@ Copy to local_config.py and fill in real values. NEVER commit local_config.py.
 """
 
 # Home Assistant
+# Select "mercedes" for direct cloud telemetry; "ha" preserves the existing reader.
+DATA_SOURCE = "ha"
+MERCEDES_VIN = ""
+MERCEDES_REGION = "Europe"  # Europe, North America, Asia-Pacific, China
+MERCEDES_TOKEN_FILE = "/data/setupOptions/dbus-ev/mercedes-token.json"
+MERCEDES_STALE_TIMEOUT = 300.0
+# Run python3 -m dbus_ev.mercedes.auth once to authorize. Never put tokens in this example.
+
+# The unified process can also own the former dbus-evcharger identity.
+# Stop/uninstall the old dbus-evcharger service before enabling this.
+CHARGER_ENABLED = False
+CHARGER_BUS_SUFFIX = "charger"
+CHARGER_NAME = "EV Charger"
+CHARGER_PHASES = 1
+# Optional local Cerbo acload meter. No round trip through Home Assistant.
+CERBO_METER_INSTANCE = None
+CERBO_METER_TTL = 15.0
+# Home charger association uses coordinates, never "charging active" as presence.
+HOME_LATITUDE = None
+HOME_LONGITUDE = None
+HOME_RADIUS_METERS = 150.0
+
+# Publish Mercedes snapshots for the accompanying HA integration via Cerbo MQTT.
+# Off for fresh installations. SetupHelper: ./setup install --ha-mqtt=on|off
+HA_MQTT_ENABLED = False
+CERBO_MQTT_HOST = "127.0.0.1"
+CERBO_MQTT_PORT = 1883
+CERBO_PORTAL_ID = ""
+CERBO_MQTT_USERNAME = ""
+CERBO_MQTT_PASSWORD = ""
+
 HA_URL = "http://192.168.1.50:8123"
 HA_TOKEN = "your_long_lived_access_token_here"
 

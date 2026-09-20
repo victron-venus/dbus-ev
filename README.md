@@ -1,9 +1,64 @@
-# Venus OS D-Bus exporter for the VEHICLE
+# Venus OS vehicle and charger bridge
 
-This service exports vehicle data from Home Assistant as
+This service exports vehicle data from Mercedes or Home Assistant as
 `com.victronenergy.ev.<suffix>` (by default `com.victronenergy.ev.ha`).
 The numeric identifier belongs in `/DeviceInstance`; the service suffix is a
-textual identifier. The separate `dbus-evcharger` package exports charger data.
+textual identifier. With `DATA_SOURCE = "mercedes"`, this package connects directly
+to Mercedes using one OAuth session and one WebSocket, and can also own the
+`com.victronenergy.evcharger.charger` service formerly provided by `dbus-evcharger`.
+
+Set `HA_MQTT_ENABLED = True` to publish complete Mercedes telemetry for the
+included [Home Assistant MQTT adapter](ha/README.md). The example defaults to
+`False`. Both `local_config.py` and SetupHelper installation options are supported:
+`./setup install --ha-mqtt=on` (or `off`). PackageManager reinstalls reuse the
+saved choice under `/data/setupOptions/dbus-ev/options.json`; interactive terminal
+installs also offer the choice. A saved SetupHelper choice overrides the config
+file until changed or that override is removed.
+
+Read [migration and rollback](docs/mercedes-migration.md) before switching a live
+installation. The old HA integration must stop before the direct Mercedes client
+starts. Preserve the two existing D-Bus identities; remove the old charger worker.
+
+### Direct Mercedes backend
+
+Provision the optional dependencies with `./install-mercedes-deps.sh` on Venus,
+or `uv sync --extra mercedes --extra dev` for development. On Venus, optional
+packages live in `/data/setupOptions/dbus-ev/python`; system packages are unchanged.
+The updater checks dependencies before stopping any service. Authorize once:
+
+```sh
+cd /data/dbus-ev
+PYTHONPATH=/data/setupOptions/dbus-ev/python python3 -m dbus_ev.mercedes.auth --region 'North America'
+```
+
+The standalone login stores only tokens and device identity, not the password.
+An existing HA token can also be transferred as described in the migration guide.
+Regions use the same mobile API as mbapi2020. The inherited username/password flow
+does not support accounts requiring 2FA; accept changed legal terms in the official
+Mercedes app. No terms are accepted automatically. The separate China PIN login
+is not exposed by this release's standalone CLI.
+
+Configure VIN, region, battery capacity and (for charger association) home
+coordinates. With `CHARGER_ENABLED = True`, instance 40 and suffix `charger` remain
+the defaults. `CERBO_METER_INSTANCE` optionally reads power directly from an
+`acload` service through the same local MQTT client. A dedicated circuit above
+50 W establishes local charging; at zero power, vehicle location/status determine
+connection when available. Unknown state and missing readings remain unavailable.
+Daily energy is never substituted for lifetime or session energy.
+
+When Mercedes explicitly reports the charge cable unplugged but omits charging
+power, the vehicle D-Bus service reports 0 W. Other missing or invalid power values
+remain unknown. Original Mercedes attributes forwarded to HA are unchanged.
+
+Mercedes field timestamps travel unchanged. Re-reading the local cache cannot
+renew its acquisition time. `MERCEDES_STALE_TIMEOUT` defaults to 300 seconds and
+controls direct-provider availability. The MQTT last will reports process/broker
+loss; the HA receiver also expires retained data independently. A single token-file
+lock prevents two local clients from sharing that authorization state.
+
+The HA backend remains selectable as `DATA_SOURCE = "ha"`. Existing standalone
+charger HA/MQTT installations may keep using `dbus-evcharger` until migrated;
+enabling the integrated charger requires the Mercedes backend.
 
 ## Python runtime
 
@@ -60,7 +115,10 @@ Standard D-Bus properties are also provided:
 
 ## Configuration
 
-Copy `local_config.example.py` to `local_config.py` and set the Home Assistant URL, long-lived access token, and entity IDs for the vehicle data.
+Copy `local_config.example.py` to `local_config.py` and select `DATA_SOURCE`. For
+Mercedes, configure the VIN, region and token file as described above; enable the
+integrated charger and HA MQTT publication as needed. For the HA backend, set the
+Home Assistant URL, long-lived access token and vehicle entity IDs.
 
 ## Usage
 

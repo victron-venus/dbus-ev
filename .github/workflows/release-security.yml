@@ -22,7 +22,7 @@ jobs:
         run: >-
           python -m pip install --only-binary=:all: bandit==1.9.2
       - name: Block high severity Python findings
-        run: python -m bandit -r . -lll -x .git,.venv,.venv-ci,tests,release-dist,dist,build -f json -o bandit-results.json
+        run: python -m bandit -r . -lll -x ./.git,./.venv,./.venv-ci,./tests,./release-dist,./dist,./build -f json -o bandit-results.json
       - name: Block high and critical dependency and secret findings
         uses: aquasecurity/trivy-action@d2a0b60797ff03db6132bd4e2b293f9b37081297
         with:
