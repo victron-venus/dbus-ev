@@ -194,7 +194,11 @@ def test_only_initialized_live_stream_can_supplement_widget(connected, full, tmp
         assert snapshot["power"] == 7200
         assert snapshot["mercedes_payload"]["data_mode"] == "push"
         client._connected = False
-        assert not client.poll()["ok"]  # stream-owned fields expire on disconnect
+        assert client.poll()["ok"]  # fresh measurements survive a brief reconnect
+        # A later widget-only response replaces, rather than renews, old fields.
+        asyncio.run(client._pull(session, auth, versions, protocol))
+        assert client.poll()["power"] is None
+        assert client.poll()["mercedes_payload"]["data_mode"] == "pull"
     else:
         assert snapshot["power"] is None
         assert snapshot["mercedes_payload"]["data_mode"] == "pull"

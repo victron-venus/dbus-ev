@@ -345,11 +345,9 @@ class MercedesClient:
                 self._received is not None
                 and 0 <= time.monotonic() - self._received < self.stale_timeout
             )
-            result["ok"] = (
-                (self._connected or self._source == "pull")
-                and fresh
-                and result.get("soc") is not None
-            )
+            # A transport reconnect does not invalidate a recently acquired
+            # measurement. It also must never advance its acquisition time.
+            result["ok"] = not self._stop.is_set() and fresh and result.get("soc") is not None
             result["_source_sample_started_at"] = self._received
             result["mercedes_payload"] = copy.deepcopy(self._payload)
             return result
