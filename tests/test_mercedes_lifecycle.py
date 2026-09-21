@@ -276,3 +276,37 @@ def test_invalid_source_and_vin_fail_before_network(monkeypatch, tmp_path):
         MercedesClient(vin="bad", region="North America", token_file=tmp_path / "token")
     with pytest.raises(ValueError):
         MercedesClient(vin=VIN, region="unknown", token_file=tmp_path / "token")
+
+
+def test_reconnect_preserves_bounded_freshness_across_outputs(monkeypatch, tmp_path):
+    now = [1000.0]
+    monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: now[0])
+    monkeypatch.setattr("dbus_ev.main._now", lambda: now[0])
+    monkeypatch.setattr("dbus_ev.main._write_heartbeat", lambda: None)
+    monkeypatch.setattr(config, "DATA_SOURCE", "mercedes")
+    monkeypatch.setattr(config, "MERCEDES_VIN", VIN)
+    monkeypatch.setattr(config, "MERCEDES_TOKEN_FILE", str(tmp_path / "token"))
+    monkeypatch.setattr(config, "CHARGER_ENABLED", True)
+    monkeypatch.setattr(config, "CERBO_METER_INSTANCE", None)
+    monkeypatch.setattr(config, "MERCEDES_STALE_TIMEOUT", 300)
+    app = build_app()
+    app.mqtt = MagicMock()
+    client = app.client
+    client._snapshot = {"soc": 72, "power": 0, "mercedes_charging_status": 3}
+    client._received = now[0]
+    # Both a short disconnect and a restored socket use the same acquisition age.
+    for connected, at, available in [
+        (False, 1015, True),
+        (True, 1299, True),
+        (False, 1300, False),
+        (True, 1301, False),
+    ]:
+        client._connected, now[0] = connected, at
+        app.apply_snapshot(client.poll())
+        assert bool(app.services.ev["/Connected"]) is available
+        assert bool(app.charger.service.svc["/Connected"]) is available
+        assert app.mqtt.tick.call_args.args[0]["ok"] is available
+        assert client._received == 1000
+    now[0] = 1100
+    client.close()
+    assert not client.poll()["ok"]

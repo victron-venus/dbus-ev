@@ -21,3 +21,12 @@ The existing
 MQTT `data mode` diagnostic distinguishes `pull` from `push`, and acquisition
 timestamps expire normally if both transports fail. WebSocket recovery restores
 the full push snapshot automatically.
+
+A brief transport reconnect preserves the last acquired snapshot until its
+configured freshness deadline (300 seconds by default). Reconnecting or polling
+the cache never renews that deadline. A subsequent REST-only response replaces
+the snapshot, so fields omitted by the widget become unknown immediately; a
+client shutdown also marks its snapshot unavailable.
+The push merge buffer belongs to the application session and survives socket
+reconnects, as in upstream. Mercedes may resume with deltas instead of replaying
+the full vehicle; an explicit full update still replaces the buffer.
