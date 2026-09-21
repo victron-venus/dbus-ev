@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbus-ev"
-version = "0.2.0"
+version = "0.2.1"
 description = "Unified Mercedes EV and charger bridge for Victron Venus OS and HA MQTT"
 readme = "README.md"
 license = { text = "MIT" }
@@ -63,7 +63,7 @@ disable = [
 ]
 
 [tool.pylint.typecheck]
-generated-members = [".*_pb2.PushMessage", ".*_pb2.ClientMessage"]
+generated-members = [".*_pb2.PushMessage", ".*_pb2.ClientMessage", ".*_pb2.VEPUpdate", ".*_pb2.VehicleStatusUpdate"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

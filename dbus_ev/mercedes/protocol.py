@@ -5,6 +5,7 @@ import math
 import time
 
 from google.protobuf.json_format import MessageToDict
+from google.protobuf.message import DecodeError
 
 from .vendor.proto import client_pb2, vehicle_events_pb2
 from .vendor.vsu_helper import normalize_vsu_car
@@ -88,3 +89,22 @@ class Protocol:
             "full_update": self.full_received,
             "attributes": copy.deepcopy(self.attributes),
         }
+
+    def decode_rest(self, raw):
+        """Read legacy VEP and current VSU widget snapshots for this VIN only."""
+        message = vehicle_events_pb2.VEPUpdate()
+        try:
+            message.ParseFromString(raw)
+            update = MessageToDict(message, preserving_proto_field_name=True)
+        except DecodeError:
+            update = {}
+        if not update.get("vin"):
+            message = vehicle_events_pb2.VehicleStatusUpdate()
+            message.ParseFromString(raw)
+            update = normalize_vsu_car(MessageToDict(message, preserving_proto_field_name=True))
+        if update.get("vin") != self.vin:
+            return None
+        # Widget snapshots may contain fewer fields than the push stream. Never
+        # turn omitted charging/door readings into fresh values from an old cache.
+        update["full_update"] = True
+        return Protocol(self.vin).merge(update)

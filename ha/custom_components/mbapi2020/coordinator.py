@@ -104,7 +104,9 @@ class MBAPI2020DataUpdateCoordinator(DataUpdateCoordinator):
                 vehicle.get("information", {}), dict
             ):
                 return
-            self.client._build_car(payload, update_mode=False)
+            self.client._build_car(
+                payload, update_mode=False, is_rest_data=payload.get("data_mode") == "pull"
+            )
             car = self.client.cars[self.vin]
             # Keep upstream IDs and presentation; no cloud capabilities lookup.
             car.features = {}
