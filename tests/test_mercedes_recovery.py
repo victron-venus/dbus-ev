@@ -71,14 +71,20 @@ def test_failed_login_stops_recovery_without_leaking_secrets(tmp_path, monkeypat
     assert "private-" not in caplog.text
 
 
-@pytest.mark.parametrize("status,stop", [(429, False), (401, False), (429, True)])
-def test_recovery_waits_for_backoff_and_uses_same_auth(tmp_path, monkeypatch, status, stop):
+@pytest.mark.parametrize(
+    "status,stop,websocket",
+    [(429, False, True), (401, False, True), (429, True, True), (429, False, False)],
+)
+def test_recovery_waits_for_backoff_and_uses_same_auth(
+    tmp_path, monkeypatch, status, stop, websocket
+):
     client = MercedesClient(vin=VIN, region="Europe", token_file=tmp_path / "token")
     session, versions, auth = (MagicMock() for _ in range(3))
     auth.async_get_cached_token = AsyncMock(return_value={"access_token": "private-token"})
     versions.async_refresh = AsyncMock()
+    error = aiohttp.WSServerHandshakeError if websocket else aiohttp.ClientResponseError
     session.ws_connect.side_effect = [
-        aiohttp.WSServerHandshakeError(None, (), status=status, headers={"Retry-After": "1200"}),
+        error(None, (), status=status, headers={"Retry-After": "1200"}),
         Context(MagicMock()),
     ]
     monkeypatch.setattr(
@@ -88,11 +94,14 @@ def test_recovery_waits_for_backoff_and_uses_same_auth(tmp_path, monkeypatch, st
     monkeypatch.setattr("dbus_ev.mercedes.client.Oauth", lambda *_: auth)
     monkeypatch.setattr(client, "_metadata", AsyncMock(return_value={}))
     events = []
+    previous_protocol = []
 
     async def cooldown(s, a, v, protocol, delay):
         assert a is auth
         if not events:
             assert delay == 1200
+            previous_protocol.append(protocol)
+            protocol.merge({"full_update": True, "attributes": {"soc": {"int_value": 70}}})
             events.append("waited")
             if stop:
                 client._stop.set()
@@ -103,7 +112,12 @@ def test_recovery_waits_for_backoff_and_uses_same_auth(tmp_path, monkeypatch, st
         events.append("login")
         return True
 
-    async def stream(*_args):
+    async def stream(_ws, _session, _auth, _versions, protocol):
+        if status == 429 and websocket:
+            assert protocol is not previous_protocol[0]
+            assert not protocol.attributes
+        else:
+            assert protocol is previous_protocol[0]
         events.append("stream")
         client._stop.set()
 
@@ -115,7 +129,7 @@ def test_recovery_waits_for_backoff_and_uses_same_auth(tmp_path, monkeypatch, st
         ["waited"]
         if stop
         else ["waited", "login", "stream"]
-        if status == 429
+        if status == 429 and websocket
         else ["waited", "stream"]
     )
 
@@ -144,5 +158,7 @@ def test_standalone_login_only_stores_password_when_requested(tmp_path, monkeypa
 
 def test_credentials_cannot_overwrite_token_file(tmp_path):
     path = str(tmp_path / "token.json")
+    args = SimpleNamespace(token_file=path, credentials_file=path)
+    attempt = login(args)
     with pytest.raises(ValueError, match="separate files"):
-        asyncio.run(login(SimpleNamespace(token_file=path, credentials_file=path)))
+        asyncio.run(attempt)

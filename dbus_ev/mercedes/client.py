@@ -190,7 +190,7 @@ class MercedesClient:
                     if status in (401, 403, 429):
                         retry = max(retry, 300)
                     if status == 429:
-                        blocked = True
+                        blocked = isinstance(exc, aiohttp.WSServerHandshakeError)
                         retry = max(retry, 900)
                     retry = retry_delay(exc, retry)
                     logger.warning(
