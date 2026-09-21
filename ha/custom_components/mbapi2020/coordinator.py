@@ -32,7 +32,7 @@ class MBAPI2020DataUpdateCoordinator(DataUpdateCoordinator):
         self.prefix = (
             topic_prefix + "/" if topic_prefix else ""
         ) + f"mercedes/{entry.data['portal_id']}"
-        self.max_age = float(entry.data.get("stale_timeout", 300))
+        self.max_age = float(entry.data.get("stale_timeout", 900))
         self.received_at = 0
         self.online = False
         self._ready = asyncio.Event()

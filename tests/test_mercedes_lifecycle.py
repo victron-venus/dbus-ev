@@ -105,7 +105,7 @@ def test_auth_failure_backs_off_and_does_not_login(monkeypatch, tmp_path):
     asyncio.run(client._serve())
     session.ws_connect.assert_not_called()
     auth.async_login_new.assert_not_called()
-    assert 0 < sleeps[0] <= 25
+    assert 21599 <= sleeps[0] <= 21600
 
 
 def test_quiet_socket_survives_stale_deadline_and_cancels_reader(monkeypatch, tmp_path):
@@ -237,6 +237,7 @@ def test_build_unified_app_does_not_open_cloud_connection(monkeypatch, tmp_path)
 
 
 def test_api_freshness_controls_both_projections_and_mqtt(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "MERCEDES_STALE_TIMEOUT", 300)
     monkeypatch.setattr(config, "DATA_SOURCE", "mercedes")
     monkeypatch.setattr(config, "MERCEDES_VIN", VIN)
     monkeypatch.setattr(config, "MERCEDES_TOKEN_FILE", str(tmp_path / "token"))

@@ -5,7 +5,8 @@ import json
 import logging
 import os
 import stat
-import time
+
+from .traffic import LOGIN_INTERVAL, TrafficLimits, retry_delay
 
 logger = logging.getLogger(__name__)
 
@@ -13,16 +14,15 @@ logger = logging.getLogger(__name__)
 class SessionRecovery:
     """Reuse the sole OAuth owner after the WebSocket Retry-After has elapsed."""
 
-    def __init__(self, credentials_file, region):
+    def __init__(self, credentials_file, region, limits=None):
         self.credentials_file = credentials_file
         self.region = region
-        self.next_attempt = 0.0
+        self.limits = limits or TrafficLimits(credentials_file)
         self.failed = False
 
     async def recover(self, auth):
-        if not self.credentials_file or self.failed or time.monotonic() < self.next_attempt:
+        if not self.credentials_file or self.failed or not self.limits.reserve_login():
             return False
-        self.next_attempt = time.monotonic() + 3600
         try:
             credentials = await asyncio.to_thread(self._credentials)
             token = await auth.async_login_new(credentials["username"], credentials["password"])
@@ -30,8 +30,12 @@ class SessionRecovery:
                 raise ValueError("No token returned")
         except Exception as exc:  # noqa: BLE001 -- preserve REST and avoid repeated failed logins
             self.failed = True
+            self.limits.login_failed()
+            if getattr(exc, "status", None) == 429:
+                self.limits.rate_limited(exc)
+            self.limits.pause(retry_delay(exc, LOGIN_INTERVAL))
             logger.warning(
-                "Mercedes session recovery stopped (%s); use standalone login before restarting",
+                "Mercedes session recovery stopped (%s); standalone login is required",
                 type(exc).__name__,
             )
             return False

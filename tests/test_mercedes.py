@@ -137,7 +137,7 @@ def test_poll_does_not_renew_acquisition_age(tmp_path, monkeypatch):
     monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: 200)
     assert client.poll()["ok"] is True
     assert client.poll()["_source_sample_started_at"] == 100
-    monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: 401)
+    monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: 1001)
     assert client.poll()["ok"] is False
     assert client._received == 100
     client._connected = False

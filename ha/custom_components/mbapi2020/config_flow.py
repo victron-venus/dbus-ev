@@ -46,7 +46,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("vin"): str,
                     vol.Optional("topic_prefix", default=""): str,
                     vol.Optional("vehicle_name", default="Mercedes-Benz"): str,
-                    vol.Optional("stale_timeout", default=300): vol.All(
+                    vol.Optional("stale_timeout", default=900): vol.All(
                         vol.Coerce(int), vol.Range(min=30)
                     ),
                 }
@@ -82,7 +82,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "vehicle_name", default=entry.data.get("vehicle_name", "Mercedes-Benz")
                     ): str,
                     vol.Optional(
-                        "stale_timeout", default=entry.data.get("stale_timeout", 300)
+                        "stale_timeout", default=entry.data.get("stale_timeout", 900)
                     ): vol.All(vol.Coerce(int), vol.Range(min=30)),
                 }
             ),

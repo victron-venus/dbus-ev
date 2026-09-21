@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbus-ev"
-version = "0.2.2"
+version = "0.2.3"
 description = "Unified Mercedes EV and charger bridge for Victron Venus OS and HA MQTT"
 readme = "README.md"
 license = { text = "MIT" }

@@ -9,7 +9,7 @@ DATA_SOURCE = "ha"
 MERCEDES_VIN = ""
 MERCEDES_REGION = "Europe"  # Europe, North America, Asia-Pacific, China
 MERCEDES_TOKEN_FILE = "/data/setupOptions/dbus-ev/mercedes-token.json"
-MERCEDES_STALE_TIMEOUT = 300.0
+MERCEDES_STALE_TIMEOUT = 900.0  # 15 min; quiet-car REST fallback is at most every 10 min.
 # Optional HTTP 429 recovery; create a private file with auth --credentials-file.
 # Empty disables password storage and automatic login recovery.
 MERCEDES_CREDENTIALS_FILE = ""

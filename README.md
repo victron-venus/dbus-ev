@@ -53,10 +53,16 @@ power, the vehicle D-Bus service reports 0 W. Other missing or invalid power val
 remain unknown. Original Mercedes attributes forwarded to HA are unchanged.
 
 Mercedes field timestamps travel unchanged. Re-reading the local cache cannot
-renew its acquisition time. `MERCEDES_STALE_TIMEOUT` defaults to 300 seconds and
+renew its acquisition time. `MERCEDES_STALE_TIMEOUT` defaults to 900 seconds and
 controls direct-provider availability. The MQTT last will reports process/broker
 loss; the HA receiver also expires retained data independently. A single token-file
 lock prevents two local clients from sharing that authorization state.
+
+Cloud access is push-first: quiet-car REST fallback runs at most every ten
+minutes. Any HTTP 429 pauses new requests across all Mercedes endpoints for at
+least 30 minutes, with increasing backoff and full `Retry-After` support.
+Optional automatic login is limited to once per six hours. These limits survive
+restarts; see [request policy and upgrade settings](docs/mercedes-upstream.md).
 
 The HA backend remains selectable as `DATA_SOURCE = "ha"`. Existing standalone
 charger HA/MQTT installations may keep using `dbus-evcharger` until migrated;

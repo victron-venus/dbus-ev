@@ -9,7 +9,6 @@ import math
 import threading
 import time
 import uuid
-from email.utils import parsedate_to_datetime
 
 import aiohttp
 
@@ -19,27 +18,17 @@ from .oauth import MBAuthError, Oauth
 from .protocol import Protocol, finite
 from .recovery import SessionRecovery
 from .store import TokenStore
+from .traffic import LOGIN_INTERVAL, TrafficLimits, retry_delay
 from .vendor.app_version import AppVersionManager
 from .vendor.decoder import Decoder
 from .vendor.helper import UrlHelper
 
 logger = logging.getLogger(__name__)
-PULL_INTERVAL = 180
-
-
-def retry_delay(error, minimum):
-    """Respect both forms of Retry-After without logging response/account data."""
-    value = (getattr(error, "headers", None) or {}).get("Retry-After")
-    if value is None:
-        return minimum
-    try:
-        delay = float(value)
-    except (TypeError, ValueError):
-        try:
-            delay = parsedate_to_datetime(value).timestamp() - time.time()
-        except (TypeError, ValueError, OverflowError):
-            return minimum
-    return max(minimum, delay) if math.isfinite(delay) else minimum
+PULL_INTERVAL = 600
+INITIAL_PULL_DELAY = 120
+RECONNECT_MIN = 60
+RECONNECT_MAX = 3600
+HEALTHY_STREAM_TIME = 300
 
 
 def vehicle_snapshot(payload, capacity=None):
@@ -95,7 +84,7 @@ class MercedesClient:
         region,
         token_file,
         credentials_file="",
-        stale_timeout=300,
+        stale_timeout=900,
         capacity=None,
         home=(None, None, 150),
     ):
@@ -105,7 +94,8 @@ class MercedesClient:
             raise ValueError("Unsupported MERCEDES_REGION")
         self.vin, self.region = vin.upper(), region
         self.store = TokenStore(token_file)
-        self.recovery = SessionRecovery(credentials_file, region)
+        self.limits = TrafficLimits(token_file)
+        self.recovery = SessionRecovery(credentials_file, region, self.limits)
         self.stale_timeout, self.capacity = stale_timeout, capacity
         self.home = home
         self._lock = threading.Lock()
@@ -125,6 +115,13 @@ class MercedesClient:
         if self._thread is not None:
             return
         self.store.acquire()
+        # Read limits again after obtaining the sole account-owner lock.
+        try:
+            self.limits = TrafficLimits(self.store.path)
+        except Exception:
+            self.store.close()
+            raise
+        self.recovery.limits = self.limits
         self._thread = threading.Thread(target=self._run, name="mercedes", daemon=True)
         self._thread.start()
 
@@ -139,13 +136,16 @@ class MercedesClient:
     async def _serve(self):
         self._loop = asyncio.get_running_loop()
         self._task = asyncio.current_task()
-        self._next_pull = time.monotonic() + 25
-        retry = 15
+        self._next_pull = time.monotonic() + INITIAL_PULL_DELAY
+        retry = RECONNECT_MIN
         protocol = Protocol(self.vin)
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
             versions = AppVersionManager(self.region)
             auth = Oauth(session, self.region, self.store, versions)
             while not self._stop.is_set():
+                await self._wait_for_api()
+                if self._stop.is_set():
+                    break
                 blocked = False
                 try:
                     await versions.async_refresh(session)
@@ -177,22 +177,22 @@ class MercedesClient:
                             self._connected = True
                         # The application session survives transport reconnects.
                         # Mercedes may resume deltas without replaying a full car.
+                        connected_at = time.monotonic()
                         await self._stream(ws, session, auth, versions, protocol)
-                        retry = 15
+                        if time.monotonic() - connected_at >= HEALTHY_STREAM_TIME:
+                            retry = RECONNECT_MIN
+                            self.limits.healthy()
                 except MBAuthError:
                     logger.error(
                         "Mercedes authorization required; run the standalone login command"
                     )
-                    retry = max(retry, 300)
+                    retry = self.limits.pause(LOGIN_INTERVAL)
                 except Exception as exc:  # noqa: BLE001 -- malformed cloud frames must reconnect
                     # Do not log tokens, raw frames, account data or HTTP response bodies.
                     status = getattr(exc, "status", None)
-                    if status in (401, 403, 429):
-                        retry = max(retry, 300)
                     if status == 429:
                         blocked = isinstance(exc, aiohttp.WSServerHandshakeError)
-                        retry = max(retry, 900)
-                    retry = retry_delay(exc, retry)
+                    retry = self._failure_delay(exc, retry)
                     logger.warning(
                         "Mercedes connection interrupted (%s, HTTP %s); retry in %ss",
                         type(exc).__name__,
@@ -208,15 +208,29 @@ class MercedesClient:
                     # first deltas into the previous session's vehicle snapshot.
                     protocol = Protocol(self.vin)
                     self._vehicle = None
-                    retry = 15
                 else:
-                    retry = min(retry * 2, 900)
+                    retry = min(retry * 2, RECONNECT_MAX)
+
+    async def _wait_for_api(self):
+        while not self._stop.is_set() and self.limits.remaining() > 0:
+            await asyncio.sleep(self.limits.remaining())
+
+    def _failure_delay(self, error, minimum):
+        status = getattr(error, "status", None)
+        if status == 429:
+            return self.limits.rate_limited(error)
+        if status in (401, 403) or isinstance(error, MBAuthError):
+            return self.limits.pause(retry_delay(error, LOGIN_INTERVAL))
+        delay = retry_delay(error, minimum)
+        if (getattr(error, "headers", None) or {}).get("Retry-After") is not None:
+            return self.limits.pause(delay)
+        return delay
 
     def _pull_delay(self):
         due = self._next_pull
         if self._received is not None:
             due = max(due, self._received + PULL_INTERVAL)
-        return max(0, due - time.monotonic())
+        return max(0, due - time.monotonic(), self.limits.remaining())
 
     async def _stream(self, ws, session, auth, versions, protocol):
         """Keep one reader alive; a quiet vehicle does not require a new socket."""
@@ -246,7 +260,10 @@ class MercedesClient:
             await asyncio.gather(pending, return_exceptions=True)
 
     async def _cooldown(self, session, auth, versions, protocol, delay):
-        """Keep REST telemetry running while the WebSocket endpoint backs off."""
+        """Fallback is allowed during transport failures, never during API limits."""
+        if self.limits.remaining():
+            await self._wait_for_api()
+            return
         deadline = time.monotonic() + delay
         while not self._stop.is_set():
             remaining = deadline - time.monotonic()
@@ -271,6 +288,8 @@ class MercedesClient:
         )
 
     async def _pull(self, session, auth, versions, protocol):
+        if self.limits.remaining():
+            return
         try:
             await versions.async_refresh(session)
             token = await auth.async_get_cached_token()
@@ -295,7 +314,7 @@ class MercedesClient:
             self._pull_retry = PULL_INTERVAL
             logger.info("Mercedes REST telemetry received")
         except Exception as exc:  # noqa: BLE001 -- invalid REST data must expire, never refresh cache
-            self._pull_retry = retry_delay(exc, min(self._pull_retry * 2, 900))
+            self._pull_retry = self._failure_delay(exc, min(self._pull_retry * 2, RECONNECT_MAX))
             logger.warning(
                 "Mercedes REST telemetry unavailable (%s, HTTP %s); retry in %ss",
                 type(exc).__name__,
