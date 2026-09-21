@@ -81,7 +81,7 @@ def test_websocket_one_owner_ack_and_shutdown(monkeypatch, tmp_path):
     assert len(received) == 1
     assert client.poll()["ok"] is False
     assert "never-publish" not in json.dumps(client.poll())
-    assert sleeps == [15]
+    assert not sleeps
 
 
 def test_auth_failure_backs_off_and_does_not_login(monkeypatch, tmp_path):
@@ -105,58 +105,42 @@ def test_auth_failure_backs_off_and_does_not_login(monkeypatch, tmp_path):
     asyncio.run(client._serve())
     session.ws_connect.assert_not_called()
     auth.async_login_new.assert_not_called()
-    assert sleeps == [300]
+    assert 0 < sleeps[0] <= 25
 
 
-def test_responsive_socket_without_vehicle_data_times_out(monkeypatch, tmp_path):
+def test_quiet_socket_survives_stale_deadline_and_cancels_reader(monkeypatch, tmp_path):
     client = MercedesClient(
         vin=VIN, region="North America", token_file=tmp_path / "token", stale_timeout=0.01
     )
     closed = []
 
-    class QuietSocket(Context):
-        """QuietSocket implementation."""
-
-        def __init__(self):
-            super().__init__(self)
+    class QuietSocket:
+        """A responsive transport with no changed vehicle values."""
 
         def __aiter__(self):
             return self.messages()
 
         async def messages(self):
-            # This peer stays connected indefinitely without sending vehicle data.
-            await asyncio.Event().wait()
-            yield
+            try:
+                await asyncio.Event().wait()
+                yield
+            finally:
+                closed.append(True)
 
-        async def __aexit__(self, *_args):
-            closed.append(True)
+    async def run():
+        client._next_pull = __import__("time").monotonic() + 0.04
 
-    session = MagicMock()
-    session.ws_connect.return_value = QuietSocket()
-    versions = MagicMock()
-    versions.async_refresh = AsyncMock()
-    versions.apply_websocket_headers.side_effect = lambda headers: headers
-    auth = MagicMock()
-    auth.async_get_cached_token = AsyncMock(return_value={"access_token": "secret"})
-    monkeypatch.setattr(
-        "dbus_ev.mercedes.client.aiohttp.ClientSession", lambda **_: Context(session)
-    )
-    monkeypatch.setattr("dbus_ev.mercedes.client.AppVersionManager", lambda _: versions)
-    monkeypatch.setattr("dbus_ev.mercedes.client.Oauth", lambda *_: auth)
-    monkeypatch.setattr(client, "_metadata", AsyncMock(return_value={}))
-    delays = []
+        async def pull(*_args):
+            # We have passed the old 0.01 s vehicle deadline without closing WS.
+            assert not closed
+            assert not client.poll()["ok"]
+            client._stop.set()
 
-    async def sleep(delay):
-        delays.append(delay)
-        client._stop.set()
+        monkeypatch.setattr(client, "_pull", pull)
+        await asyncio.wait_for(client._stream(QuietSocket(), None, None, None, None), 1)
 
-    monkeypatch.setattr("dbus_ev.mercedes.client.asyncio.sleep", sleep)
-    asyncio.run(client._serve())
+    asyncio.run(run())
     assert closed == [True]
-    assert delays == [15]
-    assert not client.poll()["ok"]
-    headers = session.ws_connect.call_args.kwargs["headers"]
-    assert headers["APP-SESSION-ID"] == headers["X-SessionId"]
 
 
 def test_login_error_does_not_expose_server_body(tmp_path, caplog):

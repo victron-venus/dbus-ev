@@ -73,6 +73,10 @@ async def main():
     window = Window(coordinator, "window_front_left", "windowstatusfrontleft")
     assert window.is_closed is True
     assert window.supported_features == 0
+    payload["data_mode"] = "pull"
+    payload["received_at"] = time.time()
+    coordinator._message(SimpleNamespace(payload=json.dumps(payload)))
+    assert coordinator.client.cars[VIN].data_collection_mode == "pull"
     with patch("custom_components.mbapi2020.coordinator.mqtt.is_connected", return_value=True):
         coordinator._availability(SimpleNamespace(payload="online"))
         assert coordinator.available
