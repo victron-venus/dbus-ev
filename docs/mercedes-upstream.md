@@ -14,7 +14,10 @@ Both transports honor `Retry-After`, and no automatic password login is attempte
 
 The widget can return either legacy VEP or current VSU protobuf data. It may
 provide only SoC, range and location. Missing fields are unknown in the REST
-snapshot; old push charging or door readings are not marked fresh. The existing
+snapshot while the socket is unavailable; old push charging or door readings
+are not marked fresh. A healthy socket that has delivered its initial full
+snapshot still owns unchanged fields, and REST supplements that live stream.
+The existing
 MQTT `data mode` diagnostic distinguishes `pull` from `push`, and acquisition
 timestamps expire normally if both transports fail. WebSocket recovery restores
 the full push snapshot automatically.

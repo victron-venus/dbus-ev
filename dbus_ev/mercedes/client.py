@@ -164,6 +164,7 @@ class MercedesClient:
                         logger.info("Mercedes telemetry connected")
                         with self._lock:
                             self._connected = True
+                        protocol = Protocol(self.vin)
                         await self._stream(ws, session, auth, versions, protocol)
                         retry = 15
                 except MBAuthError:
@@ -263,7 +264,14 @@ class MercedesClient:
                 payload = protocol.decode_rest(await response.read())
             if payload is None:
                 raise ValueError("No matching vehicle attributes")
-            self._accept(payload, "pull")
+            if self._connected and protocol.full_received:
+                # An established push subscription continues to own unchanged
+                # fields. Only that live stream may supplement the widget subset.
+                payload = protocol.merge({"attributes": payload["attributes"]})
+                source = "push"
+            else:
+                source = "pull"
+            self._accept(payload, source)
             self._pull_retry = PULL_INTERVAL
             logger.info("Mercedes REST telemetry received")
         except Exception as exc:  # noqa: BLE001 -- invalid REST data must expire, never refresh cache

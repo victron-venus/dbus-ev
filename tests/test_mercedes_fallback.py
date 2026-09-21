@@ -169,3 +169,32 @@ def test_cooldown_runs_three_minute_polls_without_busy_loop(monkeypatch, tmp_pat
     asyncio.run(client._cooldown(None, None, None, None, 900))
     assert polls == [1000, 1180, 1360, 1540, 1720]
     assert now[0] == 1900
+
+
+@pytest.mark.parametrize("connected,full", [(True, True), (False, True), (True, False)])
+def test_only_initialized_live_stream_can_supplement_widget(connected, full, tmp_path):
+    client = MercedesClient(vin=VIN, region="North America", token_file=tmp_path / "token")
+    client._connected = connected
+    protocol = Protocol(VIN)
+    frame = vehicle_events_pb2.PushMessage()
+    car = frame.vepUpdates.updates[VIN]
+    car.vin, car.full_update = VIN, full
+    car.attributes["soc"].int_value = 70
+    car.attributes["chargingPower"].double_value = 7.2
+    protocol.decode(frame.SerializeToString())
+    session, response, versions, auth = (MagicMock() for _ in range(4))
+    response.read = AsyncMock(return_value=rest_frame())
+    session.get.return_value = Context(response)
+    versions.async_refresh = AsyncMock()
+    auth.async_get_cached_token = AsyncMock(return_value={"access_token": "private"})
+    asyncio.run(client._pull(session, auth, versions, protocol))
+    snapshot = client.poll()
+    assert snapshot["soc"] == 81
+    if connected and full:
+        assert snapshot["power"] == 7200
+        assert snapshot["mercedes_payload"]["data_mode"] == "push"
+        client._connected = False
+        assert not client.poll()["ok"]  # stream-owned fields expire on disconnect
+    else:
+        assert snapshot["power"] is None
+        assert snapshot["mercedes_payload"]["data_mode"] == "pull"
