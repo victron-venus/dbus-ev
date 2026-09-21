@@ -76,7 +76,7 @@ async def main():
     payload["data_mode"] = "pull"
     payload["received_at"] = time.time()
     coordinator._message(SimpleNamespace(payload=json.dumps(payload)))
-    assert coordinator.client.cars[VIN].data_collection_mode == "pull"
+    assert coordinator.client.cars[VIN].data_collection_mode.value == "pull"
     with patch("custom_components.mbapi2020.coordinator.mqtt.is_connected", return_value=True):
         coordinator._availability(SimpleNamespace(payload="online"))
         assert coordinator.available
