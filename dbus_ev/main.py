@@ -153,6 +153,7 @@ def build_app() -> App:
             vin=config.MERCEDES_VIN,
             region=config.MERCEDES_REGION,
             token_file=config.MERCEDES_TOKEN_FILE,
+            credentials_file=config.MERCEDES_CREDENTIALS_FILE,
             stale_timeout=config.MERCEDES_STALE_TIMEOUT,
             capacity=config.BATTERY_CAPACITY_KWH,
             home=(config.HOME_LATITUDE, config.HOME_LONGITUDE, config.HOME_RADIUS_METERS),

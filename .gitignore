@@ -24,4 +24,5 @@ bandit-results.json
 release-assets/
 runtime-deps/
 mercedes-token*.json
+mercedes-credentials*.json
 *.private.json

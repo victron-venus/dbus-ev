@@ -31,7 +31,9 @@ cd /data/dbus-ev
 PYTHONPATH=/data/setupOptions/dbus-ev/python python3 -m dbus_ev.mercedes.auth --region 'North America'
 ```
 
-The standalone login stores only tokens and device identity, not the password.
+By default, standalone login stores only tokens and device identity. Optional
+[blocked-session recovery](docs/mercedes-migration.md#blocked-session-recovery)
+can retain private login credentials when explicitly configured.
 An existing HA token can also be transferred as described in the migration guide.
 Regions use the same mobile API as mbapi2020. The inherited username/password flow
 does not support accounts requiring 2FA; accept changed legal terms in the official
