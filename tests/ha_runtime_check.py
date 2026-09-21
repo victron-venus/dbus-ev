@@ -38,6 +38,7 @@ async def main():
         subentries_data=[],
     )
     coordinator = MBAPI2020DataUpdateCoordinator(hass, entry)
+    assert coordinator.max_age == 900
     assert valid_route({"vin": VIN, "portal_id": "testportal", "topic_prefix": "victron/"})
     assert not valid_route({"vin": VIN, "portal_id": "testportal", "topic_prefix": "victron/#"})
     payload = {
@@ -81,9 +82,13 @@ async def main():
         coordinator._availability(SimpleNamespace(payload="online"))
         assert coordinator.available
         coordinator.received_at = time.time() - 301
+        assert coordinator.available
+        coordinator.received_at = time.time() - 899
+        assert coordinator.available
+        coordinator.received_at = time.time() - 901
         assert not coordinator.available
         # Retained replay cannot turn an old snapshot into current data.
-        payload["received_at"] = time.time() - 400
+        payload["received_at"] = time.time() - 1000
         coordinator._message(SimpleNamespace(payload=json.dumps(payload)))
         assert not coordinator.available
         coordinator._availability(SimpleNamespace(payload="offline"))
