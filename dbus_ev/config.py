@@ -95,6 +95,7 @@ MERCEDES_TOKEN_FILE: str = str(
     _get("MERCEDES_TOKEN_FILE", "/data/setupOptions/dbus-ev/mercedes-token.json")
 )
 MERCEDES_STALE_TIMEOUT: float = float(_get("MERCEDES_STALE_TIMEOUT", 300.0))
+MERCEDES_CREDENTIALS_FILE: str = str(_get("MERCEDES_CREDENTIALS_FILE", ""))
 HOME_LATITUDE = _get("HOME_LATITUDE", None)
 HOME_LONGITUDE = _get("HOME_LONGITUDE", None)
 HOME_RADIUS_METERS = float(_get("HOME_RADIUS_METERS", 150.0))

@@ -10,6 +10,9 @@ MERCEDES_VIN = ""
 MERCEDES_REGION = "Europe"  # Europe, North America, Asia-Pacific, China
 MERCEDES_TOKEN_FILE = "/data/setupOptions/dbus-ev/mercedes-token.json"
 MERCEDES_STALE_TIMEOUT = 300.0
+# Optional HTTP 429 recovery; create a private file with auth --credentials-file.
+# Empty disables password storage and automatic login recovery.
+MERCEDES_CREDENTIALS_FILE = ""
 # Run python3 -m dbus_ev.mercedes.auth once to authorize. Never put tokens in this example.
 
 # The unified process can also own the former dbus-evcharger identity.

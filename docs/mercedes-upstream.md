@@ -10,7 +10,9 @@ The unified client also uses upstream's read-only widget REST fallback. After
 An otherwise healthy WebSocket stays open: its ping/pong heartbeat detects a dead
 transport independently of telemetry age. During a WebSocket rate limit, REST
 polling continues every three minutes; failed REST requests back off separately.
-Both transports honor `Retry-After`, and no automatic password login is attempted.
+Both transports honor `Retry-After`. Optional HTTP 429 login recovery uses the
+same OAuth owner after the WebSocket cooldown (at least 15 minutes); see
+[recovery configuration](mercedes-migration.md#blocked-session-recovery).
 
 The widget can return either legacy VEP or current VSU protobuf data. It may
 provide only SoC, range and location. Missing fields are unknown in the REST

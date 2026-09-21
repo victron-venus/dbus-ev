@@ -17,6 +17,7 @@ from dbus_ev.ha_client import map_charging_state
 
 from .oauth import MBAuthError, Oauth
 from .protocol import Protocol, finite
+from .recovery import SessionRecovery
 from .store import TokenStore
 from .vendor.app_version import AppVersionManager
 from .vendor.decoder import Decoder
@@ -88,7 +89,15 @@ class MercedesClient:
     """Maintain one OAuth/WebSocket session and a freshness-bound snapshot."""
 
     def __init__(
-        self, *, vin, region, token_file, stale_timeout=300, capacity=None, home=(None, None, 150)
+        self,
+        *,
+        vin,
+        region,
+        token_file,
+        credentials_file="",
+        stale_timeout=300,
+        capacity=None,
+        home=(None, None, 150),
     ):
         if len(vin) != 17 or not vin.isascii() or not vin.isalnum():
             raise ValueError("MERCEDES_VIN must be a 17-character VIN")
@@ -96,6 +105,7 @@ class MercedesClient:
             raise ValueError("Unsupported MERCEDES_REGION")
         self.vin, self.region = vin.upper(), region
         self.store = TokenStore(token_file)
+        self.recovery = SessionRecovery(credentials_file, region)
         self.stale_timeout, self.capacity = stale_timeout, capacity
         self.home = home
         self._lock = threading.Lock()
@@ -136,6 +146,7 @@ class MercedesClient:
             versions = AppVersionManager(self.region)
             auth = Oauth(session, self.region, self.store, versions)
             while not self._stop.is_set():
+                blocked = False
                 try:
                     await versions.async_refresh(session)
                     token = await auth.async_get_cached_token()
@@ -179,6 +190,7 @@ class MercedesClient:
                     if status in (401, 403, 429):
                         retry = max(retry, 300)
                     if status == 429:
+                        blocked = True
                         retry = max(retry, 900)
                     retry = retry_delay(exc, retry)
                     logger.warning(
@@ -191,7 +203,14 @@ class MercedesClient:
                     with self._lock:
                         self._connected = False
                 await self._cooldown(session, auth, versions, protocol, retry)
-                retry = min(retry * 2, 900)
+                if blocked and not self._stop.is_set() and await self.recovery.recover(auth):
+                    # A new login starts a new server session. Never merge its
+                    # first deltas into the previous session's vehicle snapshot.
+                    protocol = Protocol(self.vin)
+                    self._vehicle = None
+                    retry = 15
+                else:
+                    retry = min(retry * 2, 900)
 
     def _pull_delay(self):
         due = self._next_pull

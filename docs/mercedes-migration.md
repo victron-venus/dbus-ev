@@ -26,7 +26,8 @@ mode 0600. Never put them into release archives or MQTT payloads.
    repository from automatic update management before replacing the component.
 4. Transfer the now-idle entry's **fresh** `region`, `device_guid` and `token`
    fields into `/data/setupOptions/dbus-ev/mercedes-token.json` with mode 0600.
-   Do not copy the password or reuse this token concurrently in HA. Alternatively
+   Do not reuse this token concurrently in HA. Password recovery is a separate
+   opt-in described below. Alternatively
    use the standalone authorization CLI after stopping the old integration.
 5. Uninstall/disable the standalone dbus-evcharger package through its setup
    script, including its boot hook. Its `/service/dbus-evcharger` link must be
@@ -70,3 +71,34 @@ and installer lifecycle. `tests/ha_runtime_check.py` runs with the installed HA
 Python against a staged component and starts no live services. Actual Mercedes
 account access and end-to-end vehicle updates are cutover checks, not established
 by mocked tests. Cloud API changes may require updating the pinned upstream maps.
+
+## Blocked session recovery
+
+Some Mercedes sessions keep returning WebSocket HTTP 429 even while token refresh
+and the widget REST endpoint work. The widget can omit charging power, leaving
+SoC and the local charger meter visible while vehicle charging power is unknown.
+The upstream HA integration recovers this condition with an ordinary login.
+
+By default this package stores no password and automatic recovery is disabled.
+To opt in, stop dbus-ev and run the standalone login with an explicit private file:
+
+```sh
+svc -d /service/dbus-ev
+# Wait for the worker to stop before taking ownership of the token file.
+PYTHONPATH=/data/setupOptions/dbus-ev/python python3 -m dbus_ev.mercedes.auth \
+  --region 'North America' \
+  --credentials-file /data/setupOptions/dbus-ev/mercedes-credentials.json
+```
+
+Set `MERCEDES_CREDENTIALS_FILE` to that path in `local_config.py`, then start
+`svc -u /service/dbus-ev`. The CLI saves username, password and region atomically
+with mode 0600, separately from rotating tokens and outside the installed package.
+Recovery rejects files accessible to other users, owned by another user, or for
+another region. Keep the file out of release archives and MQTT.
+
+Recovery follows the server's `Retry-After` and the minimum 15-minute WebSocket
+cooldown; REST continues while waiting. The existing OAuth owner attempts at most
+one login per hour. Any failed attempt, including 2FA or new legal terms, disables
+further automatic login for that process. Resolve the account in the official app,
+run standalone login, then restart the worker. Recovery never accepts terms or
+sends vehicle commands. Clear `MERCEDES_CREDENTIALS_FILE` and restart to disable it.
