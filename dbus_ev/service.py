@@ -170,8 +170,8 @@ class EVEvices:
         self.ev.add_path(PATH_AC_POWER, 0, "i")  # W (INT32 — evcharger wiki)
         self.ev.add_path("/Ac/Energy/Forward", 0)  # kWh
         self.ev.add_path(PATH_AC_L1_POWER, 0, "i")
-        self.ev.add_path("/Ac/L2/Power", 0, "i")
-        self.ev.add_path("/Ac/L3/Power", 0, "i")
+        self.ev.add_path("/Ac/L2/Power", None, "i")
+        self.ev.add_path("/Ac/L3/Power", None, "i")
         self.ev.add_path("/Ac/L1/Voltage", 0)
         self.ev.add_path("/Ac/L1/Current", 0)
         self.ev.add_path("/Current", 0)  # A
@@ -262,6 +262,10 @@ class EVEvices:
             p = int(power_w)
         self.ev[PATH_AC_POWER] = p
         self.ev[PATH_AC_L1_POWER] = p
+        # Consumers may sum phase paths when total power is unavailable. Idle
+        # placeholders on unused phases must not turn an unknown total into 0 W.
+        self.ev["/Ac/L2/Power"] = 0 if p is not None else None
+        self.ev["/Ac/L3/Power"] = 0 if p is not None else None
 
     def update_current(self, _current_a: float | None) -> None:
         """No-op for EV service (no /Current path on the D-Bus wiki).
