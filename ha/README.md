@@ -11,6 +11,11 @@ Do not delete that entry or its device/entity registry records during migration.
 The old cloud implementation and its credentials are removed, while its local
 identity records are reused.
 
+When replacing the component, remove its `__pycache__` directories and restart
+Home Assistant. Release archives normalize file modification times; retaining
+old bytecode can otherwise run the previous code after a same-size source edit.
+Reloading an entry updates its settings but does not reload its Python modules.
+
 Configure the Cerbo portal ID, VIN and optional topic prefix. For this installation,
 the existing Mosquitto bridge adds `victron/`; use that prefix. A direct connection
 to the Cerbo broker would use an empty prefix.
