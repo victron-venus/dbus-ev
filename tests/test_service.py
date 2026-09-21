@@ -229,3 +229,15 @@ def test_connected_reflects_ha_freshness():
     assert services.ev["/Connected"] == 1
     services.set_connected(False)
     assert services.ev["/Connected"] == 0
+
+
+def test_unknown_power_invalidates_every_phase_used_by_dashboard_fallback():
+    services = make_ev_services()
+    paths = ["/Ac/Power", "/Ac/L1/Power", "/Ac/L2/Power", "/Ac/L3/Power"]
+    for invalid in (None, float("nan"), float("inf"), 2**31):
+        services.update_ac_power(7200)
+        assert [services.ev[path] for path in paths] == [7200, 7200, 0, 0]
+        services.update_ac_power(invalid)
+        assert all(services.ev[path] is None for path in paths)
+    services.update_ac_power(0)
+    assert all(services.ev[path] == 0 for path in paths)
