@@ -96,9 +96,14 @@ with mode 0600, separately from rotating tokens and outside the installed packag
 Recovery rejects files accessible to other users, owned by another user, or for
 another region. Keep the file out of release archives and MQTT.
 
-Recovery follows the server's `Retry-After` and the minimum 15-minute WebSocket
-cooldown; REST continues while waiting. The existing OAuth owner attempts at most
-one login per hour. Any failed attempt, including 2FA or new legal terms, disables
-further automatic login for that process. Resolve the account in the official app,
-run standalone login, then restart the worker. Recovery never accepts terms or
+Recovery follows the server's `Retry-After` and the minimum 30-minute global
+cooldown; REST, config requests and token refresh also pause while waiting.
+The existing OAuth owner attempts at most one automatic login per six hours,
+with no hidden retries of individual login steps. Any failed attempt, including
+2FA or new legal terms, disables further automatic login until a successful
+standalone login. Pauses and login limits persist in `<token-file>.limits.json`,
+outside the package. Restarting does not clear them. A successful manual login
+clears the failure flag and reserves the next six hours from automatic login.
+Resolve the account in the official app, wait for the server cooldown, run
+standalone login, then restart the worker. Recovery never accepts terms or
 sends vehicle commands. Clear `MERCEDES_CREDENTIALS_FILE` and restart to disable it.

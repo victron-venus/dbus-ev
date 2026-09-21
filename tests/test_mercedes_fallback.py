@@ -70,12 +70,12 @@ def test_pull_refreshes_snapshot_without_a_websocket_and_then_expires(monkeypatc
     assert snapshot["mercedes_payload"]["data_mode"] == "pull"
     assert not client._connected
     acquired = client._received
-    assert 179 <= client._pull_delay() <= 180
+    assert 599 <= client._pull_delay() <= 600
     # A successful HTTP reply without vehicle data must never renew availability.
     response.read.return_value = b""
     asyncio.run(client._pull(session, auth, versions, Protocol(VIN)))
     assert client._received == acquired
-    monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: acquired + 301)
+    monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: acquired + 901)
     assert not client.poll()["ok"]
     auth.async_login_new.assert_not_called()
 
@@ -106,7 +106,7 @@ def test_retry_after_accepts_seconds_and_http_date(monkeypatch):
         assert retry_delay(SimpleNamespace(headers={"Retry-After": header}), 900) == 3600
 
 
-def test_rate_limited_websocket_keeps_rest_running_and_recovers(monkeypatch, tmp_path):
+def test_rate_limited_websocket_pauses_rest_and_recovers(monkeypatch, tmp_path):
     client = MercedesClient(vin=VIN, region="North America", token_file=tmp_path / "token")
     session, versions, auth = (MagicMock() for _ in range(3))
     versions.async_refresh = AsyncMock()
@@ -122,13 +122,17 @@ def test_rate_limited_websocket_keeps_rest_running_and_recovers(monkeypatch, tmp
     metadata = AsyncMock(return_value={})
     monkeypatch.setattr(client, "_metadata", metadata)
     cooldowns = []
+    now = [100.0]
+    monkeypatch.setattr("dbus_ev.mercedes.traffic.time.monotonic", lambda: now[0])
 
     async def cooldown(s, a, v, protocol, delay):
         assert s is session and a is auth and v is versions
         cooldowns.append(delay)
         if len(cooldowns) == 1:
-            client._accept(protocol.decode_rest(rest_frame()), "pull")
-            assert client.poll()["ok"]
+            await client._pull(s, a, v, protocol)
+            session.get.assert_not_called()
+            assert not client.poll()["ok"]
+            now[0] += delay + 0.01
         else:
             client._stop.set()
 
@@ -143,7 +147,7 @@ def test_rate_limited_websocket_keeps_rest_running_and_recovers(monkeypatch, tmp
     monkeypatch.setattr(client, "_cooldown", cooldown)
     monkeypatch.setattr(client, "_stream", stream)
     asyncio.run(client._serve())
-    assert cooldowns == [1200, 15]
+    assert cooldowns == [1800, 3600]
     assert session.ws_connect.call_count == 2
     headers = [call.kwargs["headers"] for call in session.ws_connect.call_args_list]
     assert headers[0]["APP-SESSION-ID"] == headers[1]["APP-SESSION-ID"]
@@ -151,7 +155,7 @@ def test_rate_limited_websocket_keeps_rest_running_and_recovers(monkeypatch, tmp
     auth.async_login_new.assert_not_called()
 
 
-def test_cooldown_runs_three_minute_polls_without_busy_loop(monkeypatch, tmp_path):
+def test_transport_cooldown_runs_ten_minute_polls_without_busy_loop(monkeypatch, tmp_path):
     client = MercedesClient(vin=VIN, region="North America", token_file=tmp_path / "token")
     now, polls = [1000.0], []
     monkeypatch.setattr("dbus_ev.mercedes.client.time.monotonic", lambda: now[0])
@@ -162,13 +166,13 @@ def test_cooldown_runs_three_minute_polls_without_busy_loop(monkeypatch, tmp_pat
 
     async def pull(*_args):
         polls.append(now[0])
-        client._next_pull = now[0] + 180
+        client._next_pull = now[0] + 600
 
     monkeypatch.setattr("dbus_ev.mercedes.client.asyncio.sleep", sleep)
     monkeypatch.setattr(client, "_pull", pull)
-    asyncio.run(client._cooldown(None, None, None, None, 900))
-    assert polls == [1000, 1180, 1360, 1540, 1720]
-    assert now[0] == 1900
+    asyncio.run(client._cooldown(None, None, None, None, 1800))
+    assert polls == [1000, 1600, 2200]
+    assert now[0] == 2800
 
 
 @pytest.mark.parametrize("connected,full", [(True, True), (False, True), (True, False)])

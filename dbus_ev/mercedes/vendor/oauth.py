@@ -31,9 +31,6 @@ from .helper import LogHelper
 from .helper import UrlHelper as helper
 
 _LOGGER = logging.getLogger(__name__)
-GATEWAY_ERROR_CODES = (502, 503, 504)
-LOGIN_MAX_ATTEMPTS = 3
-LOGIN_RETRY_BACKOFF_SECONDS = 5
 
 
 class MBAuthError(Exception):
@@ -140,7 +137,7 @@ class Oauth:
             self.code_challenge = None
             _LOGGER.info("OAuth2 login successful")
             return token_info
-        except (MBAuth2FAError, MBLegalTermsError):
+        except (MBAuth2FAError, MBLegalTermsError, aiohttp.ClientResponseError):
             raise
         except Exception as e:
             _LOGGER.error("OAuth2 login failed (%s)", type(e).__name__)
@@ -165,27 +162,17 @@ class Oauth:
     async def _login_request(
         self, method: str, url: str, step: str, **kwargs
     ) -> tuple[int, str, str]:
-        """Perform a login step request, retrying transient gateway errors.
+        """Perform one login step without hidden retries of credential submissions.
 
         Returns:
             tuple: (status, final_url, body_text)
 
         """
         kwargs.setdefault("proxy", SYSTEM_PROXY)
-        for attempt in range(1, LOGIN_MAX_ATTEMPTS + 1):
-            async with self._session.request(method, url, **kwargs) as response:
-                if response.status in GATEWAY_ERROR_CODES and attempt < LOGIN_MAX_ATTEMPTS:
-                    _LOGGER.warning(
-                        "%s failed with %s - retry %s/%s",
-                        step,
-                        response.status,
-                        attempt,
-                        LOGIN_MAX_ATTEMPTS - 1,
-                    )
-                else:
-                    return (response.status, str(response.url), await response.text())
-            await asyncio.sleep(LOGIN_RETRY_BACKOFF_SECONDS * attempt)
-        raise MBAuthError(f"{step} failed after {LOGIN_MAX_ATTEMPTS} attempts")
+        async with self._session.request(method, url, **kwargs) as response:
+            if response.status >= 400:
+                response.raise_for_status()
+            return (response.status, str(response.url), await response.text())
 
     def _extract_code_from_redirect_url(self, redirect_url: str) -> str:
         """Extract authorization code from redirect URL."""
@@ -238,6 +225,8 @@ class Oauth:
         async with self._session.post(
             url, json=data, headers=headers, proxy=SYSTEM_PROXY
         ) as response:
+            if response.status == 429:
+                response.raise_for_status()
             if response.status >= 400:
                 _LOGGER.warning("User agent info submission failed: %s", response.status)
 
@@ -300,6 +289,8 @@ class Oauth:
                 proxy=SYSTEM_PROXY,
                 allow_redirects=False,
             ) as response:
+                if response.status == 429:
+                    response.raise_for_status()
                 if response.status in (302, 301):
                     redirect_url = response.headers.get("location", "")
                     if redirect_url.startswith("rismycar://"):
@@ -337,6 +328,8 @@ class Oauth:
         async with self._session.post(
             url, data=form_data, headers=headers, proxy=SYSTEM_PROXY
         ) as response:
+            if response.status == 429:
+                response.raise_for_status()
             if response.status >= 400:
                 raise MBAuthError(f"Token exchange failed: HTTP {response.status}")
             return await response.json()
@@ -466,6 +459,9 @@ class Oauth:
 
     async def _async_request(self, method, url, data="", **kwargs):
         async with self._session.request(method, url, data=data, **kwargs) as resp:
+            if resp.status == 429:
+                # Preserve Retry-After for the shared account-wide traffic limiter.
+                resp.raise_for_status()
             if resp.status >= 400:
                 raise MBAuthError(f"Mercedes authentication HTTP {resp.status}")
             return await resp.json(content_type=None)

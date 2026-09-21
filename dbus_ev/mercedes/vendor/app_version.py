@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError, ClientResponseError, ClientSession
 
 from .const import (
     DEFAULT_LOCALE,
@@ -224,6 +224,8 @@ class AppVersionManager:
 
         try:
             async with session.get(url, headers=headers, proxy=SYSTEM_PROXY) as response:
+                if response.status == 429:
+                    response.raise_for_status()
                 if response.status >= 400:
                     LOGGER.debug(
                         "Skipping app-version refresh for %s, config returned HTTP %s",
@@ -232,6 +234,9 @@ class AppVersionManager:
                     )
                     return None
                 return await response.json(content_type=None)
+        except ClientResponseError:
+            # A config rate limit applies to subsequent authentication/telemetry too.
+            raise
         except (ClientError, ValueError) as err:
             LOGGER.debug("Failed to refresh Mercedes app version for %s: %s", self._region, err)
             return None

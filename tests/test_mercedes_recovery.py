@@ -25,18 +25,18 @@ def credentials(tmp_path):
     return path
 
 
-def test_optional_recovery_and_hourly_limit(tmp_path, monkeypatch):
+def test_optional_recovery_and_six_hour_limit(tmp_path, monkeypatch):
     auth = MagicMock(async_login_new=AsyncMock(return_value={"access_token": "private-token"}))
     assert not asyncio.run(SessionRecovery("", "Europe").recover(auth))
     auth.async_login_new.assert_not_called()
     clock = [100.0]
-    monkeypatch.setattr("dbus_ev.mercedes.recovery.time.monotonic", lambda: clock[0])
+    monkeypatch.setattr("dbus_ev.mercedes.traffic.time.monotonic", lambda: clock[0])
     recovery = SessionRecovery(str(credentials(tmp_path)), "Europe")
     assert asyncio.run(recovery.recover(auth))
-    clock[0] = 3699
+    clock[0] = 21699
     assert not asyncio.run(recovery.recover(auth))
     auth.async_login_new.assert_awaited_once()
-    clock[0] = 3700
+    clock[0] = 21700
     assert asyncio.run(recovery.recover(auth))
     assert auth.async_login_new.await_count == 2
 
@@ -65,7 +65,7 @@ def test_failed_login_stops_recovery_without_leaking_secrets(tmp_path, monkeypat
     auth = MagicMock(async_login_new=AsyncMock(side_effect=error("private-password private-token")))
     recovery = SessionRecovery(str(credentials(tmp_path)), "Europe")
     assert not asyncio.run(recovery.recover(auth))
-    monkeypatch.setattr("dbus_ev.mercedes.recovery.time.monotonic", lambda: 1e12)
+    monkeypatch.setattr("dbus_ev.mercedes.traffic.time.monotonic", lambda: 1e12)
     assert not asyncio.run(recovery.recover(auth))
     auth.async_login_new.assert_awaited_once()
     assert "private-" not in caplog.text
@@ -94,12 +94,15 @@ def test_recovery_waits_for_backoff_and_uses_same_auth(
     monkeypatch.setattr("dbus_ev.mercedes.client.Oauth", lambda *_: auth)
     monkeypatch.setattr(client, "_metadata", AsyncMock(return_value={}))
     events = []
+    now = [100.0]
+    monkeypatch.setattr("dbus_ev.mercedes.traffic.time.monotonic", lambda: now[0])
     previous_protocol = []
 
     async def cooldown(s, a, v, protocol, delay):
         assert a is auth
         if not events:
-            assert delay == 1200
+            assert delay == (1800 if status == 429 else 21600)
+            now[0] += delay + 0.01
             previous_protocol.append(protocol)
             protocol.merge({"full_update": True, "attributes": {"soc": {"int_value": 70}}})
             events.append("waited")

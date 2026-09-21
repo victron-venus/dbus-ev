@@ -38,6 +38,10 @@ climate state remains in the existing preclimate status sensor. The value decode
 supports both legacy VEP and current VSU payloads. Retained snapshots do not renew
 their source receipt time; stale data is unavailable after the configured timeout.
 
+The default timeout is 900 seconds to cover Cerbo's ten-minute quiet-car fallback.
+On upgrades, reconfigure an existing entry's `stale_timeout` to 900 if it still
+uses 300. Shorter explicit values remain supported but expire between quiet polls.
+
 The MIT upstream license is included. See [provenance](../docs/mercedes-upstream.md)
 and [migration](../docs/mercedes-migration.md). Remove this component from HACS's
 upstream update management before replacement, so automatic updates cannot restore
