@@ -164,7 +164,8 @@ class MercedesClient:
                         logger.info("Mercedes telemetry connected")
                         with self._lock:
                             self._connected = True
-                        protocol = Protocol(self.vin)
+                        # The application session survives transport reconnects.
+                        # Mercedes may resume deltas without replaying a full car.
                         await self._stream(ws, session, auth, versions, protocol)
                         retry = 15
                 except MBAuthError:

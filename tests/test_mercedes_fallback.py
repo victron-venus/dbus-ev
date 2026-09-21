@@ -202,3 +202,46 @@ def test_only_initialized_live_stream_can_supplement_widget(connected, full, tmp
     else:
         assert snapshot["power"] is None
         assert snapshot["mercedes_payload"]["data_mode"] == "pull"
+
+
+def test_reconnect_keeps_application_session_delta_baseline(monkeypatch, tmp_path):
+    client = MercedesClient(vin=VIN, region="North America", token_file=tmp_path / "token")
+    session, versions, auth = (MagicMock() for _ in range(3))
+    session.ws_connect.return_value = Context(MagicMock())
+    versions.async_refresh = AsyncMock()
+    auth.async_get_cached_token = AsyncMock(return_value={"access_token": "private"})
+    monkeypatch.setattr(
+        "dbus_ev.mercedes.client.aiohttp.ClientSession", lambda **_: Context(session)
+    )
+    monkeypatch.setattr("dbus_ev.mercedes.client.AppVersionManager", lambda _: versions)
+    monkeypatch.setattr("dbus_ev.mercedes.client.Oauth", lambda *_: auth)
+    monkeypatch.setattr(client, "_metadata", AsyncMock(return_value={}))
+    protocols = []
+
+    async def stream(ws, s, a, v, protocol):
+        protocols.append(protocol)
+        if len(protocols) == 1:
+            payload = protocol.merge(
+                {
+                    "full_update": True,
+                    "attributes": {
+                        "soc": {"int_value": 70},
+                        "chargingPower": {"double_value": 7.2},
+                    },
+                }
+            )
+        else:
+            assert protocol is protocols[0] and protocol.full_received
+            payload = protocol.merge({"attributes": {"soc": {"int_value": 71}}})
+            client._stop.set()
+        client._accept(payload, "push")
+
+    async def cooldown(*_args):
+        assert client._received is not None
+
+    monkeypatch.setattr(client, "_stream", stream)
+    monkeypatch.setattr(client, "_cooldown", cooldown)
+    asyncio.run(client._serve())
+    assert len(protocols) == 2
+    assert client.poll()["soc"] == 71
+    assert client.poll()["power"] == 7200
