@@ -46,6 +46,8 @@ class Charger:
         self.service.register()
 
     def update(self, snapshot, meter=None, require_meter=False):
+        # Expired vehicle fields cannot establish location or charging status.
+        snapshot = snapshot if snapshot.get("ok") else {}
         status = snapshot.get("charger_status")
         if status is None:
             status = charger_status(snapshot.get("mercedes_charging_status"))
@@ -58,7 +60,11 @@ class Charger:
             status = 2
         elif require_meter and snapshot.get("at_site") is None and status != 0:
             status = None
-        usable = bool(snapshot.get("ok") and status is not None and power is not None)
+        # The dedicated meter has its own MQTT freshness deadline. A cloud
+        # outage must not hide its live measurements, including an idle 0 W.
+        # An idle circuit alone cannot establish whether a vehicle is plugged in.
+        source_ready = meter.get("/Connected") != 0 if require_meter else status is not None
+        usable = source_ready and power is not None
         self.service.set_connected(usable)
         svc = self.service.svc
         svc["/Status"] = status if usable else 0

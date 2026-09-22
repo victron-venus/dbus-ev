@@ -51,3 +51,12 @@ the HA MQTT entry's `stale_timeout` to 900 seconds for the ten-minute fallback.
 Explicit shorter deadlines are preserved and may show unavailable between polls.
 During rate limiting, availability expires normally; the client does not turn
 old readings into fresh telemetry to hide the enforced pause.
+
+When a dedicated Cerbo meter is configured, charger power and electrical
+measurements use the meter's independent MQTT freshness deadline. They remain
+available during Mercedes cooldowns, including an idle reading of 0 W. Expired
+vehicle location or charging state is not reused: the charger status is unknown
+unless a fresh vehicle snapshot or measured charging above 50 W establishes it.
+An expired or explicitly disconnected meter makes the charger unavailable;
+cloud power never substitutes for a required local meter. Vehicle SoC and
+vehicle charging power still expire with the Mercedes snapshot.
