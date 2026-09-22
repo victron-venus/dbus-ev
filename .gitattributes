@@ -1,3 +1,6 @@
 * text=auto
 *.sh text eol=lf
 *.py text eol=lf
+
+# Unified patch context includes mandatory leading spaces.
+vehicle-engine/patches/*.patch -whitespace

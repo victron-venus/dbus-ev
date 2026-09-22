@@ -4,8 +4,15 @@ Copy to local_config.py and fill in real values. NEVER commit local_config.py.
 """
 
 # Home Assistant
-# Select "mercedes" for direct cloud telemetry; "ha" preserves the existing reader.
+# "mercedes": built-in client; "evcc": optional multi-brand engine; "ha": legacy reader.
 DATA_SOURCE = "ha"
+# Experimental providers are opt-in. See docs/vehicles.md for supported templates,
+# private per-brand credentials, building the engine, and regional restrictions.
+EVCC_BINARY = "/data/setupOptions/dbus-ev/bin/vehicle-engine"
+EVCC_CONFIG_FILE = "/data/setupOptions/dbus-ev/vehicle.json"
+EVCC_STATE_FILE = "/data/setupOptions/dbus-ev/vehicle-state.json"
+EVCC_POLL_INTERVAL = 3600.0  # one read cycle/hour; minimum 30 min (BMW: 60 min)
+EVCC_STALE_TIMEOUT = 7500.0  # repeated local reads do not renew the cache age
 MERCEDES_VIN = ""
 MERCEDES_REGION = "Europe"  # Europe, North America, Asia-Pacific, China
 MERCEDES_TOKEN_FILE = "/data/setupOptions/dbus-ev/mercedes-token.json"
@@ -29,7 +36,8 @@ HOME_LATITUDE = None
 HOME_LONGITUDE = None
 HOME_RADIUS_METERS = 150.0
 
-# Publish Mercedes snapshots for the accompanying HA integration via Cerbo MQTT.
+# Publish vehicle snapshots via Cerbo MQTT. Mercedes retains its HA integration;
+# other brands publish raw JSON only. No HA discovery or automatic sensors.
 # Off for fresh installations. SetupHelper: ./setup install --ha-mqtt=on|off
 HA_MQTT_ENABLED = False
 CERBO_MQTT_HOST = "127.0.0.1"

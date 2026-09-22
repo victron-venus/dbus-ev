@@ -1,5 +1,7 @@
 # Venus OS vehicle and charger bridge
 
+Optional experimental multi-brand providers are documented in [docs/vehicles.md](docs/vehicles.md). They reuse pinned evcc vehicle libraries, publish raw MQTT only (no automatic HA sensors), and require a separately built optional engine.
+
 This service exports vehicle data from Mercedes or Home Assistant as
 `com.victronenergy.ev.<suffix>` (by default `com.victronenergy.ev.ha`).
 The numeric identifier belongs in `/DeviceInstance`; the service suffix is a

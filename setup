@@ -7,11 +7,14 @@
 # Capture our option before SetupHelper consumes the command line. Ordinary
 # PackageManager unattended installs reuse the persisted choice, without prompts.
 haMqttOption=""
+sourceOption=""
 for argument in "$@"; do
     case "$argument" in
         --ha-mqtt=on) haMqttOption=on ;;
         --ha-mqtt=off) haMqttOption=off ;;
         --ha-mqtt=*) echo "Use --ha-mqtt=on or --ha-mqtt=off" >&2; exit 2 ;;
+        --source=ha|--source=mercedes|--source=evcc) sourceOption=${argument#--source=} ;;
+        --source=*) echo "Use --source=ha, mercedes or evcc" >&2; exit 2 ;;
     esac
 done
 
@@ -32,12 +35,15 @@ if [ "$scriptAction" == 'INSTALL' ]; then
     if [ -n "$haMqttOption" ]; then
         python3 "$scriptDir/configure.py" --ha-mqtt "$haMqttOption" || exit $?
     elif $userInteraction && ! $reinstall && [ -t 0 ]; then
-        echo "Publish Mercedes telemetry to Home Assistant via Cerbo MQTT?"
+        echo "Publish vehicle telemetry to Home Assistant via Cerbo MQTT?"
         read -r -p "Enable (y), disable (n), or Enter to keep local_config.py/saved choice: " answer
         case "$answer" in
             y|Y) python3 "$scriptDir/configure.py" --ha-mqtt on || exit $? ;;
             n|N) python3 "$scriptDir/configure.py" --ha-mqtt off || exit $? ;;
         esac
+    fi
+    if [ -n "$sourceOption" ]; then
+        python3 "$scriptDir/configure.py" --source "$sourceOption" || exit $?
     fi
     sh "$scriptDir/update.sh" "$scriptDir" || exit $?
 fi

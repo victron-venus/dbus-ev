@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add an opt-in multi-brand provider engine using pinned evcc vehicle libraries (35 templates / 33 brands), with common D-Bus vehicle/charger projection. New providers are experimental and have no live vehicle validation.
+- Add persistent pacing, HTTP retry budgets and conservative upstream patches; expose no vehicle-control commands.
+- Allow source selection through local configuration and SetupHelper. Optional MQTT publication for new brands sends raw state only, without HA discovery or automatic sensors.
+- Keep the existing Mercedes client, HA payload and default installation behavior.
+
 All notable changes to this project will be documented in this file.
 
 ## 0.1.2
