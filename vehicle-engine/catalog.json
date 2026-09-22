@@ -1,0 +1,1127 @@
+{
+  "upstream": "github.com/evcc-io/evcc",
+  "revision": "0bd94d01de8d4d5702a8727a6ec3144313d7a246",
+  "status": "experimental; no vehicle-account validation",
+  "templates": [
+    {
+      "template": "aiways",
+      "brands": [
+        "Aiways"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password",
+        "vin"
+      ]
+    },
+    {
+      "template": "myalpine",
+      "brands": [
+        "Alpine"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "audi",
+      "brands": [
+        "Audi"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "welcomecharge",
+        "streaming",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "cardata",
+      "brands": [
+        "BMW",
+        "Mini"
+      ],
+      "oauth": true,
+      "parameters": [
+        "vin",
+        "clientid",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "vin",
+        "clientid"
+      ]
+    },
+    {
+      "template": "carwings",
+      "brands": [
+        "Nissan"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "citroen",
+      "brands": [
+        "Citroën"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "accessToken",
+        "refreshToken",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "password",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "accessToken",
+        "refreshToken"
+      ]
+    },
+    {
+      "template": "dacia",
+      "brands": [
+        "Dacia"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "ds",
+      "brands": [
+        "DS"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "accessToken",
+        "refreshToken",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "password",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "accessToken",
+        "refreshToken"
+      ]
+    },
+    {
+      "template": "fiat",
+      "brands": [
+        "Fiat",
+        "Jeep"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "pin",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "ford-connect-query",
+      "brands": [
+        "Ford"
+      ],
+      "oauth": true,
+      "parameters": [
+        "clientid",
+        "clientsecret",
+        "redirecturi",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "clientid",
+        "clientsecret",
+        "redirecturi"
+      ]
+    },
+    {
+      "template": "genesis",
+      "brands": [
+        "Genesis"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "language"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "hyundai-us",
+      "brands": [
+        "Hyundai"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "pin",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password",
+        "pin"
+      ]
+    },
+    {
+      "template": "hyundai",
+      "brands": [
+        "Hyundai"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "language",
+        "region"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "kia",
+      "brands": [
+        "Kia"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "language"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "lexus",
+      "brands": [
+        "Lexus"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "livewire",
+      "brands": [
+        "LiveWire"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "deviceuuid",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password",
+        "deviceuuid"
+      ]
+    },
+    {
+      "template": "mg",
+      "brands": [
+        "MG"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "region",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password",
+        "vin",
+        "region"
+      ]
+    },
+    {
+      "template": "myskoda",
+      "brands": [
+        "Škoda"
+      ],
+      "oauth": false,
+      "parameters": [
+        "apikey",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "welcomecharge",
+        "sandbox",
+        "cache",
+        "timeout"
+      ],
+      "required_parameters": [
+        "apikey",
+        "vin"
+      ]
+    },
+    {
+      "template": "nissan-ariya",
+      "brands": [
+        "Nissan"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "expiry"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "nissan",
+      "brands": [
+        "Nissan"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "niu-e-scooter",
+      "brands": [
+        "NIU"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "serial",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "title",
+        "icon",
+        "capacity"
+      ],
+      "required_parameters": [
+        "user",
+        "password",
+        "serial"
+      ]
+    },
+    {
+      "template": "opel",
+      "brands": [
+        "Opel"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "accessToken",
+        "refreshToken",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "password",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "accessToken",
+        "refreshToken"
+      ]
+    },
+    {
+      "template": "peugeot",
+      "brands": [
+        "Peugeot"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "accessToken",
+        "refreshToken",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "password",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "accessToken",
+        "refreshToken"
+      ]
+    },
+    {
+      "template": "polestar-data-portal",
+      "brands": [
+        "Polestar"
+      ],
+      "oauth": false,
+      "parameters": [
+        "clientid",
+        "clientsecret",
+        "accountid",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "clientid",
+        "clientsecret",
+        "accountid"
+      ]
+    },
+    {
+      "template": "renault",
+      "brands": [
+        "Renault"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "alternativewakeup",
+        "wakeupmode"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "cupra",
+      "brands": [
+        "Cupra"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "welcomecharge",
+        "streaming",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "seat",
+      "brands": [
+        "Seat"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "welcomecharge",
+        "streaming",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "skoda",
+      "brands": [
+        "Škoda"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "timeout"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "smart-hello",
+      "brands": [
+        "Smart"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "coarsecurrent",
+        "streaming",
+        "welcomecharge",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "subaru",
+      "brands": [
+        "Subaru"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "tesla",
+      "brands": [
+        "Tesla"
+      ],
+      "oauth": false,
+      "parameters": [
+        "clientId",
+        "accessToken",
+        "refreshToken",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "control",
+        "commandProxy",
+        "proxyToken",
+        "cache"
+      ],
+      "required_parameters": [
+        "clientId",
+        "accessToken",
+        "refreshToken"
+      ]
+    },
+    {
+      "template": "toyota",
+      "brands": [
+        "Toyota"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "cache"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "volvo-connected",
+      "brands": [
+        "Volvo"
+      ],
+      "oauth": true,
+      "parameters": [
+        "vccapikey",
+        "clientId",
+        "clientSecret",
+        "redirectUri",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled",
+        "vin",
+        "accessToken",
+        "refreshToken"
+      ],
+      "required_parameters": [
+        "vccapikey",
+        "clientId",
+        "clientSecret",
+        "redirectUri"
+      ]
+    },
+    {
+      "template": "vw",
+      "brands": [
+        "Volkswagen"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "timeout",
+        "coarsecurrent",
+        "welcomecharge",
+        "streaming",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    },
+    {
+      "template": "zero",
+      "brands": [
+        "Zero Motorcycles"
+      ],
+      "oauth": false,
+      "parameters": [
+        "user",
+        "password",
+        "vin",
+        "title",
+        "icon",
+        "capacity",
+        "phases",
+        "mode",
+        "minCurrent",
+        "maxCurrent",
+        "maxPower",
+        "identifiers",
+        "priority",
+        "cache",
+        "climaterdisabled",
+        "autodetectdisabled",
+        "wakeupdisabled"
+      ],
+      "required_parameters": [
+        "user",
+        "password"
+      ]
+    }
+  ]
+}

@@ -18,14 +18,23 @@ def charger_status(raw):
 class Charger:
     """Project one shared vehicle snapshot and optional meter onto charger D-Bus."""
 
-    def __init__(self, *, instance, version, bus_suffix, phases=1, name="EV Charger"):
+    def __init__(
+        self,
+        *,
+        instance,
+        version,
+        bus_suffix,
+        phases=1,
+        name="EV Charger",
+        connection="Mercedes / local meter",
+    ):
         self.service = EvChargerService(
             instance,
             version,
             bus_suffix=bus_suffix,
             custom_name=name,
             product_name="dbus-ev",
-            connection="Mercedes / local meter",
+            connection=connection,
             register=False,
             on_mode=lambda *_: False,
             on_startstop=lambda *_: False,
@@ -37,7 +46,9 @@ class Charger:
         self.service.register()
 
     def update(self, snapshot, meter=None, require_meter=False):
-        status = charger_status(snapshot.get("mercedes_charging_status"))
+        status = snapshot.get("charger_status")
+        if status is None:
+            status = charger_status(snapshot.get("mercedes_charging_status"))
         if snapshot.get("at_site") is False:
             status = 0
         meter = meter or {}

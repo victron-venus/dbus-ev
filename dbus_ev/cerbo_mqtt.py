@@ -26,6 +26,8 @@ class CerboMqtt:
         password="",
         meter_ttl=15,
         client=None,
+        source="mercedes",
+        vehicle_id="vehicle",
     ):
         if not portal or any(char in portal for char in "/+#"):
             raise ValueError("CERBO_PORTAL_ID must be configured")
@@ -34,8 +36,13 @@ class CerboMqtt:
 
             client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="dbus-ev")
         self.client = client
+        self.source = source
+        if source != "mercedes" and (
+            not vehicle_id or not all(c.isascii() and (c.isalnum() or c == "_") for c in vehicle_id)
+        ):
+            raise ValueError("BUS_SUFFIX must contain only ASCII letters, numbers and underscores")
         self.portal, self.publish_ha = portal, publish_ha
-        self.prefix = f"mercedes/{portal}"
+        self.prefix = f"mercedes/{portal}" if source == "mercedes" else f"ev/{portal}/{vehicle_id}"
         self.meter_prefix = f"N/{portal}/acload/{meter_instance}"
         self.meter_instance, self.meter_ttl = meter_instance, meter_ttl
         self._lock = threading.Lock()
@@ -117,6 +124,9 @@ class CerboMqtt:
             self._last_keepalive = now
         if not self.publish_ha:
             return
+        if self.source != "mercedes":
+            self._publish_vehicle(snapshot)
+            return
         payload = snapshot.get("mercedes_payload")
         available = bool(snapshot.get("ok") and payload)
         if available:
@@ -130,6 +140,27 @@ class CerboMqtt:
                 )
                 if result.rc == 0:
                     self._published_revision = revision
+        status = "online" if available else "offline"
+        if status != self._availability:
+            result = self.client.publish(self.prefix + "/availability", status, qos=1, retain=True)
+            if result.rc == 0:
+                self._availability = status
+
+    def _publish_vehicle(self, snapshot):
+        # Raw telemetry only: never create Home Assistant entities automatically.
+        from dbus_ev.vehicle import MQTT_FIELDS  # pylint: disable=import-outside-toplevel
+
+        available = bool(snapshot.get("ok") and snapshot.get("sampled_at") is not None)
+        if available and snapshot["sampled_at"] != self._published_revision:
+            payload = {key: snapshot.get(key) for key in MQTT_FIELDS}
+            payload.update(
+                schema=1, sampled_at=snapshot["sampled_at"], source=snapshot.get("source")
+            )
+            result = self.client.publish(
+                self.prefix + "/state", json.dumps(payload, allow_nan=False), qos=1, retain=True
+            )
+            if result.rc == 0:
+                self._published_revision = snapshot["sampled_at"]
         status = "online" if available else "offline"
         if status != self._availability:
             result = self.client.publish(self.prefix + "/availability", status, qos=1, retain=True)

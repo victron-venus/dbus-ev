@@ -10,8 +10,9 @@ from pathlib import Path
 class TokenStore:
     """Atomically persist rotating credentials under an exclusive process lock."""
 
-    def __init__(self, path):
+    def __init__(self, path, owner="Mercedes client"):
         self.path = Path(path)
+        self.owner = owner
         # The operator selects the token file in local configuration, never cloud/MQTT input.
         self.data = {}
         if self.path.exists():
@@ -28,7 +29,7 @@ class TokenStore:
         except OSError:
             self._lock.close()
             self._lock = None
-            raise RuntimeError("Another Mercedes client owns this token file") from None
+            raise RuntimeError(f"Another {self.owner} owns this token file") from None
         # The previous owner may have rotated the refresh token before releasing
         # its lock. Read again only after exclusive ownership has been obtained.
         if self.path.exists():
