@@ -318,6 +318,32 @@ def test_manual_recovery_preserves_latch_on_failed_authorization(tmp_path, monke
     assert json.loads(path.read_text())["blocked"] is False
 
 
+def test_manual_authorization_preserves_literal_cli_paths(tmp_path, monkeypatch):
+    captured = tmp_path / "arguments.json"
+    script = tmp_path / "engine ; literal"
+    script.write_text(
+        f"#!{sys.executable}\nimport json,sys\n"
+        f"with open({str(captured)!r}, 'w') as out: json.dump(sys.argv[1:], out)\n"
+    )
+    script.chmod(0o700)
+    # Leading option syntax and shell metacharacters must remain a single value.
+    config = "--authorize ; $(touch injected)"
+    state = tmp_path / "state with spaces.json"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["authorize", "--binary", str(script), f"--config={config}", "--state-file", str(state)],
+    )
+    assert evcc.main() == 0
+    assert json.loads(captured.read_text()) == [
+        f"--config={config}",
+        f"--database={state}.db",
+        "--authorize",
+    ]
+    assert not (tmp_path / "injected").exists()
+
+
 @pytest.mark.parametrize("output", ['{"schema":2}', "[]", "not json", '"' + "x" * 70000 + '"'])
 def test_invalid_pipe_reply_is_rejected(tmp_path, output):
     script = tmp_path / "engine"

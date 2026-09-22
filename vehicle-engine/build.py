@@ -1,17 +1,57 @@
 #!/usr/bin/env python3
 """Build/test the pinned providers with mandatory patches in an isolated copy."""
 
+import argparse
 import hashlib
 import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
 
+def go_arguments(argv=None):
+    """Accept only build/test options that cannot replace the patched module."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    build = commands.add_parser("build")
+    build.add_argument("-trimpath", action="store_true")
+    build.add_argument("-ldflags", choices=("-s -w",))
+    build.add_argument("--output", type=Path)
+    build.add_argument("package", nargs="?", choices=(".",), default=".")
+    test = commands.add_parser("test")
+    test.add_argument("-race", action="store_true")
+    test.add_argument("-count", type=int)
+    test.add_argument("package", nargs="?", choices=(".", "./..."), default="./...")
+    vet = commands.add_parser("vet")
+    vet.add_argument("package", nargs="?", choices=(".", "./..."), default="./...")
+    args = parser.parse_args(argv)
+    if args.command == "build":
+        command = ["build"]
+        if args.trimpath:
+            command.append("-trimpath")
+        if args.ldflags:
+            command.append("-ldflags=-s -w")
+        if args.output is not None:
+            command.append(f"-o={args.output.resolve()}")
+    elif args.command == "test":
+        command = ["test"]
+        if args.race:
+            command.append("-race")
+        if args.count is not None:
+            if args.count < 1:
+                parser.error("-count must be positive")
+            command.append(f"-count={args.count}")
+    else:
+        command = ["vet"]
+    command.append("." if args.package == "." else "./...")
+    return command
+
+
 def main():
+    # Validate before downloading modules or invoking any process.
+    command = go_arguments()
     root = Path(__file__).resolve().parent
     os.chdir(root)
     module = json.loads(
@@ -38,11 +78,12 @@ def main():
             (root / "go.mod").read_text() + f"\nreplace github.com/evcc-io/evcc => {stage}\n"
         )
         shutil.copyfile(root / "go.sum", modfile.with_suffix(".sum"))
-        command = sys.argv[1:]
-        if not command or command[0] not in ("test", "build", "vet"):
-            raise SystemExit("Usage: python3 build.py build|test|vet [Go arguments]")
-        subprocess.run(
-            ["go", command[0], "-mod=readonly", f"-modfile={modfile}", *command[1:]], check=True
+        # S8705: only allowlisted options reach Go. The output filename is a
+        # literal -o=value; callers cannot inject -modfile/-overlay/-toolexec/-exec.
+        subprocess.run(  # NOSONAR - validated build options, no arbitrary Go flags
+            ["go", command[0], "-mod=readonly", f"-modfile={modfile}", *command[1:]],
+            shell=False,
+            check=True,
         )
 
 

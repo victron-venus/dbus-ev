@@ -27,7 +27,8 @@ class Engine:
         self.timeout = timeout
         # The process intentionally lives across polls and is reaped in close().
         self.process = subprocess.Popen(  # pylint: disable=consider-using-with
-            [binary, "--config", str(config_file), "--database", str(database)],
+            [binary, f"--config={config_file}", f"--database={database}"],
+            shell=False,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -226,15 +227,17 @@ def main():
     store = TokenStore(args.state_file, owner="vehicle engine")
     store.acquire()
     try:
-        result = subprocess.run(
+        # S8701/S8705: this local operator CLI deliberately selects the installed
+        # engine with the operator's own privileges, never from vehicle telemetry
+        # or a network endpoint. Separate argv and flag=value preserve literal paths.
+        result = subprocess.run(  # NOSONAR - reviewed local executable selection
             [
                 args.binary,
-                "--config",
-                args.config,
-                "--database",
-                args.state_file + ".db",
+                f"--config={args.config}",
+                f"--database={args.state_file}.db",
                 "--authorize",
             ],
+            shell=False,
             check=False,
         )
         if result.returncode == 0:

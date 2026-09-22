@@ -6,4 +6,4 @@ root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 output=${1:?Supply an absolute destination for the optional vehicle-engine binary}
 case "$output" in /*) ;; *) echo 'Destination must be absolute' >&2; exit 2 ;; esac
 cd "$root/vehicle-engine"
-CGO_ENABLED=0 python3 build.py build -trimpath -ldflags='-s -w' -o "$output" .
+CGO_ENABLED=0 python3 build.py build -trimpath -ldflags='-s -w' --output "$output" .

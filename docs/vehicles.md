@@ -69,6 +69,11 @@ source when updating this engine. The release source archive includes its source
 module lock/checksums and conservative patches. Do not use a plain `go build`:
 the mandatory patch hook intentionally makes unpatched builds fail compilation.
 
+The build CLI accepts only the documented build/test/vet commands and their
+supported options (`-trimpath`, `-ldflags='-s -w'`, `--output`, `-race`, `-count`). It
+rejects arbitrary Go flags, including module/overlay overrides and executable
+hooks, before downloading dependencies or starting any process.
+
 The build uses a temporary copy of the verified upstream module, applies the
 reviewable patches and leaves the Go module cache untouched. Its module
 replacements match the pinned upstream dependency replacements. The MIT notice
@@ -133,6 +138,10 @@ python3 -m dbus_ev.providers.evcc \
 This is an explicit interactive action. It prints a manufacturer login URL/code,
 validates OAuth state for redirect flows, and stores tokens in a private SQLite
 file beside the state file. It never prints tokens or sends vehicle commands.
+`--binary` intentionally executes the local program selected by the operator,
+with that operator's permissions. Use the engine built and installed above; do
+not pass executable paths supplied by vehicle data or a remote request. Paths
+are passed as literal arguments without a shell.
 For templates without interactive OAuth, place the required credentials/API keys
 or access/refresh tokens in the JSON using the upstream instructions. The same
 command acknowledges corrected configuration and releases a failed-login latch.
