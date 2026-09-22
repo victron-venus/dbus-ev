@@ -10,6 +10,30 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+ALL_PACKAGES = "./..."
+
+
+def build_arguments(args):
+    command = ["build"]
+    if args.trimpath:
+        command.append("-trimpath")
+    if args.ldflags:
+        command.append("-ldflags=-s -w")
+    if args.output is not None:
+        command.append(f"-o={args.output.resolve()}")
+    return command
+
+
+def test_arguments(args, parser):
+    command = ["test"]
+    if args.race:
+        command.append("-race")
+    if args.count is not None:
+        if args.count < 1:
+            parser.error("-count must be positive")
+        command.append(f"-count={args.count}")
+    return command
+
 
 def go_arguments(argv=None):
     """Accept only build/test options that cannot replace the patched module."""
@@ -23,29 +47,17 @@ def go_arguments(argv=None):
     test = commands.add_parser("test")
     test.add_argument("-race", action="store_true")
     test.add_argument("-count", type=int)
-    test.add_argument("package", nargs="?", choices=(".", "./..."), default="./...")
+    test.add_argument("package", nargs="?", choices=(".", ALL_PACKAGES), default=ALL_PACKAGES)
     vet = commands.add_parser("vet")
-    vet.add_argument("package", nargs="?", choices=(".", "./..."), default="./...")
+    vet.add_argument("package", nargs="?", choices=(".", ALL_PACKAGES), default=ALL_PACKAGES)
     args = parser.parse_args(argv)
     if args.command == "build":
-        command = ["build"]
-        if args.trimpath:
-            command.append("-trimpath")
-        if args.ldflags:
-            command.append("-ldflags=-s -w")
-        if args.output is not None:
-            command.append(f"-o={args.output.resolve()}")
+        command = build_arguments(args)
     elif args.command == "test":
-        command = ["test"]
-        if args.race:
-            command.append("-race")
-        if args.count is not None:
-            if args.count < 1:
-                parser.error("-count must be positive")
-            command.append(f"-count={args.count}")
+        command = test_arguments(args, parser)
     else:
         command = ["vet"]
-    command.append("." if args.package == "." else "./...")
+    command.append("." if args.package == "." else ALL_PACKAGES)
     return command
 
 

@@ -224,7 +224,8 @@ def test_mqtt_raw_only_never_discovery_no_duplicates_and_staleness():
     calls = wire.publish.call_args_list
     assert [c.args[0] for c in calls] == ["ev/portal/car/state", "ev/portal/car/availability"]
     data = json.loads(calls[0].args[1])
-    assert data["soc"] == 0 and data["power"] is None
+    assert data["soc"] == 0
+    assert data["power"] is None
     mqtt.tick(snapshot)
     assert wire.publish.call_count == 2
     mqtt.tick(dict(snapshot, ok=False))

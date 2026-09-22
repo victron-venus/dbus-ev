@@ -21,6 +21,52 @@ import (
 	"github.com/evcc-io/evcc/util/templates"
 )
 
+func authorizationParameters(conf map[string]any, names []any) map[string]any {
+	params := map[string]any{}
+	for _, param := range names {
+		for key, value := range conf {
+			if strings.EqualFold(key, param.(string)) {
+				params[key] = value
+			}
+		}
+	}
+	return params
+}
+
+func waitForAuthorization(ctx context.Context, provider api.AuthProvider) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for !provider.Authenticated() {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+	return nil
+}
+
+func completeAuthorization(ctx context.Context, provider api.AuthProvider, state string, input io.Reader, output io.Writer) error {
+	link, device, err := provider.Login(state)
+	if err != nil {
+		return err
+	}
+	if device != nil {
+		fmt.Fprintf(output, "Open %s and enter code %s\n", device.VerificationURI, device.UserCode)
+		return waitForAuthorization(ctx, provider)
+	}
+	fmt.Fprintf(output, "Open this URL, then paste the full redirect URL here:\n%s\n", link)
+	scanner := bufio.NewScanner(input)
+	if !scanner.Scan() {
+		return errors.New("redirect URL required")
+	}
+	callback, err := url.Parse(strings.TrimSpace(scanner.Text()))
+	if err != nil || callback.Query().Get("state") != state {
+		return errors.New("invalid OAuth state")
+	}
+	return provider.HandleCallback(callback.Query())
+}
+
 // Run only from the explicit authorization command, under the parent's owner
 // lock. Login never runs implicitly in this helper's polling loop.
 func authorizeVehicle(conf map[string]any, database string, input io.Reader, output io.Writer) error {
@@ -47,14 +93,7 @@ func authorizeVehicle(conf map[string]any, database string, input io.Reader, out
 		return err
 	}
 	defer db.Close()
-	params := map[string]any{}
-	for _, param := range tmpl.Auth["params"].([]any) {
-		for key, value := range conf {
-			if strings.EqualFold(key, param.(string)) {
-				params[key] = value
-			}
-		}
-	}
+	params := authorizationParameters(conf, tmpl.Auth["params"].([]any))
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	ts, err := auth.NewFromConfig(ctx, typ, params)
@@ -70,34 +109,8 @@ func authorizeVehicle(conf map[string]any, database string, input io.Reader, out
 		return err
 	}
 	state := hex.EncodeToString(random[:])
-	link, device, err := provider.Login(state)
-	if err != nil {
+	if err := completeAuthorization(ctx, provider, state, input, output); err != nil {
 		return err
-	}
-	if device != nil {
-		fmt.Fprintf(output, "Open %s and enter code %s\n", device.VerificationURI, device.UserCode)
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for !provider.Authenticated() {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-ticker.C:
-			}
-		}
-	} else {
-		fmt.Fprintf(output, "Open this URL, then paste the full redirect URL here:\n%s\n", link)
-		scanner := bufio.NewScanner(input)
-		if !scanner.Scan() {
-			return errors.New("redirect URL required")
-		}
-		callback, err := url.Parse(strings.TrimSpace(scanner.Text()))
-		if err != nil || callback.Query().Get("state") != state {
-			return errors.New("invalid OAuth state")
-		}
-		if err := provider.HandleCallback(callback.Query()); err != nil {
-			return err
-		}
 	}
 	if err := settings.Persist(); err != nil {
 		return err

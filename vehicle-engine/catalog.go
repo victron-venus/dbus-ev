@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "embed"
+	_ "embed" // Required by go:embed to include the provider catalog in the binary.
 	"encoding/json"
 )
 

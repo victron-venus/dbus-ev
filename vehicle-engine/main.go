@@ -97,14 +97,8 @@ func sample(v api.Vehicle) reply {
 	if capacity := v.Capacity(); capacity > 0 && !math.IsInf(capacity, 0) {
 		d["battery_capacity"] = capacity
 	}
-	if p, ok := api.Cap[api.ChargeState](v); ok {
-		value, e := p.Status()
-		if e != nil && !errors.Is(e, api.ErrNotAvailable) {
-			return failure(e)
-		}
-		if e == nil {
-			d["status"] = string(value)
-		}
+	if err := sampleChargeState(v, d); err != nil {
+		return failure(err)
 	}
 	if p, ok := api.Cap[api.SocLimiter](v); ok {
 		value, e := p.GetLimitSoc()
@@ -112,26 +106,8 @@ func sample(v api.Vehicle) reply {
 			return failure(err)
 		}
 	}
-	if p, ok := api.Cap[api.VehicleRange](v); ok {
-		value, e := p.Range()
-		if err := putNumber(d, "range_to_go", float64(value), e); err != nil {
-			return failure(err)
-		}
-	}
-	if p, ok := api.Cap[api.VehicleOdometer](v); ok {
-		value, e := p.Odometer()
-		if err := putNumber(d, "odometer", value, e); err != nil {
-			return failure(err)
-		}
-	}
-	if p, ok := api.Cap[api.VehiclePosition](v); ok {
-		lat, lon, e := p.Position()
-		if e != nil && !errors.Is(e, api.ErrNotAvailable) {
-			return failure(e)
-		}
-		if e == nil && math.Abs(lat) <= 90 && math.Abs(lon) <= 180 {
-			d["latitude"], d["longitude"] = lat, lon
-		}
+	if err := sampleTravel(v, d); err != nil {
+		return failure(err)
 	}
 	if p, ok := api.Cap[api.Meter](v); ok {
 		value, e := p.CurrentPower()
@@ -140,6 +116,45 @@ func sample(v api.Vehicle) reply {
 		}
 	}
 	return reply{Schema: protocolVersion, OK: true, Data: d}
+}
+
+func sampleChargeState(v api.Vehicle, d map[string]any) error {
+	if p, ok := api.Cap[api.ChargeState](v); ok {
+		value, err := p.Status()
+		if errors.Is(err, api.ErrNotAvailable) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		d["status"] = string(value)
+	}
+	return nil
+}
+
+func sampleTravel(v api.Vehicle, d map[string]any) error {
+	if p, ok := api.Cap[api.VehicleRange](v); ok {
+		value, e := p.Range()
+		if err := putNumber(d, "range_to_go", float64(value), e); err != nil {
+			return err
+		}
+	}
+	if p, ok := api.Cap[api.VehicleOdometer](v); ok {
+		value, e := p.Odometer()
+		if err := putNumber(d, "odometer", value, e); err != nil {
+			return err
+		}
+	}
+	if p, ok := api.Cap[api.VehiclePosition](v); ok {
+		lat, lon, e := p.Position()
+		if e != nil && !errors.Is(e, api.ErrNotAvailable) {
+			return e
+		}
+		if e == nil && math.Abs(lat) <= 90 && math.Abs(lon) <= 180 {
+			d["latitude"], d["longitude"] = lat, lon
+		}
+	}
+	return nil
 }
 
 func loadConfig(path string) (map[string]any, error) {

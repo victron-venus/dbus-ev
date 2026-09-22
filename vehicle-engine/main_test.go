@@ -87,24 +87,29 @@ func TestCatalogMatchesPinnedUpstreamAndRenders(t *testing.T) {
 	}
 	for _, p := range c.Templates {
 		t.Run(p.Template, func(t *testing.T) {
-			tmpl, err := templates.ByName(templates.Vehicle, p.Template)
-			if err != nil || tmpl.Deprecated {
-				t.Fatalf("unusable template: %v", err)
-			}
-			conf := map[string]any{"template": p.Template, "vin": "WDD00000000000001"}
-			if p.Template == "niu-e-scooter" {
-				delete(conf, "vin")
-			}
-			for _, key := range p.Required {
-				if key != "vin" {
-					conf[key] = "test-placeholder"
-				}
-			}
-			// Render only: no constructor, network, account or vehicle needed.
-			if _, err := templates.RenderInstance(templates.Vehicle, conf); err != nil {
-				t.Fatal(err)
-			}
+			assertCatalogTemplate(t, p.Template, p.Required)
 		})
+	}
+}
+
+func assertCatalogTemplate(t *testing.T, name string, required []string) {
+	t.Helper()
+	tmpl, err := templates.ByName(templates.Vehicle, name)
+	if err != nil || tmpl.Deprecated {
+		t.Fatalf("unusable template: %v", err)
+	}
+	conf := map[string]any{"template": name, "vin": "WDD00000000000001"}
+	if name == "niu-e-scooter" {
+		delete(conf, "vin")
+	}
+	for _, key := range required {
+		if key != "vin" {
+			conf[key] = "test-placeholder"
+		}
+	}
+	// Render only: no constructor, network, account or vehicle needed.
+	if _, err := templates.RenderInstance(templates.Vehicle, conf); err != nil {
+		t.Fatal(err)
 	}
 }
 

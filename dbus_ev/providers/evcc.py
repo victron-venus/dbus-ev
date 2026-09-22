@@ -161,6 +161,32 @@ class EvccClient:
             self.engine.close()
             self.engine = None
 
+    def _poll_engine(self, now):
+        # Reserve before network I/O so process crashes cannot bypass pacing.
+        self._save(next_poll=now + self.interval)
+        if self.engine is None:
+            self._save(next_login=now + LOGIN_INTERVAL)
+        started_at = time.monotonic()
+        try:
+            if self.engine is None:
+                self.engine = self.factory(self.binary, self.config_file, self.database)
+            response = self.engine.poll()
+            if response.get("ok") is True and isinstance(response.get("data"), dict):
+                candidate = normalize(
+                    response["data"], vin=self.vin, capacity=self.capacity, home=self.home
+                )
+                if candidate["soc"] is None:
+                    raise ValueError("Missing valid state of charge")
+                self.snapshot = candidate
+                self.received, self.sampled_at = started_at, now
+                self._save(failures=0, next_poll=time.time() + self.interval)
+            else:
+                self._failure(response)
+        except (OSError, RuntimeError, ValueError, subprocess.SubprocessError):
+            # Do not log provider output or exception bodies.
+            self._stop_engine()
+            self._failure({"error": "transport"})
+
     def poll(self):
         self.start()
         now = time.time()
@@ -170,36 +196,7 @@ class EvccClient:
             and now >= state.get("next_poll", 0)
             and (self.engine is not None or now >= state.get("next_login", 0))
         ):
-            # Reserve before network I/O so process crashes cannot bypass pacing.
-            self._save(next_poll=now + self.interval)
-            if self.engine is None:
-                self._save(next_login=now + LOGIN_INTERVAL)
-            started_at = time.monotonic()
-            try:
-                if self.engine is None:
-                    self.engine = self.factory(self.binary, self.config_file, self.database)
-                response = self.engine.poll()
-                if response.get("ok") is True and isinstance(response.get("data"), dict):
-                    candidate = normalize(
-                        response["data"], vin=self.vin, capacity=self.capacity, home=self.home
-                    )
-                    if candidate["soc"] is None:
-                        raise ValueError("Missing valid state of charge")
-                    self.snapshot = candidate
-                    self.received, self.sampled_at = started_at, now
-                    self._save(failures=0, next_poll=time.time() + self.interval)
-                else:
-                    self._failure(response)
-            except (
-                OSError,
-                RuntimeError,
-                ValueError,
-                TimeoutError,
-                subprocess.SubprocessError,
-            ):
-                # Do not log provider output or exception bodies.
-                self._stop_engine()
-                self._failure({"error": "transport"})
+            self._poll_engine(now)
         fresh = (
             self.received is not None and 0 <= time.monotonic() - self.received < self.stale_timeout
         )
