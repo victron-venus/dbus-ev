@@ -49,16 +49,36 @@ from gi.repository import GLib
 from vedbus import VeDbusService
 # Inspect the configuration that will actually be used, before stopping workers.
 import os
+import json
 root = Path(sys.argv[1] if os.environ.get("PUSH_LOCAL_CONFIG") == "1" else sys.argv[2])
 config_file = root / "local_config.py"
 values = {}
 if config_file.exists():
     exec(compile(config_file.read_text(), str(config_file), "exec"), values)
+options_file = Path(os.environ.get("DBUS_EV_SETUP_OPTIONS", "/data/setupOptions/dbus-ev/options.json"))
+if options_file.exists():
+    options = json.loads(options_file.read_text())
+    for key in ("HA_MQTT_ENABLED", "DATA_SOURCE"):
+        if key in options:
+            values[key] = options[key]
 if values.get("DATA_SOURCE") == "mercedes":
     try:
         import aiohttp, google.protobuf, paho.mqtt.client
     except ImportError as exc:
         raise SystemExit("Missing Mercedes dependencies: run install-mercedes-deps.sh first") from exc
+if values.get("HA_MQTT_ENABLED") or values.get("CERBO_METER_INSTANCE") is not None:
+    import paho.mqtt.client
+if values.get("DATA_SOURCE") == "evcc":
+    # Validate private configuration and executable locally; never log in from setup.
+    sys.path.insert(0, sys.argv[1])
+    from dbus_ev.providers.evcc import EvccClient
+    EvccClient(
+        binary=values.get("EVCC_BINARY", "/data/setupOptions/dbus-ev/bin/vehicle-engine"),
+        config_file=values.get("EVCC_CONFIG_FILE", "/data/setupOptions/dbus-ev/vehicle.json"),
+        state_file=values.get("EVCC_STATE_FILE", "/data/setupOptions/dbus-ev/vehicle-state.json"),
+        interval=values.get("EVCC_POLL_INTERVAL", 3600),
+        stale_timeout=values.get("EVCC_STALE_TIMEOUT", 7500),
+    )
 PYTHON
 
 # A second owner must not advertise the same charger. Migration stops/removes

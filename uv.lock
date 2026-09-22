@@ -174,6 +174,9 @@ mercedes = [
     { name = "paho-mqtt" },
     { name = "protobuf" },
 ]
+mqtt = [
+    { name = "paho-mqtt" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -181,6 +184,7 @@ requires-dist = [
     { name = "aiohttp", marker = "extra == 'mercedes'", specifier = ">=3.9" },
     { name = "paho-mqtt", marker = "extra == 'dev'", specifier = ">=2.0" },
     { name = "paho-mqtt", marker = "extra == 'mercedes'", specifier = ">=2.0" },
+    { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = ">=2.0" },
     { name = "protobuf", marker = "extra == 'dev'", specifier = ">=6.31.1,<7" },
     { name = "protobuf", marker = "extra == 'mercedes'", specifier = ">=6.31.1,<7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
@@ -188,7 +192,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.31" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9" },
 ]
-provides-extras = ["mercedes", "dev"]
+provides-extras = ["mercedes", "mqtt", "dev"]
 
 [[package]]
 name = "frozenlist"

@@ -28,7 +28,7 @@ except ImportError:
 
 
 def _get(name: str, default):
-    if name == "HA_MQTT_ENABLED" and name in _setup_options:
+    if name in ("HA_MQTT_ENABLED", "DATA_SOURCE") and name in _setup_options:
         return _setup_options[name]
     if local_config is not None and hasattr(local_config, name):
         return getattr(local_config, name)
@@ -89,6 +89,12 @@ HA_TIMEOUT: float = float(_get("HA_TIMEOUT", 3.0))
 
 # One upstream provider per process; no automatic cloud/HA switching.
 DATA_SOURCE: str = str(_get("DATA_SOURCE", "ha")).lower()
+# Optional multi-brand engine. Its poll cadence is independent of the local loop.
+EVCC_BINARY = str(_get("EVCC_BINARY", "/data/setupOptions/dbus-ev/bin/vehicle-engine"))
+EVCC_CONFIG_FILE = str(_get("EVCC_CONFIG_FILE", "/data/setupOptions/dbus-ev/vehicle.json"))
+EVCC_STATE_FILE = str(_get("EVCC_STATE_FILE", "/data/setupOptions/dbus-ev/vehicle-state.json"))
+EVCC_POLL_INTERVAL = float(_get("EVCC_POLL_INTERVAL", 3600))
+EVCC_STALE_TIMEOUT = float(_get("EVCC_STALE_TIMEOUT", 7500))
 MERCEDES_VIN: str = str(_get("MERCEDES_VIN", "")).upper()
 MERCEDES_REGION: str = str(_get("MERCEDES_REGION", "Europe"))
 MERCEDES_TOKEN_FILE: str = str(

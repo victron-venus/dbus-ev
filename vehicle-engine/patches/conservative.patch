@@ -1,0 +1,236 @@
+--- a/util/request/roundtrip.go
++++ b/util/request/roundtrip.go
+@@ -14,6 +14,9 @@
+ 	"github.com/prometheus/client_golang/prometheus"
+ 	"github.com/sandrolain/httpcache"
+ )
++
++// DBusEVTransport is supplied by the dbus-ev engine before any provider is created.
++var DBusEVTransport func(http.RoundTripper) http.RoundTripper
+ 
+ type roundTripper struct {
+ 	log  *util.Logger
+@@ -56,7 +59,7 @@
+ func NewTripper(log *util.Logger, base http.RoundTripper) http.RoundTripper {
+ 	tripper := &roundTripper{
+ 		log:  log,
+-		base: base,
++		base: DBusEVTransport(base),
+ 	}
+ 
+ 	return tripper
+--- a/vehicle/carwings.go
++++ b/vehicle/carwings.go
+@@ -105,33 +105,9 @@
+ 	return err
+ }
+ 
++// dbus-ev reads the server cache without asking the car to refresh.
+ func (v *CarWings) status() (carwings.BatteryStatus, error) {
+-	// api result is stale
+-	if v.refreshKey != "" {
+-		if err := v.refreshResult(); err != nil {
+-			return carwings.BatteryStatus{}, err
+-		}
+-	}
+-
+-	bs, err := v.session.BatteryStatus()
+-
+-	if err == nil {
+-		if elapsed := time.Since(bs.Timestamp); elapsed > carwingsStatusExpiry {
+-			if err = v.refreshRequest(); err != nil {
+-				return carwings.BatteryStatus{}, err
+-			}
+-
+-			err = api.ErrMustRetry
+-		} else {
+-			// reset if elapsed < carwingsStatusExpiry,
+-			// otherwise next check after soc timeout does not trigger update because refreshResult succeeds on old key
+-			v.refreshKey = ""
+-		}
+-	} else {
+-		err = v.connectIfRequired(err)
+-	}
+-
+-	return bs, err
++    return v.session.BatteryStatus()
+ }
+ 
+ // refreshResult triggers an update if not already in progress, otherwise gets result
+--- a/vehicle/nissan/provider.go
++++ b/vehicle/nissan/provider.go
+@@ -1,7 +1,6 @@
+ package nissan
+ 
+ import (
+-	"fmt"
+ 	"time"
+ 
+ 	"github.com/evcc-io/evcc/api"
+@@ -38,46 +37,9 @@
+ 	return impl
+ }
+ 
++// dbus-ev never calls the active-refresh callback, including after read failures.
+ func (v *Provider) status(battery func() (StatusResponse, error), refresh func() (ActionResponse, error)) (StatusResponse, error) {
+-	res, err := battery()
+-
+-	if err == nil {
+-		// result valid?
+-		updated := res.Attributes.Updated
+-		if time.Since(updated) < v.expiry || updated.IsZero() {
+-			v.refreshTime = time.Time{}
+-			return res, err
+-		}
+-	}
+-
+-	// request a refresh, irrespective of a previous error
+-	if v.refreshTime.IsZero() {
+-		if _, err = refresh(); err == nil {
+-			v.refreshTime = time.Now()
+-			err = api.ErrMustRetry
+-		}
+-
+-		return res, err
+-	}
+-
+-	// refresh finally expired
+-	if time.Since(v.refreshTime) > refreshTimeout {
+-		v.refreshTime = time.Time{}
+-		if err == nil {
+-			err = api.ErrTimeout
+-		}
+-	} else {
+-		if len(res.Errors) > 0 {
+-			// extract error code
+-			e := res.Errors[0]
+-			err = fmt.Errorf("%s: %s", e.Code, e.Detail)
+-		} else {
+-			// wait for refresh, irrespective of a previous error
+-			err = api.ErrMustRetry
+-		}
+-	}
+-
+-	return res, err
++    return battery()
+ }
+ 
+ var _ api.Battery = (*Provider)(nil)
+--- a/vehicle/toyota/provider.go
++++ b/vehicle/toyota/provider.go
+@@ -1,8 +1,6 @@
+ package toyota
+ 
+ import (
+-	"strings"
+-	"sync"
+ 	"time"
+ 
+ 	"github.com/evcc-io/evcc/api"
+@@ -16,46 +14,12 @@
+ 	refresh func() error
+ }
+ 
++// dbus-ev reads cloud state without requesting a TCU update while charging.
+ func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {
+-	var (
+-		mu          sync.Mutex
+-		lastRefresh time.Time
+-	)
+-
+-	refresh := func() error {
+-		err := api.RefreshStatus(vin)
+-		if err == nil {
+-			mu.Lock()
+-			lastRefresh = time.Now()
+-			mu.Unlock()
+-		}
+-		return err
+-	}
+-
+-	impl := &Provider{
+-		status: util.Cached(func() (Status, error) {
+-			res, err := api.Status(vin)
+-			if err != nil {
+-				return res, err
+-			}
+-
+-			// While charging, periodically ask the TCU to push fresh data
+-			// to the cloud so subsequent polls return up-to-date SOC values.
+-			mu.Lock()
+-			needsRefresh := strings.EqualFold(res.Payload.ChargingStatus, "charging") && time.Since(lastRefresh) >= refreshInterval
+-			mu.Unlock()
+-			if needsRefresh {
+-				if err := refresh(); err != nil {
+-					log.ERROR.Printf("status refresh: %v", err)
+-				}
+-			}
+-
+-			return res, nil
+-		}, cache),
+-		refresh: refresh,
+-	}
+-
+-	return impl
++    return &Provider{
++        status: util.Cached(func() (Status, error) { return api.Status(vin) }, cache),
++        refresh: func() error { return api.RefreshStatus(vin) },
++    }
+ }
+ 
+ var _ api.Resurrector = (*Provider)(nil)
+--- a/vehicle/fiat.go
++++ b/vehicle/fiat.go
+@@ -60,7 +60,7 @@
+ 	cc.VIN, err = ensureVehicle(cc.VIN, api.Vehicles)
+ 
+ 	if err == nil {
+-		v.Provider = fiat.NewProvider(api, cc.VIN, cc.PIN, cc.Expiry, cc.Cache)
++		v.Provider = fiat.NewProvider(api, cc.VIN, "", cc.Expiry, cc.Cache)
+ 		v.Controller = fiat.NewController(v.Provider, api, log, cc.VIN, cc.PIN)
+ 	}
+ 
+--- a/vehicle/bmw/cardata/provider.go
++++ b/vehicle/bmw/cardata/provider.go
+@@ -72,7 +72,7 @@
+ 	}
+ 
+ 	// obsolete containers keep streaming, resulting in duplicate messages
+-	defer v.deleteObsoleteContainers(containers)
++	// dbus-ev does not delete containers owned by other installations.
+ 
+ 	if i := slices.IndexFunc(containers, func(c Container) bool {
+ 		return c.Name == containerName && c.Purpose == requiredVersion
+--- a/vehicle/bmw/cardata/mqtt.go
++++ b/vehicle/bmw/cardata/mqtt.go
+@@ -132,7 +132,7 @@
+ }
+ 
+ func (v *MqttConnector) run(ctx context.Context, ts oauth2.TokenSource) {
+-	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(time.Second), backoff.WithMaxInterval(time.Minute), backoff.WithMaxElapsedTime(0))
++	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(5*time.Minute), backoff.WithMaxInterval(6*time.Hour), backoff.WithRandomizationFactor(0), backoff.WithMaxElapsedTime(0))
+ 
+ 	for ctx.Err() == nil {
+ 		time.Sleep(bo.NextBackOff())
+@@ -168,7 +168,7 @@
+ 	paho := mqtt.NewClient(
+ 		mqtt.NewClientOptions().
+ 			AddBroker(StreamingURL).
+-			SetAutoReconnect(true).
++			SetAutoReconnect(false).
+ 			SetUsername(gcid).
+ 			SetPassword(idToken))
+ 
+--- a/vehicle/saic/api.go
++++ b/vehicle/saic/api.go
+@@ -103,8 +103,8 @@
+ 
+ // repeatRequest polls for the deferred answer in the background
+ func (v *API) repeatRequest(path string, event_id string) {
+-	for count := range 20 {
+-		time.Sleep(2 * time.Second)
++	for count := range 3 {
++		time.Sleep(20 * time.Second)
+ 		v.log.TRACE.Printf("repeated query %d", count)
+ 		// success stores the value (stateValid); a hard error stops the loop
+ 		if err := v.doRepeatedRequest(path, event_id); err != api.ErrMustRetry {

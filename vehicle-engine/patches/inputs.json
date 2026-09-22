@@ -1,0 +1,34 @@
+[
+  {
+    "path": "util/request/roundtrip.go",
+    "sha256": "5afd19706707156ec6d00d0bd919544646e36f360602245eac2f6bb9235ec79f"
+  },
+  {
+    "path": "vehicle/carwings.go",
+    "sha256": "37f7c9863e99d120cf45b95a09fad283ebf65865f5795d2a453059825eae4ddf"
+  },
+  {
+    "path": "vehicle/nissan/provider.go",
+    "sha256": "eaa8c1c4791fdce43e97d8b6732c3c9cbce88f365b0eb106027c8b84dc79db4e"
+  },
+  {
+    "path": "vehicle/toyota/provider.go",
+    "sha256": "579f34c8e44b3d8fac454df2acd5a639a597ac6a9e00b79dafa0c5cdba607b48"
+  },
+  {
+    "path": "vehicle/fiat.go",
+    "sha256": "4a09178d2024b294428fedebbcb0828db467c1fc2176ef41000a37f439d16213"
+  },
+  {
+    "path": "vehicle/bmw/cardata/provider.go",
+    "sha256": "92104e00d484b66089edfe5971578a47cc2f91e9a2126f614909cb5d013ee1ed"
+  },
+  {
+    "path": "vehicle/bmw/cardata/mqtt.go",
+    "sha256": "59282d1ab3c3bbe3c1c692c9aa2cd3e6ffcab67296fd2a9e97c7dd28929e7855"
+  },
+  {
+    "path": "vehicle/saic/api.go",
+    "sha256": "715c53ecdbc8b88da4a09486fb90a0024e3812f596d297ce372dfcb8c35e8c77"
+  }
+]

@@ -58,7 +58,9 @@ class App:
             if config.DATA_SOURCE == "mercedes"
             else config.SENSOR_STALE_TIMEOUT
         )
-        if config.DATA_SOURCE == "mercedes":
+        if config.DATA_SOURCE == "evcc":
+            self.stale_timeout = config.EVCC_STALE_TIMEOUT
+        if config.DATA_SOURCE in ("mercedes", "evcc"):
             self.loop_interval_ms = 1000
 
     def shutdown(self) -> None:
@@ -113,7 +115,7 @@ class App:
         )
         if now_ok:
             self.last_ok_time = started_at
-        elif config.DATA_SOURCE == "mercedes":
+        elif config.DATA_SOURCE in ("mercedes", "evcc"):
             self.last_ok_time = None
         self.latest_snapshot = dict(snapshot, ok=now_ok)
         self._update_connected()
@@ -160,10 +162,22 @@ def build_app() -> App:
         )
     elif config.DATA_SOURCE == "ha":
         client = _build_ha_client()
+    elif config.DATA_SOURCE == "evcc":
+        from dbus_ev.providers.evcc import EvccClient
+
+        client = EvccClient(
+            binary=config.EVCC_BINARY,
+            config_file=config.EVCC_CONFIG_FILE,
+            state_file=config.EVCC_STATE_FILE,
+            interval=config.EVCC_POLL_INTERVAL,
+            stale_timeout=config.EVCC_STALE_TIMEOUT,
+            capacity=config.BATTERY_CAPACITY_KWH,
+            home=(config.HOME_LATITUDE, config.HOME_LONGITUDE, config.HOME_RADIUS_METERS),
+        )
     else:
-        raise ValueError("DATA_SOURCE must be 'ha' or 'mercedes'")
-    if config.CHARGER_ENABLED and config.DATA_SOURCE != "mercedes":
-        raise ValueError("The integrated charger requires DATA_SOURCE='mercedes'")
+        raise ValueError("DATA_SOURCE must be 'ha', 'mercedes' or 'evcc'")
+    if config.CHARGER_ENABLED and config.DATA_SOURCE == "ha":
+        raise ValueError("The integrated charger requires DATA_SOURCE='mercedes' or 'evcc'")
     mqtt = None
     if config.HA_MQTT_ENABLED or config.CERBO_METER_INSTANCE is not None:
         from dbus_ev.cerbo_mqtt import CerboMqtt
@@ -177,6 +191,8 @@ def build_app() -> App:
             meter_ttl=config.CERBO_METER_TTL,
             username=config.CERBO_MQTT_USERNAME,
             password=config.CERBO_MQTT_PASSWORD,
+            source=config.DATA_SOURCE,
+            vehicle_id=config.BUS_SUFFIX,
         )
     charger = None
     if config.CHARGER_ENABLED:
@@ -188,6 +204,7 @@ def build_app() -> App:
             bus_suffix=config.CHARGER_BUS_SUFFIX,
             phases=config.CHARGER_PHASES,
             name=config.CHARGER_NAME,
+            connection=f"{config.DATA_SOURCE} / local meter",
         )
     services = EVEvices(
         ev_instance=config.DEVICE_INSTANCE,

@@ -10,16 +10,22 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--ha-mqtt", choices=("on", "off"), required=True)
+    parser.add_argument("--ha-mqtt", choices=("on", "off"))
+    parser.add_argument("--source", choices=("ha", "mercedes", "evcc"))
     parser.add_argument("--options-file", default="/data/setupOptions/dbus-ev/options.json")
     args = parser.parse_args()
+    if args.ha_mqtt is None and args.source is None:
+        parser.error("at least one of --ha-mqtt or --source is required")
     path = Path(args.options_file)
     # The local installer explicitly selects this file; no network data selects a path.
     options = {}
     if path.exists():
         saved = path.read_text(encoding="utf-8")  # NOSONAR(S8707)
         options = json.loads(saved)
-    options["HA_MQTT_ENABLED"] = args.ha_mqtt == "on"
+    if args.ha_mqtt is not None:
+        options["HA_MQTT_ENABLED"] = args.ha_mqtt == "on"
+    if args.source is not None:
+        options["DATA_SOURCE"] = args.source
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=".options-", dir=path.parent)
     try:
@@ -30,7 +36,7 @@ def main():
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
-    print(f"Home Assistant MQTT publication: {args.ha_mqtt}")
+    print("Installer options saved")
 
 
 if __name__ == "__main__":

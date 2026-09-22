@@ -15,7 +15,7 @@ jobs:
     name: CI
     # Reusable workflows must be called at the JOB level (no runs-on/steps);
     # a step-level `uses` of a workflow_call workflow is rejected by GitHub.
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@58b0879de83172ce521edf2af552d65e3cac3599
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@ddfb0d25a7428cb74e3d30a115b15a3a78e74ddd
     with:
       python-version: '3.12.13'
       # mypy has pre-existing errors (Venus OS imports without stubs); tracked separately
@@ -41,3 +41,23 @@ jobs:
             exit 1
           fi
           echo "OK: local_config.example.py looks like a template"
+
+  vehicle-engine:
+    name: Experimental vehicle engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: vehicle-engine/go.mod
+          cache-dependency-path: vehicle-engine/go.sum
+      - name: Test read-only engine and every catalog template without accounts
+        run: python3 vehicle-engine/build.py test -race ./...
+      - name: Vet engine
+        run: python3 vehicle-engine/build.py vet ./...
+      - name: Cross-compile for Cerbo GX
+        env:
+          GOOS: linux
+          GOARCH: arm
+          GOARM: '7'
+        run: sh scripts/build-vehicle-engine.sh /tmp/vehicle-engine-armv7
