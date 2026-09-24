@@ -11,7 +11,7 @@ jobs:
     name: CI
     # Reusable workflows must be called at the JOB level (no runs-on/steps);
     # a step-level `uses` of a workflow_call workflow is rejected by GitHub.
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@b6f9eba75c400111a724c4c7a28310e6216a99fc
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@d0eff82dd3db5364b2d03382cce1ba0af227de78
     with:
       python-version: '3.12.13'
       # mypy has pre-existing errors (Venus OS imports without stubs); tracked separately
