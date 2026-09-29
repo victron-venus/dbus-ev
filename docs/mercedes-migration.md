@@ -72,6 +72,21 @@ Python against a staged component and starts no live services. Actual Mercedes
 account access and end-to-end vehicle updates are cutover checks, not established
 by mocked tests. Cloud API changes may require updating the pinned upstream maps.
 
+### Missing electric consumption readings
+
+The HA `Electric consumption start` sensor reports `unknown` when the MQTT
+snapshot omits the reading or marks it invalid. Missing data is not measured zero:
+publishing it as zero without a unit can raise a statistics unit-change repair.
+Valid zero readings remain numeric, and valid display values and units still come
+from the vehicle snapshot. Entity IDs and recorded numerical history are unchanged;
+this correction does not rewrite or clear statistics.
+
+`tests/ha_runtime_check.py` verifies missing and invalid readings, recovery, valid
+zero, and source-unit mapping against the installed HA entity and statistics APIs.
+Deploy only the reviewed HA component change and restart HA to load the updated
+Python constants; reloading its config entry does not reload imported modules.
+No Cerbo service update or MQTT test publication is needed for this correction.
+
 ## Blocked session recovery
 
 Some Mercedes sessions keep returning WebSocket HTTP 429 even while token refresh

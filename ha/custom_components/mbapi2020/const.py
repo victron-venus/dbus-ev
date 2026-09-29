@@ -1040,7 +1040,7 @@ SENSORS = {
         False,
         None,
         SensorStateClass.MEASUREMENT,
-        "Zero",
+        None,
         1,
     ],
     "electricconsumptionreset": [
