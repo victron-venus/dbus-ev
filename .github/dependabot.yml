@@ -8,3 +8,7 @@ updates:
       codeql:
         patterns:
           - github/codeql-action/*
+      toolkit-workflows:
+        patterns:
+          - victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml
+          - victron-venus/venus-os-ci-toolkit/.github/workflows/auto-merge.yml
