@@ -109,3 +109,22 @@ def test_mode_constants_match_victron():
     assert MODE_AUTO == 0
     assert MODE_ON == 1
     assert MODE_OFF == 2
+
+
+def test_none_level_within_fresh_window_holds_without_assert(clock):
+    """DBUSEV-2: non-fresh None after a fresh reading must not AssertionError."""
+    c = ValveController(
+        start_value=30.0,
+        stop_value=85.0,
+        sensor_stale_timeout=120.0,
+        min_switch_interval=0.0,
+        clock=clock,
+    )
+    desired, why = c.update(20.0, True)
+    assert desired is True and why == "auto-open"
+    clock.advance(10)
+    desired, why = c.update(None, False)
+    assert desired is True and why == "hold"
+    clock.advance(120)
+    desired, why = c.update(None, False)
+    assert desired is False and why == "stale-close"

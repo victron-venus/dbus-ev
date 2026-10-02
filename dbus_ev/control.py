@@ -68,12 +68,12 @@ class ValveController:
         if stale:
             return False, "stale-close"
 
-        assert level is not None
-        if level <= self.start_value:
+        if level is not None and level <= self.start_value:
             target, why = True, "auto-open"
-        elif level >= self.stop_value:
+        elif level is not None and level >= self.stop_value:
             target, why = False, "auto-close"
         else:
+            # Missing or in-range readings hold until the freshness timeout.
             return self._desired, "hold"
 
         # Anti-chatter: never flip faster than min_switch_interval.
