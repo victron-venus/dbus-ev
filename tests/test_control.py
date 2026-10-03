@@ -120,6 +120,11 @@ def test_none_level_within_fresh_window_holds_without_assert(clock):
         min_switch_interval=0.0,
         clock=clock,
     )
+    desired, why = c.update(90.0, True)
+    assert desired is False and why == "auto-close"
+    clock.advance(10)
+    desired, why = c.update(None, False)
+    assert desired is False and why == "hold"
     desired, why = c.update(20.0, True)
     assert desired is True and why == "auto-open"
     clock.advance(10)
