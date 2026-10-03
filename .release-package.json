@@ -12,6 +12,7 @@
     "local_config.example.py",
     "configure.py",
     "install-mercedes-deps.sh",
+    "requirements-mercedes.txt",
     "ha",
     "vehicle-engine",
     "scripts/build-vehicle-engine.sh",
