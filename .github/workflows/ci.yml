@@ -11,7 +11,7 @@ jobs:
     name: CI
     # Reusable workflows must be called at the JOB level (no runs-on/steps);
     # a step-level `uses` of a workflow_call workflow is rejected by GitHub.
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@6b18a89f16c874cbaa960a6f54a784c5753aeb63
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@6b18a89f16c874cbaa960a6f54a784c5753aeb63 # main
     with:
       python-version: '3.12.13'
       # mypy has pre-existing errors (Venus OS imports without stubs); tracked separately
@@ -43,8 +43,8 @@ jobs:
     name: Experimental vehicle engine
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: vehicle-engine/go.mod
           cache-dependency-path: vehicle-engine/go.sum
