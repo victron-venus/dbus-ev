@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.7 - 2026-10-04
+
+### Changed
+
+- Reduce Mercedes memory use by loading the HA HTTP client only when needed,
+  removing the redundant polling thread and avoiding repeated raw telemetry copies.
+- Release processed WebSocket frames while idle and decode only the configured VIN.
+- Limit local MQTT subscriptions and cached fields to the 17 charger measurements.
+  Suppress whole-GX keepalive republication and refresh exact meter paths for
+  compatibility with older FlashMQ versions.
+
+### Fixed
+
+- Retry rejected MQTT keepalive and meter requests on the next tick instead of
+  delaying retries until the next refresh interval.
+
+### Compatibility
+
+- Preserve configuration, authorization data, source timestamps and the one-second
+  Mercedes freshness checks. HA and experimental provider network polls remain
+  on their worker thread. No configuration or data migration is required.
+
 ## Unreleased
 
 - Add an opt-in multi-brand provider engine using pinned evcc vehicle libraries (35 templates / 33 brands), with common D-Bus vehicle/charger projection. New providers are experimental and have no live vehicle validation.
