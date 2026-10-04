@@ -160,19 +160,25 @@ class CerboMqtt:
                 self._availability = status
 
     def _refresh_meter(self, now):
+        """Refresh bounded meter paths, retrying rejected publishes on the next tick."""
         # FlashMQ ignores legacy selective keepalive arrays and republishes the
         # entire GX for each one. Keep the stream alive without that broadcast.
         if self._last_keepalive is None or now - self._last_keepalive >= 30:
-            self.client.publish(f"R/{self.portal}/keepalive", KEEPALIVE_PAYLOAD)
-            self._last_keepalive = now
+            result = self.client.publish(f"R/{self.portal}/keepalive", KEEPALIVE_PAYLOAD)
+            if result.rc == 0:
+                self._last_keepalive = now
         if self._last_meter_refresh is None or now - self._last_meter_refresh >= 10:
             # Stable values (especially idle 0 W) still need live responses
             # before the 15-second TTL. Read exact paths: some deployed FlashMQ
             # versions do not respond to subtree reads such as /Ac.
             prefix = f"R/{self.portal}/acload/{self.meter_instance}"
+            all_reads_succeeded = True
             for path in METER_PATHS:
-                self.client.publish(prefix + path, "")
-            self._last_meter_refresh = now
+                result = self.client.publish(prefix + path, "")
+                if result.rc != 0:
+                    all_reads_succeeded = False
+            if all_reads_succeeded:
+                self._last_meter_refresh = now
 
     def _publish_vehicle(self, snapshot):
         # Raw telemetry only: never create Home Assistant entities automatically.

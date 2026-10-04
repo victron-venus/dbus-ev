@@ -114,6 +114,7 @@ def test_idle_read_responses_keep_zero_fresh_but_missing_response_expires(monkey
             deliver(mqtt, "/Ac/Power", 0)
         elif topic == "R/portal/acload/85/Connected":
             deliver(mqtt, "/Connected", 1)
+        return SimpleNamespace(rc=0)
 
     wire.publish.side_effect = read_response
     mqtt.tick({})
@@ -152,4 +153,45 @@ def test_disabled_meter_never_subscribes_or_requests_keepalives(monkeypatch):
     for clock.now in (100, 110, 130):
         mqtt.tick({})
     wire.subscribe.assert_not_called()
+    wire.publish.assert_not_called()
+
+
+def test_rejected_keepalive_retries_without_repeating_successful_reads(monkeypatch):
+    """A rejected keepalive must retry next tick without rescheduling live reads."""
+    mqtt, wire, clock = broker(monkeypatch)
+    wire.publish.side_effect = lambda topic, _payload: SimpleNamespace(
+        rc=4 if topic.endswith("/keepalive") else 0
+    )
+    mqtt.tick({})
+    wire.publish.side_effect = None
+    wire.publish.reset_mock()
+    clock.now = 101
+    mqtt.tick({})
+    wire.publish.assert_called_once_with(
+        "R/portal/keepalive", '{"keepalive-options":["suppress-republish"]}'
+    )
+    wire.publish.reset_mock()
+    clock.now = 102
+    mqtt.tick({})
+    wire.publish.assert_not_called()
+
+
+def test_rejected_meter_read_retries_entire_bounded_batch_on_next_tick(monkeypatch):
+    """One rejected path leaves the batch due until all read requests succeed."""
+    mqtt, wire, clock = broker(monkeypatch)
+    wire.publish.side_effect = lambda topic, _payload: SimpleNamespace(
+        rc=4 if topic.endswith("/Ac/Power") else 0
+    )
+    mqtt.tick({})
+    wire.publish.side_effect = None
+    wire.publish.reset_mock()
+    clock.now = 101
+    mqtt.tick({})
+    requests = [call.args for call in wire.publish.call_args_list]
+    assert len(requests) == 17
+    assert ("R/portal/acload/85/Ac/Power", "") in requests
+    assert all(topic.startswith("R/portal/acload/85/") for topic, _payload in requests)
+    wire.publish.reset_mock()
+    clock.now = 102
+    mqtt.tick({})
     wire.publish.assert_not_called()
