@@ -10,8 +10,6 @@ import math
 import time
 from typing import Any
 
-import requests
-
 logger = logging.getLogger(__name__)
 
 # Jinja template sent to /api/template. Tokens are replaced literally.
@@ -218,6 +216,10 @@ class HaClient:
         timeout: float = 3.0,
         breaker: CircuitBreaker | None = None,
     ) -> None:
+        # Mercedes shares the pure state mapping above but never makes HA
+        # requests. Keep the requests/urllib3 stack out of that backend.
+        import requests  # pylint: disable=import-outside-toplevel
+
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.soc_entity = soc_entity
@@ -265,6 +267,8 @@ class HaClient:
         )
         self._configured = bool(base_url and token)
         self._session = requests.Session()
+        self._timeout_error = requests.exceptions.Timeout
+        self._request_error = requests.exceptions.RequestException
         if token:
             self._session.headers.update(
                 {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -437,10 +441,10 @@ class HaClient:
                 )
             }
             self.breaker.record_success()
-        except requests.exceptions.Timeout as exc:
+        except self._timeout_error as exc:
             self.breaker.record_failure()
             self._log_error_throttled(f"HA timeout: {exc}")
-        except requests.exceptions.RequestException as exc:
+        except self._request_error as exc:
             self.breaker.record_failure()
             self._log_error_throttled(f"HA connection error: {exc}")
         except HomeAssistantError as exc:

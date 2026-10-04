@@ -136,6 +136,27 @@ Run the service on the Cerbo GX (or any Venus OS device) with Python 3.12.x.
 
 The service uses the `vedbus` package which is available on Venus OS.
 
+### Resource use on Cerbo
+
+`VSZ` is virtual address space, including reserved thread stacks and mapped
+libraries; `RSS` is memory currently resident in RAM. Compare both alongside CPU
+over an interval rather than interpreting `%VSZ` as processor load. A small
+standard-library sampler is available from the source checkout:
+
+```sh
+ssh Cerbo 'svstat /service/dbus-ev'
+# Replace PID with the service PID printed above.
+ssh Cerbo 'python3 - PID --interval 10 --samples 6' < scripts/measure_process.py
+```
+
+The Mercedes backend reads its existing cache directly on the main loop, without
+an extra polling thread or a full telemetry copy every second. It releases
+processed WebSocket frames before waiting for more data and loads the HA HTTP
+client only when HA is selected. Freshness and local meter checks still run
+every second. Local MQTT reads are limited to the charger's 17 measurement paths;
+keepalives suppress whole-system republication. Exact-path reads keep unchanged
+measurements fresh on FlashMQ versions that do not support subtree reads.
+
 ## License
 
 MIT

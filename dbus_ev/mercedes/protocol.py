@@ -54,15 +54,17 @@ class Protocol:
             reply = bytes.fromhex("ba0100")
         elif kind == "apptwin_pending_command_request":
             reply = bytes.fromhex("aa0100")
-        data = MessageToDict(message, preserving_proto_field_name=True)
-        updates = {}
+        # Frames often contain unrelated account events or several vehicles.
+        # Acknowledge all of them, but materialize only our VIN's telemetry.
+        update = None
         if kind == "vepUpdates":
-            updates = data.get(kind, {}).get("updates", {})
+            car = message.vepUpdates.updates.get(self.vin)
+            if car is not None:
+                update = MessageToDict(car, preserving_proto_field_name=True)
         elif kind == "vehicle_status_updates":
-            updates = {
-                vin: normalize_vsu_car(car) for vin, car in data.get(kind, {}).get(kind, {}).items()
-            }
-        update = updates.get(self.vin)
+            car = message.vehicle_status_updates.vehicle_status_updates.get(self.vin)
+            if car is not None:
+                update = normalize_vsu_car(MessageToDict(car, preserving_proto_field_name=True))
         return reply, self.merge(update) if update else None
 
     def merge(self, update):

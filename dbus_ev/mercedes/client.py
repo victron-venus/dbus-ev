@@ -246,6 +246,7 @@ class MercedesClient:
                     message = pending.result()
                 except StopAsyncIteration:
                     break
+                done.clear()
                 if message.type == aiohttp.WSMsgType.ERROR:
                     break
                 if message.type == aiohttp.WSMsgType.BINARY:
@@ -254,6 +255,10 @@ class MercedesClient:
                         await ws.send_bytes(ack)
                     if payload is not None:
                         self._accept(payload, "push")
+                    del ack, payload
+                # The completed task and its message can hold an 8 MiB frame.
+                # Release them before a quiet stream waits for its next update.
+                del message
                 pending = asyncio.create_task(anext(messages))
         finally:
             pending.cancel()
@@ -378,6 +383,19 @@ class MercedesClient:
         return metadata
 
     def poll(self):
+        """Return an independent snapshot for callers that may edit its payload."""
+        result = self.cached_snapshot()
+        result["mercedes_payload"] = copy.deepcopy(result["mercedes_payload"])
+        return result
+
+    def cached_snapshot(self):
+        """Read current telemetry without copying the large raw vehicle payload.
+
+        The returned top-level dictionary belongs to the caller, but its nested
+        ``mercedes_payload`` is borrowed and must only be read. Each acquisition
+        replaces that payload, so existing readers keep a consistent old value
+        even when the stream receives another frame.
+        """
         with self._lock:
             result = dict(self._snapshot)
             fresh = (
@@ -388,7 +406,7 @@ class MercedesClient:
             # measurement. It also must never advance its acquisition time.
             result["ok"] = not self._stop.is_set() and fresh and result.get("soc") is not None
             result["_source_sample_started_at"] = self._received
-            result["mercedes_payload"] = copy.deepcopy(self._payload)
+            result["mercedes_payload"] = self._payload
             return result
 
     def close(self):

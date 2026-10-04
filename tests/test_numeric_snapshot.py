@@ -12,7 +12,7 @@ from tests.test_service import make_ev_services
 
 def mocked_client():
     session = MagicMock()
-    with patch("dbus_ev.ha_client.requests.Session", return_value=session):
+    with patch("requests.Session", return_value=session):
         client = make_client(breaker=CircuitBreaker(threshold=1))
     return client, session
 

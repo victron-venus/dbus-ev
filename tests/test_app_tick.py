@@ -1,6 +1,10 @@
 """Integration-ish tests for App.tick wiring with fake client/services."""
 
-from dbus_ev.main import VEHICLE_PROPS, App
+import sys
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+
+from dbus_ev.main import VEHICLE_PROPS, App, serve
 
 
 class FakeClient:
@@ -179,3 +183,62 @@ def test_tick_capacity_falls_back_without_entity(monkeypatch):
     app = build_app(dict(BASE, battery_capacity=None))
     app.tick()
     assert app.services.items["/BatteryCapacity"] == 80.0
+
+
+def test_cached_reader_keeps_outputs_fresh_without_duplicate_work(monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr("dbus_ev.main._now", lambda: now[0])
+    heartbeat = MagicMock()
+    monkeypatch.setattr("dbus_ev.main._write_heartbeat", heartbeat)
+    monkeypatch.setattr("dbus_ev.main.config.DATA_SOURCE", "mercedes")
+    monkeypatch.setattr("dbus_ev.main.config.MERCEDES_STALE_TIMEOUT", 15)
+    snapshot = {"ok": True, "soc": 42, "_source_sample_started_at": 1000.0}
+    reader = MagicMock(return_value=snapshot)
+    client, services, mqtt, charger = (MagicMock() for _ in range(4))
+    app = App(client, services, mqtt=mqtt, charger=charger, snapshot_reader=reader)
+
+    assert app.tick() is True
+    client.poll.assert_not_called()
+    services.set_connected.assert_called_once_with(True)
+    mqtt.tick.assert_called_once()
+    charger.update.assert_called_once()
+    heartbeat.assert_called_once()
+
+    # The cache reader must not renew the source time; expiry and meter updates
+    # still run even when the vehicle has sent no new data.
+    now[0] += 15
+    assert app.tick() is True
+    services.set_connected.assert_called_with(False)
+    assert mqtt.tick.call_args.args[0]["ok"] is False
+    assert charger.update.call_args.args[0]["ok"] is False
+    assert mqtt.meter.call_count == 2
+    assert snapshot["ok"] is True
+
+
+def test_serve_uses_cache_reader_without_poll_thread(monkeypatch):
+    glib = MagicMock()
+    monkeypatch.setitem(sys.modules, "gi.repository", SimpleNamespace(GLib=glib))
+    monkeypatch.setattr("dbus_ev.main.signal.signal", lambda *_: None)
+    worker_factory = MagicMock()
+    monkeypatch.setattr("dbus_ev.main.PollWorker", worker_factory)
+    client, services = MagicMock(), MagicMock()
+    app = App(client, services, snapshot_reader=client.cached_snapshot)
+    serve(app)
+    worker_factory.assert_not_called()
+    glib.timeout_add.assert_called_once_with(app.loop_interval_ms, app.tick)
+    assert app.worker is None
+    app.shutdown()
+    client.close.assert_called_once()
+
+
+def test_serve_keeps_network_polls_on_worker(monkeypatch):
+    glib = MagicMock()
+    monkeypatch.setitem(sys.modules, "gi.repository", SimpleNamespace(GLib=glib))
+    monkeypatch.setattr("dbus_ev.main.signal.signal", lambda *_: None)
+    worker_factory = MagicMock()
+    monkeypatch.setattr("dbus_ev.main.PollWorker", worker_factory)
+    app = App(MagicMock(), MagicMock())
+    serve(app)
+    worker_factory.assert_called_once_with(app.client, glib.idle_add)
+    app.shutdown()
+    worker_factory.return_value.stop.assert_called_once()

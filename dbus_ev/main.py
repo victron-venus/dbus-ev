@@ -44,8 +44,13 @@ def _setup_logging(debug: bool) -> None:
 class App:
     """HA <-> D-Bus bridge controller."""
 
-    def __init__(self, client, services: EVEvices, *, charger=None, mqtt=None) -> None:
+    def __init__(
+        self, client, services: EVEvices, *, charger=None, mqtt=None, snapshot_reader=None
+    ) -> None:
         self.client = client
+        # An explicitly nonblocking cache reader can run on the GLib thread.
+        # Network-backed poll methods still belong to PollWorker.
+        self.snapshot_reader = snapshot_reader
         self.services = services
         self.last_ok_time: float | None = None
         self.loop_interval_ms = max(250, int(config.POLL_INTERVAL * 1000))
@@ -81,7 +86,8 @@ class App:
             _write_heartbeat()
             return True
         started_at = _now()
-        return self.apply_snapshot(dict(self.client.poll(), _sample_started_at=started_at))
+        read_snapshot = self.snapshot_reader or self.client.poll
+        return self.apply_snapshot(dict(read_snapshot(), _sample_started_at=started_at))
 
     def _update_connected(self) -> None:
         self.services.set_connected(
@@ -214,7 +220,13 @@ def build_app() -> App:
         connection=f"evcharger:{config.EVCHARGER_INSTANCE}",
         bus_suffix=config.BUS_SUFFIX,
     )
-    return App(client, services, charger=charger, mqtt=mqtt)
+    return App(
+        client,
+        services,
+        charger=charger,
+        mqtt=mqtt,
+        snapshot_reader=client.cached_snapshot if config.DATA_SOURCE == "mercedes" else None,
+    )
 
 
 def _build_ha_client():
@@ -244,7 +256,8 @@ def serve(app: App) -> None:
         app.client.start()
     if app.mqtt:
         app.mqtt.start()
-    app.worker = PollWorker(app.client, GLib.idle_add)
+    if app.snapshot_reader is None:
+        app.worker = PollWorker(app.client, GLib.idle_add)
     GLib.timeout_add(app.loop_interval_ms, app.tick)
     mainloop = GLib.MainLoop()
 

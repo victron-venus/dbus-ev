@@ -215,7 +215,7 @@ def test_build_template_renders_in_jinja():
     Environment(autoescape=True).parse(t)
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_poll_static_vin_uses_literal_no_ha_call_for_vin(post):
     """Static VIN: client never asks HA to resolve it; VIN returned as string."""
     c = make_client(vin_entity="4JGDM0EB0PA123456")
@@ -238,7 +238,7 @@ def test_state_is_on_mapping():
     assert state_is_on(None) is None
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_poll_success(post):
     post.return_value = template_response()
     c = make_client()
@@ -252,7 +252,7 @@ def test_poll_success(post):
     assert "states('sensor.soc')" in kwargs["json"]["template"]
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_poll_empty_optional_entities_return_none(post):
     """Empty optional entities -> poll returns None for those fields."""
     c = make_client(
@@ -293,7 +293,7 @@ def test_poll_empty_optional_entities_return_none(post):
     assert r["at_site"] is None
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_poll_failure_serves_last_known(post):
     post.return_value = template_response()
     c = make_client()
@@ -306,7 +306,7 @@ def test_poll_failure_serves_last_known(post):
     assert second["soc"] == 42.0  # last-known served
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_circuit_breaker_opens_and_resets(post, monkeypatch):
     clock = FakeClock()
     breaker = CircuitBreaker(threshold=3, reset_timeout=60.0)
@@ -330,7 +330,7 @@ def test_circuit_breaker_opens_and_resets(post, monkeypatch):
     assert breaker.is_open is False
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
+@patch("requests.Session.post")
 def test_unconfigured_client_shortcircuits(post):
     c = HaClient(
         base_url="",
@@ -354,8 +354,8 @@ def test_unconfigured_client_shortcircuits(post):
     assert post.call_count == 0
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
-@patch("dbus_ev.ha_client.requests.Session.get")
+@patch("requests.Session.post")
+@patch("requests.Session.get")
 def test_poll_power_no_unit_assumes_kw(get, post):
     """Power sensor without unit_of_measurement: assume kW -> W.
 
@@ -371,8 +371,8 @@ def test_poll_power_no_unit_assumes_kw(get, post):
     assert r["power"] is None  # template_response has no power key, so power=None
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
-@patch("dbus_ev.ha_client.requests.Session.get")
+@patch("requests.Session.post")
+@patch("requests.Session.get")
 def test_poll_power_kw_to_w_conversion(get, post):
     """Power=9.5 kW from HA -> 9500 W on D-Bus."""
     payload = {
@@ -398,8 +398,8 @@ def test_poll_power_kw_to_w_conversion(get, post):
     assert r["power"] == 9500.0  # 9.5 kW * 1000 = 9500 W
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
-@patch("dbus_ev.ha_client.requests.Session.get")
+@patch("requests.Session.post")
+@patch("requests.Session.get")
 def test_poll_power_explicit_kw_unit(get, post):
     """Power sensor with unit_of_measurement=kW -> converted to W."""
     payload = {
@@ -426,8 +426,8 @@ def test_poll_power_explicit_kw_unit(get, post):
     assert r["power"] == 9500.0
 
 
-@patch("dbus_ev.ha_client.requests.Session.post")
-@patch("dbus_ev.ha_client.requests.Session.get")
+@patch("requests.Session.post")
+@patch("requests.Session.get")
 def test_poll_power_w_unit_no_conversion(get, post):
     """Power sensor with unit_of_measurement=W -> published as-is (W)."""
     payload = {

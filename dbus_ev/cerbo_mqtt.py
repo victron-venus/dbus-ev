@@ -10,6 +10,21 @@ import time
 
 logger = logging.getLogger(__name__)
 
+# Only measurements projected by Charger.update belong in the local cache.
+METER_PATHS = (
+    "/Connected",
+    "/Ac/Power",
+    "/Ac/Energy/Forward",
+    "/Ac/Current",
+    "/Ac/Frequency",
+    *(
+        f"/Ac/L{phase}/{field}"
+        for phase in (1, 2, 3)
+        for field in ("Power", "Voltage", "Current", "PowerFactor")
+    ),
+)
+KEEPALIVE_PAYLOAD = '{"keepalive-options":["suppress-republish"]}'
+
 
 class CerboMqtt:
     """One local MQTT connection for telemetry publication and meter consumption."""
@@ -44,12 +59,14 @@ class CerboMqtt:
         self.portal, self.publish_ha = portal, publish_ha
         self.prefix = f"mercedes/{portal}" if source == "mercedes" else f"ev/{portal}/{vehicle_id}"
         self.meter_prefix = f"N/{portal}/acload/{meter_instance}"
+        self._meter_topics = {self.meter_prefix + path: path for path in METER_PATHS}
         self.meter_instance, self.meter_ttl = meter_instance, meter_ttl
         self._lock = threading.Lock()
         self._meter = {}
         self._connected = False
         self._published_revision = None
         self._last_keepalive = None
+        self._last_meter_refresh = None
         self._availability = None
         self._started = False
         if username:
@@ -76,8 +93,9 @@ class CerboMqtt:
             self._published_revision = None
             self._availability = None
             self._last_keepalive = None
+            self._last_meter_refresh = None
         if self.meter_instance is not None:
-            client.subscribe(self.meter_prefix + "/#", qos=1)
+            client.subscribe([(topic, 1) for topic in self._meter_topics])
 
     def _on_disconnect(self, *_args):
         with self._lock:
@@ -85,9 +103,9 @@ class CerboMqtt:
             self._meter.clear()
 
     def _on_message(self, client, userdata, message):
-        if not message.topic.startswith(self.meter_prefix + "/") or message.retain:
+        key = self._meter_topics.get(message.topic)
+        if key is None or message.retain:
             return
-        key = message.topic[len(self.meter_prefix) :]
         try:
             value = json.loads(message.payload)["value"]
             value = float(value) if value is not None else None
@@ -115,13 +133,8 @@ class CerboMqtt:
             connected = self._connected
         if not connected:
             return
-        if self.meter_instance is not None and (
-            self._last_keepalive is None or now - self._last_keepalive >= 10
-        ):
-            self.client.publish(
-                f"R/{self.portal}/keepalive", json.dumps([f"acload/{self.meter_instance}/#"])
-            )
-            self._last_keepalive = now
+        if self.meter_instance is not None:
+            self._refresh_meter(now)
         if not self.publish_ha:
             return
         if self.source != "mercedes":
@@ -145,6 +158,21 @@ class CerboMqtt:
             result = self.client.publish(self.prefix + "/availability", status, qos=1, retain=True)
             if result.rc == 0:
                 self._availability = status
+
+    def _refresh_meter(self, now):
+        # FlashMQ ignores legacy selective keepalive arrays and republishes the
+        # entire GX for each one. Keep the stream alive without that broadcast.
+        if self._last_keepalive is None or now - self._last_keepalive >= 30:
+            self.client.publish(f"R/{self.portal}/keepalive", KEEPALIVE_PAYLOAD)
+            self._last_keepalive = now
+        if self._last_meter_refresh is None or now - self._last_meter_refresh >= 10:
+            # Stable values (especially idle 0 W) still need live responses
+            # before the 15-second TTL. Read exact paths: some deployed FlashMQ
+            # versions do not respond to subtree reads such as /Ac.
+            prefix = f"R/{self.portal}/acload/{self.meter_instance}"
+            for path in METER_PATHS:
+                self.client.publish(prefix + path, "")
+            self._last_meter_refresh = now
 
     def _publish_vehicle(self, snapshot):
         # Raw telemetry only: never create Home Assistant entities automatically.
