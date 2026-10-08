@@ -298,3 +298,9 @@ Consumers must honor that flag when using last-known vehicle data. A successful
 HA reply proves receipt from HA, not independent freshness of a vehicle's
 upstream integration. Local regressions cover a blocked request, continued main
 loop ticks, expiry, single outstanding work item, recovery and safe shutdown.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
+[SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
+and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
