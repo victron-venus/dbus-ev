@@ -105,28 +105,28 @@ class MercedesMeEntity(CoordinatorEntity[MBAPI2020DataUpdateCoordinator], Entity
 
         if self._attributes is not None:
             for attrib in sorted(self._attributes):
-                if "." in attrib:
-                    object_name = attrib.split(".")[0]
-                    attrib_name = attrib.split(".")[1]
-                else:
-                    object_name = self._feature_name
-                    attrib_name = attrib
-                retrievalstatus = self._get_car_value(
-                    object_name, attrib_name, "retrievalstatus", "error"
-                )
-
-                if retrievalstatus == "VALID":
-                    state[attrib_name] = self._get_car_value(
-                        object_name, attrib_name, "display_value", None
-                    )
-                    if not state[attrib_name]:
-                        state[attrib_name] = self._get_car_value(
-                            object_name, attrib_name, "value", "error"
-                        )
-
-                if retrievalstatus in ["NOT_RECEIVED"]:
-                    state[attrib_name] = "NOT_RECEIVED"
+                self._add_configured_attribute(state, attrib)
         return state
+
+    def _add_configured_attribute(self, state, attrib) -> None:
+        """Append one configured attribute without changing its fallback order."""
+        if "." in attrib:
+            object_name = attrib.split(".")[0]
+            attrib_name = attrib.split(".")[1]
+        else:
+            object_name = self._feature_name
+            attrib_name = attrib
+        retrievalstatus = self._get_car_value(object_name, attrib_name, "retrievalstatus", "error")
+
+        if retrievalstatus == "VALID":
+            state[attrib_name] = self._get_car_value(
+                object_name, attrib_name, "display_value", None
+            )
+            if not state[attrib_name]:
+                state[attrib_name] = self._get_car_value(object_name, attrib_name, "value", "error")
+
+        if retrievalstatus in ["NOT_RECEIVED"]:
+            state[attrib_name] = "NOT_RECEIVED"
 
     @property
     def device_info(self) -> DeviceInfo:
