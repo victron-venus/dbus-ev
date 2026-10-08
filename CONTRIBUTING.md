@@ -21,6 +21,18 @@ Contributions must be compatible with [LICENSE](LICENSE). Preserve third-party c
 
 Install local test dependencies with `bash scripts/ci.sh --install`, then run `bash scripts/ci.sh`. The script is the authoritative local entry point for the checks and tool versions; inspect it and the checked-in dependency manifests before installing prerequisites. Use an isolated development environment.
 
+For the shared Python checks, use uv 0.12.18 and the checked-in lock without resolving newer packages:
+
+```bash
+uv sync --locked --only-group build --no-install-workspace --no-install-local --no-build --python 3.12.13
+uv sync --locked --extra dev --group build --no-build-isolation --python 3.12.13
+.venv/bin/python -m ruff check .
+.venv/bin/python -m ruff format --check .
+.venv/bin/python -m pytest --cov=. --cov-report=term-missing --cov-fail-under=60
+```
+
+The `build` group installs wheel-only build tools before the local package is built without an isolated dependency resolver. To build a wheel with that environment, run `.venv/bin/python -m build --no-isolation --wheel`.
+
 Automated tests use mocks or controlled fixtures where available. A passing unit test does not establish hardware safety. Describe any physical-device test separately, including firmware, configuration and expected rollback. Never run installation, deployment, Terraform apply or actuator commands merely to validate a documentation change.
 
 ## Source and interfaces
