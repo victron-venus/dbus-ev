@@ -83,8 +83,7 @@ PYTHON
 
 # A second owner must not advertise the same charger. Migration stops/removes
 # the old package's service before enabling CHARGER_ENABLED in this package.
-if [ -e /service/dbus-evcharger ]; then
-    if python3 - "$SRC_DIR" "$INSTALL_DIR" <<'PYTHON'
+if [ -e /service/dbus-evcharger ] && python3 - "$SRC_DIR" "$INSTALL_DIR" <<'PYTHON'
 import os, sys
 from pathlib import Path
 root = Path(sys.argv[1] if os.environ.get("PUSH_LOCAL_CONFIG") == "1" else sys.argv[2])
@@ -94,10 +93,9 @@ if p.exists():
     exec(compile(p.read_text(), str(p), "exec"), values)
 raise SystemExit(0 if values.get("CHARGER_ENABLED") else 1)
 PYTHON
-    then
-        echo "Remove the old /service/dbus-evcharger before enabling the unified charger" >&2
-        exit 1
-    fi
+then
+    echo "Remove the old /service/dbus-evcharger before enabling the unified charger" >&2
+    exit 1
 fi
 
 command -v svc >/dev/null
