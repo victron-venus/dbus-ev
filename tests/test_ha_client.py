@@ -478,3 +478,64 @@ def test_map_charging_state():
     assert map_charging_state("foo") == 255
     # None -> None
     assert map_charging_state(None) is None
+
+
+@patch("requests.Session.post")
+def test_poll_normalized_snapshot_survives_next_request_failure(post):
+    client = make_client(breaker=CircuitBreaker(threshold=3))
+    payload = {
+        "soc": " \u200742.5\u00a0",
+        "target_soc": " UnKnOwN ",
+        "vin": " \tVINEXAMPLE ",
+        "battery_capacity": "NaN",
+        "charging_state": " CHARGING ",
+        "odometer": ["42"],
+        "range_to_go": "10",
+        "range_to_go_unit": "mi",
+        "latitude": {},
+        "longitude": False,
+        "at_site": "true",
+        "current": " -1e9999 ",
+        "power": " 1.25 ",
+        "power_unit": "kW",
+    }
+    post.side_effect = [
+        ReqConnError("not ready"),
+        MagicMock(status_code=200, text=json.dumps(payload)),
+        Timeout("unavailable"),
+    ]
+
+    assert client.poll()["ok"] is False
+    assert client.breaker._failures == 1
+    before = client.last_known
+    live = client.poll()
+    expected = {
+        "soc": 42.5,
+        "target_soc": None,
+        "vin": "VINEXAMPLE",
+        "battery_capacity": None,
+        "charging_state": 3,
+        "odometer": None,
+        "range_to_go": pytest.approx(16.09344),
+        "latitude": None,
+        "longitude": None,
+        "at_site": True,
+        "current": None,
+        "power": 1250.0,
+    }
+    assert live == {**expected, "ok": True}
+    assert client.last_known == expected
+    assert client.last_known is not before
+    assert client.last_known is not live
+    assert client.breaker._failures == 0
+
+    cached = client.last_known
+    failed = client.poll()
+    assert failed == {**expected, "ok": False}
+    assert client.last_known is cached
+    assert failed is not cached
+    assert client.breaker._failures == 1
+    assert post.call_count == 3
+    for request in post.call_args_list:
+        assert request.args == ("http://ha:8123/api/template",)
+        assert request.kwargs == {"json": {"template": client._template}, "timeout": 3.0}
