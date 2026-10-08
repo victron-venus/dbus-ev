@@ -10,6 +10,10 @@ imports cleanly without velib_python/dbus.
 import logging
 import math
 
+# Shared protocol identifiers keep publication and update paths consistent.
+DBUS_MODE_PATH = "/Mode"
+DBUS_SET_CURRENT_PATH = "/SetCurrent"
+
 logger = logging.getLogger(__name__)
 
 
@@ -186,7 +190,7 @@ class EvChargerService:
         self.svc.add_path("/Ac/L3/PowerFactor", 0)
 
         # --- charging control paths (writable) ----------------------------
-        self.svc.add_path("/Mode", MODE_AUTO, writeable=True, onchangecallback=on_mode)
+        self.svc.add_path(DBUS_MODE_PATH, MODE_AUTO, writeable=True, onchangecallback=on_mode)
         self.svc.add_path("/StartStop", 0, writeable=True, onchangecallback=on_startstop)
         self.svc.add_path("/AutoStart", 0, writeable=True)
         self.svc.add_path("/EnableDisplay", 1, writeable=True)
@@ -194,7 +198,7 @@ class EvChargerService:
         # --- current control paths ----------------------------------------
         self.svc.add_path("/Current", 0)  # A actual
         self.svc.add_path(
-            "/SetCurrent", 0, writeable=True, onchangecallback=on_setcurrent
+            DBUS_SET_CURRENT_PATH, 0, writeable=True, onchangecallback=on_setcurrent
         )  # A setpoint
         self.svc.add_path("/MinCurrent", 6, writeable=True)  # A minimum
         self.svc.add_path("/MaxCurrent", 32, writeable=True)  # A maximum
@@ -314,13 +318,13 @@ class EvChargerService:
     def set_mode_quietly(self, mode: int) -> None:
         """Set /Mode without re-triggering the onchange handler."""
         if isinstance(self.svc, NullDbusService):
-            self.svc.items["/Mode"] = mode
+            self.svc.items[DBUS_MODE_PATH] = mode
         else:
-            self.svc["/Mode"] = mode
+            self.svc[DBUS_MODE_PATH] = mode
 
     def set_current_quietly(self, current: float) -> None:
         """Set /SetCurrent without re-triggering the onchange handler."""
         if isinstance(self.svc, NullDbusService):
-            self.svc.items["/SetCurrent"] = current
+            self.svc.items[DBUS_SET_CURRENT_PATH] = current
         else:
-            self.svc["/SetCurrent"] = current
+            self.svc[DBUS_SET_CURRENT_PATH] = current

@@ -15,6 +15,22 @@ def charger_status(raw):
     return None
 
 
+def _status_and_power(snapshot, meter, require_meter):
+    """Resolve charging evidence before updating the D-Bus projection."""
+    status = snapshot.get("charger_status")
+    if status is None:
+        status = charger_status(snapshot.get("mercedes_charging_status"))
+    if snapshot.get("at_site") is False:
+        status = 0
+    power = meter.get("/Ac/Power") if require_meter else snapshot.get("power")
+    if require_meter and power is not None and power > 50:
+        # The dedicated home circuit is stronger evidence than missing GPS.
+        status = 2
+    elif require_meter and snapshot.get("at_site") is None and status != 0:
+        status = None
+    return status, power
+
+
 class Charger:
     """Project one shared vehicle snapshot and optional meter onto charger D-Bus."""
 
@@ -48,18 +64,8 @@ class Charger:
     def update(self, snapshot, meter=None, require_meter=False):
         # Expired vehicle fields cannot establish location or charging status.
         snapshot = snapshot if snapshot.get("ok") else {}
-        status = snapshot.get("charger_status")
-        if status is None:
-            status = charger_status(snapshot.get("mercedes_charging_status"))
-        if snapshot.get("at_site") is False:
-            status = 0
         meter = meter or {}
-        power = meter.get("/Ac/Power") if require_meter else snapshot.get("power")
-        if require_meter and power is not None and power > 50:
-            # The dedicated home circuit is stronger evidence than missing GPS.
-            status = 2
-        elif require_meter and snapshot.get("at_site") is None and status != 0:
-            status = None
+        status, power = _status_and_power(snapshot, meter, require_meter)
         # The dedicated meter has its own MQTT freshness deadline. A cloud
         # outage must not hide its live measurements, including an idle 0 W.
         # An idle circuit alone cannot establish whether a vehicle is plugged in.
