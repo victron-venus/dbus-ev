@@ -141,8 +141,6 @@ BINARY_SENSOR_OPTIONS = [
     "warningbrakefluid",
     "warningcoolantlevellow",
     "parkbrakestatus",
-    #'readingLampFrontRight',
-    #'readingLampFrontLeft',
     "warningBrakeLiningWear",
     "warninglowbattery",
     "starterBatteryState",

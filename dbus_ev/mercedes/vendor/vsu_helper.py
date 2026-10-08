@@ -153,6 +153,11 @@ def _normalize_value(legacy_key: str, value: Any, legacy: dict[str, Any]) -> Non
         legacy["charging_prediction_soc"] = value
         return
 
+    _normalize_scalar_value(value, legacy)
+
+
+def _normalize_scalar_value(value: Any, legacy: dict[str, Any]) -> None:
+    """Keep scalar enum and typed-value normalization in one place."""
     # Top-level enum strings (e.g. DOORLOCKSTATUSVEHICLE_EXTERNAL_LOCKED) need
     # to round-trip to their proto integer so downstream consumers that do
     # ``int(value)`` (lock.py) or compare against 0/1/2 (binary_sensor.py)

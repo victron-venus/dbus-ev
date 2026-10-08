@@ -83,10 +83,9 @@ async def create_missing_sensors_for_car(car, coordinator, async_add_entities):
 
     # Helper function to check and add eligible devices
     def _check_and_add_device(device, car):
-        if device:
-            if f"sensor.{device.unique_id}" not in car.sensors:
-                missing_sensors.append(device)
-                LOGGER.debug("Sensor added: %s, %s", device._name, f"sensor.{device.unique_id}")
+        if device and f"sensor.{device.unique_id}" not in car.sensors:
+            missing_sensors.append(device)
+            LOGGER.debug("Sensor added: %s, %s", device._name, f"sensor.{device.unique_id}")
 
     # Process regular sensors
     for key, value in sorted(SENSORS.items()):
@@ -166,6 +165,10 @@ class MercedesMESensor(MercedesMeEntity, RestoreSensor):
                 return STATE_UNKNOWN
             return STATE_UNKNOWN
 
+        return self._available_state()
+
+    def _available_state(self):
+        """Render an available reading using its original type-specific rules."""
         if self._internal_name == "lastParkEvent":
             if self._state:
                 return datetime.fromtimestamp(int(self._state))

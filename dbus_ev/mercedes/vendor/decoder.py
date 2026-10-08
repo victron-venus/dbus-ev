@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import time
-import traceback
 from datetime import datetime
 from typing import Any
 
@@ -81,6 +80,14 @@ class Decoder:
             if "windowStatusOverall" not in received_car_data["attributes"]:
                 self._create_synthetic_window_status_overall(received_car_data, car.finorvin)
 
+        self._update_car_sections(car, received_car_data, update_mode)
+
+        if not update_mode:
+            car.entry_setup_complete = True
+
+        self.cars[car.finorvin] = car
+
+    def _update_car_sections(self, car, received_car_data, update_mode):
         car.odometer = self._get_car_values(
             received_car_data,
             car.finorvin,
@@ -169,11 +176,6 @@ class Decoder:
             update_mode,
         )
 
-        if not update_mode:
-            car.entry_setup_complete = True
-
-        self.cars[car.finorvin] = car
-
     def _get_car_values(self, car_detail, vin, class_instance, options, update):
         # Define handlers for specific options and the generic case
         option_handlers = {
@@ -181,7 +183,7 @@ class Decoder:
             "chargeflap": self._get_car_values_handle_chargeflap,
             "chargeinletcoupler": self._get_car_values_handle_chargeinletcoupler,
             "chargeinletlock": self._get_car_values_handle_chargeinletlock,
-            "chargePrograms": self._get_car_values_handle_chargePrograms,
+            "chargePrograms": self._get_car_values_handle_charge_programs,
             "chargingBreakClockTimer": self._get_car_values_handle_charging_break_clock_timer,
             "chargingPowerRestriction": self._get_car_values_handle_charging_power_restriction,
             "endofchargetime": self._get_car_values_handle_endofchargetime,
@@ -292,12 +294,15 @@ class Decoder:
                     loghelper.Mask_VIN(vin),
                 )
                 return None
-            car_detail = current_car.last_full_message or car_detail
+            car_detail = current_car.last_full_message
             attributes = car_detail.get("attributes", {})
             charge_programs = attributes.get("chargePrograms")
             if not charge_programs:
                 return None
 
+        return self._max_soc_from_programs(charge_programs, class_instance)
+
+    def _max_soc_from_programs(self, charge_programs, class_instance):
         time_stamp = charge_programs.get("timestamp", 0)
         charge_programs_value = charge_programs.get("charge_programs_value", {})
         charge_program_parameters = charge_programs_value.get("charge_program_parameters", [])
@@ -452,7 +457,7 @@ class Decoder:
             unit=None,
         )
 
-    def _get_car_values_handle_chargePrograms(
+    def _get_car_values_handle_charge_programs(
         self, car_detail, class_instance, option, update, vin: str
     ):
         attributes = car_detail.get("attributes", {})
@@ -519,17 +524,7 @@ class Decoder:
             status = charging_prediction_max_soc.get("status", "VALID")
             time_stamp = charging_prediction_max_soc.get("timestamp", 0)
 
-            if isinstance(predicted_end_time, datetime):
-                value = predicted_end_time
-            elif isinstance(predicted_end_time, str):
-                try:
-                    value = datetime.strptime(predicted_end_time, "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=dt.UTC
-                    )
-                except Exception:
-                    value = None
-            else:
-                value = None
+            value = self._predicted_charge_end_value(predicted_end_time)
             if value is not None:
                 return CarAttribute(
                     value=value,
@@ -556,6 +551,23 @@ class Decoder:
                     unit=None,
                 )
 
+        return self._legacy_charge_end(attributes, vin)
+
+    def _predicted_charge_end_value(self, predicted_end_time):
+        if isinstance(predicted_end_time, datetime):
+            value = predicted_end_time
+        elif isinstance(predicted_end_time, str):
+            try:
+                value = datetime.strptime(predicted_end_time, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=dt.UTC
+                )
+            except Exception:
+                value = None
+        else:
+            value = None
+        return value
+
+    def _legacy_charge_end(self, attributes, vin):
         # Older cars have two attributes endofchargetime and endofChargeTimeWeekday
         # endofchargetime is in minutes after midnight
         try:
@@ -590,8 +602,8 @@ class Decoder:
                         loghelper.Mask_VIN(vin),
                     )
                     return None
-                car_detail = current_car.last_full_message
-                attributes = car_detail.get("attributes", {})
+                last_full_message = current_car.last_full_message
+                attributes = last_full_message.get("attributes", {})
 
             local_tz = dt.datetime.now().astimezone().tzinfo
             end_weekday_attr = attributes.get("endofChargeTimeWeekday", {})
@@ -631,12 +643,10 @@ class Decoder:
                 display_value=dt_with_time.isoformat(),
                 unit=None,
             )
-        except Exception as e:
-            LOGGER.error(
-                "Error processing endofchargetime for car %s: %s, %s",
+        except Exception:
+            LOGGER.exception(
+                "Error processing endofchargetime for car %s",
                 loghelper.Mask_VIN(vin),
-                e,
-                traceback.format_exc(),
             )
             return None
 
@@ -682,35 +692,6 @@ class Decoder:
     ):
         attributes = car_detail.get("attributes", {})
 
-        def _attr_to_bool(attr: dict[str, Any]) -> bool:
-            """Coerce legacy/VSU attribute payloads to a boolean state."""
-            if not attr:
-                return False
-
-            if "bool_value" in attr:
-                return bool(attr.get("bool_value"))
-
-            raw_value = attr.get("value")
-            if isinstance(raw_value, bool):
-                return raw_value
-            if isinstance(raw_value, int):
-                return raw_value > 0
-            if isinstance(raw_value, str):
-                lowered = raw_value.lower()
-                if lowered in ("true", "false"):
-                    return lowered == "true"
-                if raw_value.lstrip("-").isdigit():
-                    return int(raw_value) > 0
-
-            raw_int = attr.get("int_value")
-            if raw_int is not None:
-                try:
-                    return int(raw_int) > 0
-                except (TypeError, ValueError):
-                    return False
-
-            return False
-
         # Retrieve attributes with defaults to handle missing keys
         precond_now_attr = attributes.get("precondNow", {})
         precond_active_attr = attributes.get("precondActive", {})
@@ -722,8 +703,8 @@ class Decoder:
 
         # VSU reports precondNow as an enum attribute and precondState as a
         # nested message, while the legacy VEP path used plain booleans.
-        precond_now_value = _attr_to_bool(precond_now_attr)
-        precond_active_value = _attr_to_bool(precond_active_attr)
+        precond_now_value = self._preconditioning_attr_to_bool(precond_now_attr)
+        precond_active_value = self._preconditioning_attr_to_bool(precond_active_attr)
         precond_operating_mode_value = precond_operating_mode_attr.get("int_value", 0)
         precond_operating_mode_bool = int(precond_operating_mode_value) > 0
         precond_state_activation_value = False
@@ -767,6 +748,35 @@ class Decoder:
             return CarAttribute(False, 4, 0)
 
         return None
+
+    def _preconditioning_attr_to_bool(self, attr: dict[str, Any]) -> bool:
+        """Coerce legacy/VSU attribute payloads to a boolean state."""
+        if not attr:
+            return False
+
+        if "bool_value" in attr:
+            return bool(attr.get("bool_value"))
+
+        raw_value = attr.get("value")
+        if isinstance(raw_value, bool):
+            return raw_value
+        if isinstance(raw_value, int):
+            return raw_value > 0
+        if isinstance(raw_value, str):
+            lowered = raw_value.lower()
+            if lowered in ("true", "false"):
+                return lowered == "true"
+            if raw_value.lstrip("-").isdigit():
+                return int(raw_value) > 0
+
+        raw_int = attr.get("int_value")
+        if raw_int is not None:
+            try:
+                return int(raw_int) > 0
+            except (TypeError, ValueError):
+                return False
+
+        return False
 
     def _get_car_values_handle_temperature_points(
         self, car_detail, class_instance, option: str, update, vin: str
@@ -832,6 +842,28 @@ class Decoder:
         ]
 
         # Check individual window statuses
+        window_statuses, latest_timestamp = self._window_observations(car_data, main_window_attrs)
+
+        # Calculate overall status based on individual windows
+        # If we have valid window statuses, determine overall state
+        overall_value = self._overall_window_status(window_statuses)
+
+        # Create the synthetic windowStatusOverall attribute
+        car_data["attributes"]["windowStatusOverall"] = {
+            "timestamp": str(latest_timestamp) if latest_timestamp > 0 else "0",
+            "bool_value": overall_value == "CLOSED",
+            "status": "VALID",  # Use same status as other synthetic attributes
+            "timestamp_in_ms": str(latest_timestamp * 1000 + 223),
+        }
+
+        LOGGER.debug(
+            "Created synthetic windowStatusOverall for %s: %s (based on %d individual windows)",
+            loghelper.Mask_VIN(vin),
+            overall_value,
+            len(window_statuses),
+        )
+
+    def _window_observations(self, car_data, main_window_attrs):
         window_statuses = []
         latest_timestamp = 0
 
@@ -851,9 +883,9 @@ class Decoder:
                 # Add to window statuses if value is available
                 if value is not None:
                     window_statuses.append(value)
+        return window_statuses, latest_timestamp
 
-        # Calculate overall status based on individual windows
-        # If we have valid window statuses, determine overall state
+    def _overall_window_status(self, window_statuses):
         if window_statuses:
             # Assume "CLOSED" = 0, "OPEN" = 1 or similar numeric values
             # If all windows are closed (0), overall should be "CLOSED"
@@ -872,21 +904,7 @@ class Decoder:
         else:
             # No individual window data available, default to CLOSED
             overall_value = "CLOSED"
-
-        # Create the synthetic windowStatusOverall attribute
-        car_data["attributes"]["windowStatusOverall"] = {
-            "timestamp": str(latest_timestamp) if latest_timestamp > 0 else "0",
-            "bool_value": overall_value == "CLOSED",
-            "status": "VALID",  # Use same status as other synthetic attributes
-            "timestamp_in_ms": str(latest_timestamp * 1000 + 223),
-        }
-
-        LOGGER.debug(
-            "Created synthetic windowStatusOverall for %s: %s (based on %d individual windows)",
-            loghelper.Mask_VIN(vin),
-            overall_value,
-            len(window_statuses),
-        )
+        return overall_value
 
     def _get_car_value(self, class_instance, object_name, attrib_name, default_value):
         return getattr(
