@@ -7,7 +7,6 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import time
-import traceback
 from datetime import datetime
 from typing import Any
 
@@ -188,7 +187,7 @@ class Decoder:
             "chargeflap": self._get_car_values_handle_chargeflap,
             "chargeinletcoupler": self._get_car_values_handle_chargeinletcoupler,
             "chargeinletlock": self._get_car_values_handle_chargeinletlock,
-            "chargePrograms": self._get_car_values_handle_chargePrograms,
+            "chargePrograms": self._get_car_values_handle_charge_programs,
             "chargingBreakClockTimer": self._get_car_values_handle_charging_break_clock_timer,
             "chargingPowerRestriction": self._get_car_values_handle_charging_power_restriction,
             "endofchargetime": self._get_car_values_handle_endofchargetime,
@@ -462,7 +461,7 @@ class Decoder:
             unit=None,
         )
 
-    def _get_car_values_handle_chargePrograms(
+    def _get_car_values_handle_charge_programs(
         self, car_detail, class_instance, option, update, vin: str
     ):
         attributes = car_detail.get("attributes", {})
@@ -648,12 +647,10 @@ class Decoder:
                 display_value=dt_with_time.isoformat(),
                 unit=None,
             )
-        except Exception as e:
-            LOGGER.error(
-                "Error processing endofchargetime for car %s: %s, %s",
+        except Exception:
+            LOGGER.exception(
+                "Error processing endofchargetime for car %s",
                 loghelper.Mask_VIN(vin),
-                e,
-                traceback.format_exc(),
             )
             return None
 
