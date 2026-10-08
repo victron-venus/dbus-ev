@@ -8,6 +8,9 @@ import math
 import threading
 import time
 
+# Shared protocol identifiers keep publication and update paths consistent.
+AVAILABILITY_SUFFIX = "/availability"
+
 logger = logging.getLogger(__name__)
 
 # Only measurements projected by Charger.update belong in the local cache.
@@ -72,7 +75,7 @@ class CerboMqtt:
         if username:
             client.username_pw_set(username, password)
         if publish_ha:
-            client.will_set(self.prefix + "/availability", "offline", qos=1, retain=True)
+            client.will_set(self.prefix + AVAILABILITY_SUFFIX, "offline", qos=1, retain=True)
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect
         client.on_message = self._on_message
@@ -155,7 +158,9 @@ class CerboMqtt:
                     self._published_revision = revision
         status = "online" if available else "offline"
         if status != self._availability:
-            result = self.client.publish(self.prefix + "/availability", status, qos=1, retain=True)
+            result = self.client.publish(
+                self.prefix + AVAILABILITY_SUFFIX, status, qos=1, retain=True
+            )
             if result.rc == 0:
                 self._availability = status
 
@@ -197,7 +202,9 @@ class CerboMqtt:
                 self._published_revision = snapshot["sampled_at"]
         status = "online" if available else "offline"
         if status != self._availability:
-            result = self.client.publish(self.prefix + "/availability", status, qos=1, retain=True)
+            result = self.client.publish(
+                self.prefix + AVAILABILITY_SUFFIX, status, qos=1, retain=True
+            )
             if result.rc == 0:
                 self._availability = status
 
@@ -205,7 +212,9 @@ class CerboMqtt:
         if not self._started:
             return
         if self.publish_ha and self._connected:
-            info = self.client.publish(self.prefix + "/availability", "offline", qos=1, retain=True)
+            info = self.client.publish(
+                self.prefix + AVAILABILITY_SUFFIX, "offline", qos=1, retain=True
+            )
             try:
                 info.wait_for_publish(timeout=2)
             except RuntimeError:
