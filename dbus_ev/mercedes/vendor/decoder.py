@@ -294,7 +294,7 @@ class Decoder:
                     loghelper.Mask_VIN(vin),
                 )
                 return None
-            car_detail = current_car.last_full_message or car_detail
+            car_detail = current_car.last_full_message
             attributes = car_detail.get("attributes", {})
             charge_programs = attributes.get("chargePrograms")
             if not charge_programs:
@@ -551,7 +551,7 @@ class Decoder:
                     unit=None,
                 )
 
-        return self._legacy_charge_end(car_detail, attributes, vin)
+        return self._legacy_charge_end(attributes, vin)
 
     def _predicted_charge_end_value(self, predicted_end_time):
         if isinstance(predicted_end_time, datetime):
@@ -567,7 +567,7 @@ class Decoder:
             value = None
         return value
 
-    def _legacy_charge_end(self, car_detail, attributes, vin):
+    def _legacy_charge_end(self, attributes, vin):
         # Older cars have two attributes endofchargetime and endofChargeTimeWeekday
         # endofchargetime is in minutes after midnight
         try:
@@ -602,8 +602,8 @@ class Decoder:
                         loghelper.Mask_VIN(vin),
                     )
                     return None
-                car_detail = current_car.last_full_message
-                attributes = car_detail.get("attributes", {})
+                last_full_message = current_car.last_full_message
+                attributes = last_full_message.get("attributes", {})
 
             local_tz = dt.datetime.now().astimezone().tzinfo
             end_weekday_attr = attributes.get("endofChargeTimeWeekday", {})
