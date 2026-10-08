@@ -83,10 +83,9 @@ async def create_missing_sensors_for_car(car, coordinator, async_add_entities):
 
     # Helper function to check and add eligible devices
     def _check_and_add_device(device, car):
-        if device:
-            if f"sensor.{device.unique_id}" not in car.sensors:
-                missing_sensors.append(device)
-                LOGGER.debug("Sensor added: %s, %s", device._name, f"sensor.{device.unique_id}")
+        if device and f"sensor.{device.unique_id}" not in car.sensors:
+            missing_sensors.append(device)
+            LOGGER.debug("Sensor added: %s, %s", device._name, f"sensor.{device.unique_id}")
 
     # Process regular sensors
     for key, value in sorted(SENSORS.items()):
