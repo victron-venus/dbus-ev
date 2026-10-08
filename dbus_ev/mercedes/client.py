@@ -192,17 +192,7 @@ class MercedesClient:
                     retry = self.limits.pause(LOGIN_INTERVAL)
                 # Malformed cloud frames must reconnect.
                 except Exception as exc:  # noqa: BLE001
-                    # Do not log tokens, raw frames, account data or HTTP response bodies.
-                    status = getattr(exc, "status", None)
-                    if status == 429:
-                        blocked = isinstance(exc, aiohttp.WSServerHandshakeError)
-                    retry = self._failure_delay(exc, retry)
-                    logger.warning(
-                        "Mercedes connection interrupted (%s, HTTP %s); retry in %ss",
-                        type(exc).__name__,
-                        status if isinstance(status, int) else "n/a",
-                        retry,
-                    )
+                    blocked, retry = self._connection_failure(exc, retry)
                 finally:
                     with self._lock:
                         self._connected = False
@@ -214,6 +204,21 @@ class MercedesClient:
                     self._vehicle = None
                 else:
                     retry = min(retry * 2, RECONNECT_MAX)
+
+    def _connection_failure(self, exc, retry):
+        blocked = False
+        # Do not log tokens, raw frames, account data or HTTP response bodies.
+        status = getattr(exc, "status", None)
+        if status == 429:
+            blocked = isinstance(exc, aiohttp.WSServerHandshakeError)
+        retry = self._failure_delay(exc, retry)
+        logger.warning(
+            "Mercedes connection interrupted (%s, HTTP %s); retry in %ss",
+            type(exc).__name__,
+            status if isinstance(status, int) else "n/a",
+            retry,
+        )
+        return blocked, retry
 
     async def _wait_for_api(self):
         while not self._stop.is_set() and self.limits.remaining() > 0:
