@@ -82,7 +82,7 @@ async def create_missing_sensors_for_car(car, coordinator, async_add_entities):
     missing_sensors = []
 
     # Helper function to check and add eligible devices
-    def _check_and_add_device(device, car, sensor_type="sensor"):
+    def _check_and_add_device(device, car):
         if device:
             if f"sensor.{device.unique_id}" not in car.sensors:
                 missing_sensors.append(device)

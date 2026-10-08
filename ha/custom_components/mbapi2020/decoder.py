@@ -516,12 +516,12 @@ class Decoder:
 
         attributes = car_detail.get("attributes", {})
 
-        chargingPredictionMaxSoc = attributes.get("chargingPredictionMaxSoc", {})
-        charging_prediction_soc = chargingPredictionMaxSoc.get("charging_prediction_soc", {})
+        charging_prediction_max_soc = attributes.get("chargingPredictionMaxSoc", {})
+        charging_prediction_soc = charging_prediction_max_soc.get("charging_prediction_soc", {})
         predicted_end_time = charging_prediction_soc.get("predicted_end_time", None)
         if predicted_end_time is not None:
-            status = chargingPredictionMaxSoc.get("status", "VALID")
-            time_stamp = chargingPredictionMaxSoc.get("timestamp", 0)
+            status = charging_prediction_max_soc.get("status", "VALID")
+            time_stamp = charging_prediction_max_soc.get("timestamp", 0)
 
             if isinstance(predicted_end_time, datetime):
                 value = predicted_end_time
@@ -777,12 +777,12 @@ class Decoder:
     ):
         curr_zone = option.replace("temperature_points_", "")
         attributes = car_detail.get("attributes", {})
-        temperaturePoints = attributes.get("temperaturePoints")
-        if not temperaturePoints:
+        temperature_points_attribute = attributes.get("temperaturePoints")
+        if not temperature_points_attribute:
             return None
 
-        time_stamp = temperaturePoints.get("timestamp", 0)
-        temperature_points_value = temperaturePoints.get("temperature_points_value", {})
+        time_stamp = temperature_points_attribute.get("timestamp", 0)
+        temperature_points_value = temperature_points_attribute.get("temperature_points_value", {})
         temperature_points = temperature_points_value.get("temperature_points", [])
 
         for point in temperature_points:
@@ -803,7 +803,7 @@ class Decoder:
                 # Legacy VEP/REST shape: temperature is a scalar.
                 value = temperature if temperature is not None else 0
                 display_value = point.get("temperature_display_value")
-                unit = temperaturePoints.get("temperature_unit", None)
+                unit = temperature_points_attribute.get("temperature_unit", None)
 
             return CarAttribute(
                 value=value,

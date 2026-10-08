@@ -31,6 +31,7 @@ from .helper import LogHelper
 from .helper import UrlHelper as helper
 
 _LOGGER = logging.getLogger(__name__)
+_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded"
 
 
 class MBAuthError(Exception):
@@ -279,7 +280,7 @@ class Oauth:
         """Resume authorization and extract code."""
         headers = self._get_mobile_safari_headers()
         headers["accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        headers["content-type"] = "application/x-www-form-urlencoded"
+        headers["content-type"] = _FORM_CONTENT_TYPE
         data = aiohttp.FormData({"token": token})
         try:
             async with self._session.post(
@@ -315,7 +316,7 @@ class Oauth:
         if not self.code_verifier:
             raise MBAuthError("Code verifier not available for token exchange")
         headers = self._get_header()
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        headers["Content-Type"] = _FORM_CONTENT_TYPE
         data = {
             "client_id": self.CLIENT_ID,
             "code": code,
@@ -340,7 +341,7 @@ class Oauth:
         encoded_email = urllib.parse.quote_plus(email, safe="@")
         data = f"client_id={helper.Login_App_Id(self._region)}&grant_type=password&username={encoded_email}&password={nonce}:{pin}&scope=openid email phone profile offline_access ciam-uid"
         headers = self._get_header()
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        headers["Content-Type"] = _FORM_CONTENT_TYPE
         headers["Stage"] = "prod"
         headers["X-Device-Id"] = self._device_guid
         headers["X-Request-Id"] = str(uuid.uuid4())
@@ -379,7 +380,7 @@ class Oauth:
         url = f"{helper.Login_Base_Url(self._region)}/as/token.oauth2"
         data = f"grant_type=refresh_token&refresh_token={refresh_token}"
         headers = self._get_header()
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
+        headers["Content-Type"] = _FORM_CONTENT_TYPE
         headers["X-Device-Id"] = self._device_guid
         headers["X-Request-Id"] = str(uuid.uuid4())
         token_info = None
