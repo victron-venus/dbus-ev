@@ -76,6 +76,28 @@ class CircuitBreaker:
             logger.warning("Circuit breaker OPEN after %i consecutive failures", self._failures)
 
 
+def _state_float(s: Any) -> float | None:
+    if s is None:
+        return None
+    s = str(s).strip()
+    if s == "" or s.lower() in ("none", "unknown", "unavailable"):
+        return None
+    try:
+        value = float(s)
+        return value if math.isfinite(value) else None
+    except ValueError:
+        return None
+
+
+def _state_text(s: Any) -> str | None:
+    if s is None:
+        return None
+    s = str(s).strip()
+    if s == "" or s.lower() in ("none", "unknown", "unavailable"):
+        return None
+    return s
+
+
 def state_is_on(state: Any) -> bool | None:
     """Map an HA state string to on/off. unavailable/unknown -> None."""
     s = str(state).strip().lower() if state is not None else ""
@@ -349,39 +371,18 @@ class HaClient:
             if not isinstance(data, dict):
                 raise HomeAssistantAPIError("HA template response must be a JSON object")
 
-            # Helper to convert string to float or None
-            def to_float(s: Any) -> float | None:
-                if s is None:
-                    return None
-                s = str(s).strip()
-                if s == "" or s.lower() in ("none", "unknown", "unavailable"):
-                    return None
-                try:
-                    value = float(s)
-                    return value if math.isfinite(value) else None
-                except ValueError:
-                    return None
-
-            def to_str(s: Any) -> str | None:
-                if s is None:
-                    return None
-                s = str(s).strip()
-                if s == "" or s.lower() in ("none", "unknown", "unavailable"):
-                    return None
-                return s
-
-            soc = to_float(data.get("soc"))
-            target_soc = to_float(data.get("target_soc"))
-            vin = to_str(data.get("vin"))
-            battery_capacity = to_float(data.get("battery_capacity"))
-            charging_state = map_charging_state(to_str(data.get("charging_state")))
-            odometer = to_float(data.get("odometer"))
-            range_to_go = to_float(data.get("range_to_go"))
-            latitude = to_float(data.get("latitude"))
-            longitude = to_float(data.get("longitude"))
+            soc = _state_float(data.get("soc"))
+            target_soc = _state_float(data.get("target_soc"))
+            vin = _state_text(data.get("vin"))
+            battery_capacity = _state_float(data.get("battery_capacity"))
+            charging_state = map_charging_state(_state_text(data.get("charging_state")))
+            odometer = _state_float(data.get("odometer"))
+            range_to_go = _state_float(data.get("range_to_go"))
+            latitude = _state_float(data.get("latitude"))
+            longitude = _state_float(data.get("longitude"))
             at_site = state_is_on(data.get("at_site"))
-            current = to_float(data.get("current"))
-            power = to_float(data.get("power"))
+            current = _state_float(data.get("current"))
+            power = _state_float(data.get("power"))
 
             # Normalize units from HA unit_of_measurement to what the
             # Venus dbus wiki expects. HA reports power in kW; /Ac/Power is
