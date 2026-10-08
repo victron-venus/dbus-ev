@@ -133,6 +133,26 @@ class MercedesClient:
         finally:
             self.store.close()
 
+    async def _websocket_headers(self, session, auth, versions):
+        await versions.async_refresh(session)
+        token = await auth.async_get_cached_token()
+        if not token:
+            raise MBAuthError("Authorization required")
+        if self._vehicle is None:
+            self._vehicle = await self._metadata(session, token, versions)
+        return versions.apply_websocket_headers(
+            {
+                "Authorization": token["access_token"],
+                "APP-SESSION-ID": self._session_id,
+                "X-SessionId": self._session_id,
+                "X-TrackingId": str(uuid.uuid4()).upper(),
+                "OUTPUT-FORMAT": "PROTO",
+                "ris-os-name": "ios",
+                "ris-os-version": "26.3",
+                "X-Locale": "en-US",
+            }
+        )
+
     async def _serve(self):
         self._loop = asyncio.get_running_loop()
         self._task = asyncio.current_task()
@@ -148,24 +168,7 @@ class MercedesClient:
                     break
                 blocked = False
                 try:
-                    await versions.async_refresh(session)
-                    token = await auth.async_get_cached_token()
-                    if not token:
-                        raise MBAuthError("Authorization required")
-                    if self._vehicle is None:
-                        self._vehicle = await self._metadata(session, token, versions)
-                    headers = versions.apply_websocket_headers(
-                        {
-                            "Authorization": token["access_token"],
-                            "APP-SESSION-ID": self._session_id,
-                            "X-SessionId": self._session_id,
-                            "X-TrackingId": str(uuid.uuid4()).upper(),
-                            "OUTPUT-FORMAT": "PROTO",
-                            "ris-os-name": "ios",
-                            "ris-os-version": "26.3",
-                            "X-Locale": "en-US",
-                        }
-                    )
+                    headers = await self._websocket_headers(session, auth, versions)
                     async with session.ws_connect(
                         UrlHelper.Websocket_url(self.region),
                         headers=headers,
