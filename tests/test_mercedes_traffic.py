@@ -163,10 +163,15 @@ def test_blocked_cooldown_does_not_poll_at_expiry_before_recovery(tmp_path, cloc
 
 def test_failed_persistence_prevents_credential_submission(tmp_path, monkeypatch):
     recovery = SessionRecovery(str(credentials(tmp_path)), "Europe")
-    monkeypatch.setattr(recovery.limits.store, "save", MagicMock(side_effect=OSError("disk full")))
+    error = OSError("disk full")
+    save = MagicMock(side_effect=error)
+    monkeypatch.setattr(recovery.limits.store, "save", save)
     auth = MagicMock(async_login_new=AsyncMock())
-    with pytest.raises(OSError):
-        asyncio.run(recovery.recover(auth))
+    operation = recovery.recover(auth)
+    with pytest.raises(OSError) as caught:
+        asyncio.run(operation)
+    assert caught.value is error
+    save.assert_called_once()
     auth.async_login_new.assert_not_called()
 
 
@@ -180,11 +185,14 @@ def test_corrupt_deadline_fails_closed(tmp_path, bad):
 
 def test_config_429_is_not_hidden_before_following_requests():
     response = MagicMock(status=429)
-    response.raise_for_status.side_effect = limited(3600)
+    error = limited(3600)
+    response.raise_for_status.side_effect = error
     session = MagicMock()
     session.get.return_value = Context(response)
+    operation = AppVersionManager("Europe")._fetch_remote_config(session)
     with pytest.raises(aiohttp.ClientResponseError) as caught:
-        asyncio.run(AppVersionManager("Europe")._fetch_remote_config(session))
+        asyncio.run(operation)
+    assert caught.value is error
     assert caught.value.headers["Retry-After"] == "3600"
     session.get.assert_called_once()
 
@@ -241,6 +249,7 @@ def test_standalone_login_does_not_bypass_pause_or_prompt(tmp_path, monkeypatch,
     prompt = MagicMock()
     monkeypatch.setattr("builtins.input", prompt)
     args = SimpleNamespace(token_file=str(token), region="Europe")
+    operation = login(args)
     with pytest.raises(ValueError, match="cooldown"):
-        asyncio.run(login(args))
+        asyncio.run(operation)
     prompt.assert_not_called()

@@ -66,7 +66,8 @@ def test_pull_refreshes_snapshot_without_a_websocket_and_then_expires(monkeypatc
     auth.async_get_cached_token = AsyncMock(return_value={"access_token": "private"})
     asyncio.run(client._pull(session, auth, versions, Protocol(VIN)))
     snapshot = client.poll()
-    assert snapshot["ok"] and snapshot["soc"] == 81
+    assert snapshot["ok"]
+    assert snapshot["soc"] == 81
     assert snapshot["mercedes_payload"]["data_mode"] == "pull"
     assert not client._connected
     acquired = client._received
@@ -126,7 +127,9 @@ def test_rate_limited_websocket_pauses_rest_and_recovers(monkeypatch, tmp_path):
     monkeypatch.setattr("dbus_ev.mercedes.traffic.time.monotonic", lambda: now[0])
 
     async def cooldown(s, a, v, protocol, delay):
-        assert s is session and a is auth and v is versions
+        assert s is session
+        assert a is auth
+        assert v is versions
         cooldowns.append(delay)
         if len(cooldowns) == 1:
             await client._pull(s, a, v, protocol)
@@ -235,7 +238,8 @@ def test_reconnect_keeps_application_session_delta_baseline(monkeypatch, tmp_pat
                 }
             )
         else:
-            assert protocol is protocols[0] and protocol.full_received
+            assert protocol is protocols[0]
+            assert protocol.full_received
             payload = protocol.merge({"attributes": {"soc": {"int_value": 71}}})
             client._stop.set()
         client._accept(payload, "push")

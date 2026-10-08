@@ -76,12 +76,14 @@ def test_worker_exception_can_retry_and_pending_shutdown_cannot_publish():
         assert worker.poll(applied.append)
         callback, *args = deliveries.get(timeout=1)
         assert callback(*args) is False
-        assert len(applied) == 1 and applied[0]["ok"] is False
+        assert len(applied) == 1
+        assert applied[0]["ok"] is False
         assert worker.poll(applied.append)
         callback, *args = deliveries.get(timeout=1)
         assert worker.stop(timeout=2)
         assert callback(*args) is False
-        assert len(applied) == 1 and applied[0]["ok"] is False
+        assert len(applied) == 1
+        assert applied[0]["ok"] is False
         assert worker.poll(applied.append) is False
     finally:
         assert worker.stop(timeout=2)
