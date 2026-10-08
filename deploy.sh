@@ -65,11 +65,9 @@ echo ">>> Service status:"
 STATUS=""
 for _attempt in $(seq 1 15); do
     sleep 1
-    if STATUS="$(ssh "$SSH_HOST" "svstat /service/dbus-ev 2>&1")"; then
-        if [[ "$STATUS" == *": up (pid "* ]]; then
-            printf '%s\n' "$STATUS"
-            break
-        fi
+    if STATUS="$(ssh "$SSH_HOST" "svstat /service/dbus-ev 2>&1")" && [[ "$STATUS" == *": up (pid "* ]]; then
+        printf '%s\n' "$STATUS"
+        break
     fi
 done
 if [[ "$STATUS" != *": up (pid "* ]]; then

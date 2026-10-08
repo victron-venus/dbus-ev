@@ -187,7 +187,8 @@ class MercedesClient:
                         "Mercedes authorization required; run the standalone login command"
                     )
                     retry = self.limits.pause(LOGIN_INTERVAL)
-                except Exception as exc:  # noqa: BLE001 -- malformed cloud frames must reconnect
+                # Malformed cloud frames must reconnect.
+                except Exception as exc:  # noqa: BLE001
                     # Do not log tokens, raw frames, account data or HTTP response bodies.
                     status = getattr(exc, "status", None)
                     if status == 429:
@@ -318,7 +319,8 @@ class MercedesClient:
             self._accept(payload, source)
             self._pull_retry = PULL_INTERVAL
             logger.info("Mercedes REST telemetry received")
-        except Exception as exc:  # noqa: BLE001 -- invalid REST data must expire, never refresh cache
+        # Invalid REST data must expire, never refresh cache.
+        except Exception as exc:  # noqa: BLE001
             self._pull_retry = self._failure_delay(exc, min(self._pull_retry * 2, RECONNECT_MAX))
             logger.warning(
                 "Mercedes REST telemetry unavailable (%s, HTTP %s); retry in %ss",
