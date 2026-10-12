@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.8] - Development line
+
+### Fixed
+
+- Expose the charger projection as read-only telemetry and retain the existing freshness boundaries.
+- Update the optional vehicle engine's HTTP/2 dependencies and simplify Mercedes decoding, connection failures and HTTP client handling.
+- Interpret GitHub response status from the authoritative HTTP headers during release publication.
+
+### Upgrade
+
+This cycle preserves existing configuration and authentication data. New provider integrations remain experimental; automated tests do not establish live vehicle acceptance. Beta and RC artifacts will be built under the new base version without reusing the existing 0.2.7 release tag.
+
+### Security
+
+Keep provider tokens and credentials in the existing protected local configuration and exclude them from exported telemetry and logs. The charger projection remains read-only, and existing freshness checks continue to reject stale readings.
+
 ## [0.2.7] - Development line
 
 ### Changed
