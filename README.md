@@ -70,6 +70,31 @@ The HA backend remains selectable as `DATA_SOURCE = "ha"`. Existing standalone
 charger HA/MQTT installations may keep using `dbus-evcharger` until migrated;
 enabling the integrated charger requires the Mercedes backend.
 
+## Command ownership and telemetry limits
+
+This bridge owns the vehicle and optional charger **telemetry projections**.
+It does not own a physical charger command path. The projected `/Mode`,
+`/StartStop`, `/SetCurrent`, `/AutoStart`, `/EnableDisplay`, `/MinCurrent` and
+`/MaxCurrent` paths are read-only compatibility fields; setting them cannot
+start/stop charging or change a current limit. Vehicle target SoC is likewise
+telemetry, not an actuator. Use the separately configured EVSE/vehicle controller
+for physical commands, with exactly one command owner per actuator.
+
+The bridge publishes optional HA telemetry and sends Cerbo MQTT `R/` read and
+keepalive requests. It does not publish `W/` commands or write ESS, pump or
+thermostat controls. Disable the old `dbus-evcharger` projection when enabling the
+integrated charger, preserving the intended service identities; distinct D-Bus
+names are not arbitration between physical command writers.
+
+Vehicle `/Connected` follows the selected provider's freshness budget. Some
+last-known vehicle fields remain visible while disconnected and must not be
+used as live charging permission. Local meter fields have an independent
+`CERBO_METER_TTL` (15 seconds by default): retained MQTT messages do not refresh
+them, disconnect clears them, and a configured expired meter cannot fall back
+to cloud power. Fresh local power can remain available during a cloud outage;
+an idle 0 W alone does not establish whether a car is connected. Tests cover
+these software boundaries, not physical EVSE actuation.
+
 ## Python runtime
 
 Native Venus OS packages target **Python 3.12.x**. The audited Cerbo on Venus OS
