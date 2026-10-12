@@ -63,3 +63,33 @@ def test_cloud_only_charger_still_expires(charger):
 
     assert charger.service.svc["/Connected"] == 0
     assert charger.service.svc["/Ac/Power"] is None
+
+
+def test_projection_registers_no_writable_charger_controls(monkeypatch):
+    from dbus_ev import charger_service
+
+    registered = {}
+
+    class CapturingService(charger_service.NullDbusService):
+        def add_path(self, path, value, *args, **kwargs):
+            registered[path] = kwargs
+            return super().add_path(path, value, *args, **kwargs)
+
+    service = CapturingService("com.victronenergy.evcharger.test")
+    monkeypatch.setattr(charger_service, "_make_service", lambda name: service)
+    charger = Charger(instance=40, version="test", bus_suffix="test")
+    controls = (
+        "/Mode",
+        "/StartStop",
+        "/SetCurrent",
+        "/AutoStart",
+        "/EnableDisplay",
+        "/MinCurrent",
+        "/MaxCurrent",
+    )
+    assert all(path in registered for path in controls)
+    assert not {path for path, options in registered.items() if options.get("writeable")}
+    assert all(not registered[path].get("onchangecallback") for path in controls)
+    # Read-only registration still permits the owning process to publish telemetry.
+    charger.update({"ok": True, "charger_status": 2, "power": 7200})
+    assert service["/Ac/Power"] == 7200
