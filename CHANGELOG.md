@@ -12,6 +12,10 @@
 
 This cycle preserves existing configuration and authentication data. New provider integrations remain experimental; automated tests do not establish live vehicle acceptance. Beta and RC artifacts will be built under the new base version without reusing the existing 0.2.7 release tag.
 
+### Security
+
+Keep provider tokens and credentials in the existing protected local configuration and exclude them from exported telemetry and logs. The charger projection remains read-only, and existing freshness checks continue to reject stale readings.
+
 ## [0.2.7] - Development line
 
 ### Changed
