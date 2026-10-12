@@ -52,9 +52,6 @@ class Charger:
             product_name="dbus-ev",
             connection=connection,
             register=False,
-            on_mode=lambda *_: False,
-            on_startstop=lambda *_: False,
-            on_setcurrent=lambda *_: False,
         )
         self.phases = phases
         self.service.svc["/NrOfPhases"] = phases
