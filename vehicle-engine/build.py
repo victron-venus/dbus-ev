@@ -15,14 +15,14 @@ ALL_PACKAGES = "./..."
 
 
 def fuzz_seconds(value):
-    match = re.fullmatch(r"([1-9][0-9]*)s", value)
+    match = re.fullmatch(r"([1-9]\d*)s", value, re.ASCII)
     if match is None or int(match[1]) > 300:
         raise argparse.ArgumentTypeError("fuzz limits must be 1s through 300s")
     return value
 
 
 def fuzz_target(value):
-    if re.fullmatch(r"\^Fuzz[A-Za-z0-9_]+\$", value) is None:
+    if re.fullmatch(r"\^Fuzz\w+\$", value, re.ASCII) is None:
         raise argparse.ArgumentTypeError("select one exact anchored Fuzz function")
     return value
 

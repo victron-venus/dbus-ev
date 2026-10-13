@@ -31,6 +31,8 @@ def load_builder():
         ["vet", "-vettool=/tmp/tool"],
         ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-exec=sh"],
         ["fuzz", "-fuzz=Fuzz.*"],
+        ["fuzz", "-fuzz=^FuzzÄ$"],
+        ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-fuzztime=1٠s"],
         ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-parallel=99"],
         ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-fuzztime=0s"],
         ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-timeout=301s"],
