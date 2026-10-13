@@ -9,6 +9,7 @@ import aiohttp
 
 from .oauth import Oauth
 from .store import TokenStore
+from .tls import session_options
 from .traffic import TrafficLimits
 from .vendor.app_version import AppVersionManager
 from .vendor.const import CONF_ALLOWED_REGIONS, REGION_CHINA
@@ -24,7 +25,10 @@ async def login(args):
         limits = TrafficLimits(args.token_file)
         if limits.remaining():
             raise ValueError("Mercedes cooldown is active; wait before standalone login")
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30),
+            **session_options(),
+        ) as session:
             auth = Oauth(session, args.region, store, AppVersionManager(args.region))
             username = (await asyncio.to_thread(input, "Mercedes account email: ")).strip()
             password = await asyncio.to_thread(getpass.getpass, "Mercedes account password: ")

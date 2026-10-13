@@ -4,31 +4,75 @@
     "sha256": "5afd19706707156ec6d00d0bd919544646e36f360602245eac2f6bb9235ec79f"
   },
   {
-    "path": "vehicle/carwings.go",
-    "sha256": "37f7c9863e99d120cf45b95a09fad283ebf65865f5795d2a453059825eae4ddf"
+    "path": "util/transport/default.go",
+    "sha256": "9fae135a60cf53522b92028168f59c8204dc8d6b07a521005da68d35d6ade4aa"
   },
   {
-    "path": "vehicle/nissan/provider.go",
-    "sha256": "eaa8c1c4791fdce43e97d8b6732c3c9cbce88f365b0eb106027c8b84dc79db4e"
+    "path": "vehicle/bluelink/cci.go",
+    "sha256": "4e8496cbc5ad94897c98d70fb762c55eccbd09383dd668c74b3e2f977ca77d2b"
   },
   {
-    "path": "vehicle/toyota/provider.go",
-    "sha256": "579f34c8e44b3d8fac454df2acd5a639a597ac6a9e00b79dafa0c5cdba607b48"
-  },
-  {
-    "path": "vehicle/fiat.go",
-    "sha256": "4a09178d2024b294428fedebbcb0828db467c1fc2176ef41000a37f439d16213"
-  },
-  {
-    "path": "vehicle/bmw/cardata/provider.go",
-    "sha256": "92104e00d484b66089edfe5971578a47cc2f91e9a2126f614909cb5d013ee1ed"
+    "path": "vehicle/bluelink/identity.go",
+    "sha256": "a3406877337d985085083a8817ed4a5754dc6c0ce410ef7fea2a26cc06a1b899"
   },
   {
     "path": "vehicle/bmw/cardata/mqtt.go",
     "sha256": "59282d1ab3c3bbe3c1c692c9aa2cd3e6ffcab67296fd2a9e97c7dd28929e7855"
   },
   {
+    "path": "vehicle/bmw/cardata/provider.go",
+    "sha256": "92104e00d484b66089edfe5971578a47cc2f91e9a2126f614909cb5d013ee1ed"
+  },
+  {
+    "path": "vehicle/carwings.go",
+    "sha256": "37f7c9863e99d120cf45b95a09fad283ebf65865f5795d2a453059825eae4ddf"
+  },
+  {
+    "path": "vehicle/fiat.go",
+    "sha256": "4a09178d2024b294428fedebbcb0828db467c1fc2176ef41000a37f439d16213"
+  },
+  {
+    "path": "vehicle/fiat/api.go",
+    "sha256": "7715a6600eb5947823c30d6ea2a113fe63c16923c325972d9dd86a11870395ff"
+  },
+  {
+    "path": "vehicle/fiat/identity.go",
+    "sha256": "c716b60827ca6ce37e796f0a977c4f917c6d3c9d7d2571feb69b55116b499426"
+  },
+  {
+    "path": "vehicle/nissan/identity.go",
+    "sha256": "827848ac5c49b645670114e9fe933cf220f39251f59840600f11285dd30c96b4"
+  },
+  {
+    "path": "vehicle/nissan/provider.go",
+    "sha256": "eaa8c1c4791fdce43e97d8b6732c3c9cbce88f365b0eb106027c8b84dc79db4e"
+  },
+  {
     "path": "vehicle/saic/api.go",
     "sha256": "715c53ecdbc8b88da4a09486fb90a0024e3812f596d297ce372dfcb8c35e8c77"
+  },
+  {
+    "path": "vehicle/saic/identity.go",
+    "sha256": "88476f595661ef7000fa6f1e8db348dd621dd114eb527b61bc5d8b15abc42e99"
+  },
+  {
+    "path": "vehicle/smart/hello/helper.go",
+    "sha256": "814878f666bfaf02544c54c9c0f8cd3f62cc0fe6120015aaf564d73b9a121e66"
+  },
+  {
+    "path": "vehicle/smart/hello/identity.go",
+    "sha256": "5b662df28ebe702aab5e2a94ddd51c63e7084766c2effee02f4e3ea8d0dfe7c9"
+  },
+  {
+    "path": "vehicle/toyota/provider.go",
+    "sha256": "579f34c8e44b3d8fac454df2acd5a639a597ac6a9e00b79dafa0c5cdba607b48"
+  },
+  {
+    "path": "vehicle/vag/vwidentity/endpoint.go",
+    "sha256": "95cc90ff3a7d6c5caa88495743879834e392422a9c4e69bf54ec2590601211da"
+  },
+  {
+    "path": "vehicle/vw/eudataact/api.go",
+    "sha256": "1e953eec11bca0858da3865a0b0d6ef069749d7ac00b41dcbfc6521d98dea4b1"
   }
 ]

@@ -23,6 +23,7 @@ import (
 	"github.com/evcc-io/evcc/util"
 	"github.com/evcc-io/evcc/util/request"
 	"github.com/evcc-io/evcc/util/templates"
+	"github.com/evcc-io/evcc/util/transport"
 	"github.com/evcc-io/evcc/vehicle"
 )
 
@@ -176,6 +177,10 @@ func loadConfig(path string) (map[string]any, error) {
 	if err != nil || tmpl.Deprecated || !supported(name) {
 		return nil, errors.New("unknown or deprecated template")
 	}
+	if err := validateProviderCrypto(conf); err != nil {
+		return nil, err
+	}
+	delete(conf, "allowLegacyCrypto")
 	// No user-supplied action hooks or cloud proxy override. The helper only
 	// instantiates a vehicle and never starts the evcc site/loadpoint controller.
 	delete(conf, "onIdentify")
@@ -232,6 +237,9 @@ func run(input io.Reader, output io.Writer, conf map[string]any, database string
 }
 
 func main() {
+	// Cover SDKs using the process default client as well as request.NewClient.
+	// Provider-specific clients use the same reviewed policy in the pinned patch.
+	http.DefaultTransport = &httpsOnlyTransport{base: transport.Default()}
 	confPath := flag.String("config", "", "private evcc vehicle-template JSON")
 	database := flag.String("database", "", "private persistent token database")
 	catalog := flag.Bool("catalog", false, "list upstream vehicle templates without network access")

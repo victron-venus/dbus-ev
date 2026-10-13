@@ -118,6 +118,10 @@ def main():
                 raise SystemExit(f"Pinned upstream source changed: {name}")
             target.parent.chmod(0o700)
             target.chmod(0o600)
+        # The reviewed patch adds helpers to these existing upstream packages.
+        # Only the isolated copy becomes writable; the module cache stays intact.
+        for package in ("util", "util/transport"):
+            (stage / package).chmod(0o700)
         subprocess.run(
             ["git", "apply", str(root / "patches/conservative.patch")], cwd=stage, check=True
         )

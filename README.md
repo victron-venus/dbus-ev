@@ -2,6 +2,8 @@
 
 [![Fuzzing: RC only](https://img.shields.io/badge/Fuzzing-RC%20only-blue)](docs/fuzzing.md)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15456/badge)](https://www.bestpractices.dev/projects/15456)
+
 Optional experimental multi-brand providers are documented in [docs/vehicles.md](docs/vehicles.md). They reuse pinned evcc vehicle libraries, publish raw MQTT only (no automatic HA sensors), and require a separately built optional engine.
 
 This service exports vehicle data from Mercedes or Home Assistant as
@@ -265,11 +267,26 @@ read-only firmware filesystem. Firmware updates can replace system Python
 packages; check dependencies after each update before assuming the service is
 healthy. The installer does not run `pip` or upgrade system packages.
 
+HTTPS and Mercedes require `cryptography>=50.0.2` for exact verified certificate
+key checks. Provision its pinned binary wheels once, before updating:
+
+```sh
+./install-tls-deps.sh
+```
+
+The script installs only into persistent `/data/setupOptions/dbus-ev/python`.
+`install-mercedes-deps.sh` includes the same step. ARMv7 requires the reviewed [offline TLS bundle](docs/tls-dependencies.md),
+CPython 3.12, glibc 2.36 or newer and `libffi.so.8`; pass its directory to the
+script. Unsupported targets fail before installation instead of compiling on
+the device. The updater checks the dependency before stopping the old service.
+No live-device compatibility or new release acceptance is implied by a wheel
+availability check.
+
 Before installation, check the target interpreter:
 
 ```sh
 python3 --version
-python3 -c "import requests, dbus; from gi.repository import GLib"
+PYTHONPATH=/data/setupOptions/dbus-ev/python python3 -c "import requests, cryptography, dbus; from gi.repository import GLib"
 ```
 
 Verify a running process and its D-Bus data after installation:
@@ -338,3 +355,7 @@ Public release candidates run bounded native fuzzing of the input boundaries
 described in the [fuzzing guide](docs/fuzzing.md). Mutation campaigns do not run on
 PRs, betas or nightlies. The guide covers scope, budgets, evidence and regression
 reproduction.
+
+## Project maintenance
+
+[Governance and continuity](GOVERNANCE.md), [code of conduct](CODE_OF_CONDUCT.md), [roadmap](ROADMAP.md), [security assurance](docs/security-assurance.md) and [quality evidence](docs/quality-and-build.md) describe the current process and its limitations. The dynamic OpenSSF badge links to the live self-assessment; repository documents do not award a badge.
