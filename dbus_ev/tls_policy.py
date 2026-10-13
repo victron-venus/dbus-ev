@@ -70,11 +70,13 @@ class _VerifiedSocket(ssl.SSLSocket):  # pylint: disable=abstract-method
     """Preserve stdlib unsupported socket methods and add post-handshake checks."""
 
     def do_handshake(self, block: bool = False) -> None:
-        super().do_handshake(block)
         try:
+            super().do_handshake(block)
             _check_verified_keys(self)
-        except Exception:
-            self.close()
+        except BaseException as error:
+            # An incomplete nonblocking handshake must retain its descriptor.
+            if not isinstance(error, ssl.SSLWantReadError | ssl.SSLWantWriteError):
+                self.close()
             raise
 
 

@@ -20,7 +20,7 @@ Direct Mercedes OAuth uses SHA-256 PKCE with 32 cryptographically random bytes f
 
 The Home Assistant URL is operator-configured and can use plaintext HTTP. Cerbo and optional HA MQTT can likewise be plaintext. Isolate trusted-local transports or use independently authenticated encryption before crossing an untrusted network. This project does not claim universal encrypted transport, universal forward secrecy or encrypted local HTTP/MQTT. Never export live configuration, tokens or raw private snapshots in issues.
 
-No first-party C/C++ source is maintained here, but Go runtime/cgo, Python, protobuf, D-Bus/GLib and system TLS libraries may include native code. Go race detection is not a proof of memory safety for third-party native dependencies. Keep the supported firmware and locked dependencies patched.
+The ARMv7 TLS bundle builds third-party CFFI C code from a pinned source archive; Go runtime/cgo, Python, protobuf, D-Bus/GLib and system TLS libraries also include native code. Go race detection and the bundle import/key probe do not establish dynamic memory-safety analysis of CFFI. That criterion remains unmet without a dedicated sanitizer run. Keep the supported firmware and locked dependencies patched.
 
 ## Static-analysis triage
 

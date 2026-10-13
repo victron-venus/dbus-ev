@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import aiohttp
@@ -26,7 +27,7 @@ from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 from dbus_ev.ha_tls import VerifiedHTTPSAdapter
-from dbus_ev.mercedes.tls import session_options
+from dbus_ev.mercedes.tls import _check_redirect, session_options
 from dbus_ev.tls_policy import client_context, enforce_peer_key_policy
 
 Key = rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey
@@ -361,3 +362,48 @@ def test_https_redirect_never_sends_private_data_to_plaintext(chains, monkeypatc
         plain.shutdown()
         plain.server_close()
         thread.join(2)
+
+
+@pytest.mark.parametrize("error", [ssl.SSLError, ssl.SSLWantReadError, ssl.SSLWantWriteError])
+def test_tls_socket_lifetime_after_handshake_error(
+    monkeypatch: pytest.MonkeyPatch, error: type[ssl.SSLError]
+) -> None:
+    """Fatal native handshake errors close the fd; nonblocking retry retains it."""
+    retry = error in (ssl.SSLWantReadError, ssl.SSLWantWriteError)
+
+    def fail_handshake(self: ssl.SSLSocket, block: bool = False) -> None:
+        raise error("synthetic handshake outcome")
+
+    context = enforce_peer_key_policy(ssl.create_default_context())
+    left, right = socket.socketpair()
+    with (
+        right,
+        context.wrap_socket(
+            left, server_hostname="localhost", do_handshake_on_connect=False
+        ) as wrapped,
+    ):
+        monkeypatch.setattr(ssl.SSLSocket, "do_handshake", fail_handshake)
+        with pytest.raises(error, match="synthetic handshake outcome"):
+            wrapped.do_handshake()
+        assert (wrapped.fileno() != -1) == retry
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "/new-path",
+        "wss://other.invalid/ws",
+        "https://other.invalid/ws",
+        "ws://other.invalid/ws",
+        "http://other.invalid/ws",
+    ],
+)
+def test_websocket_redirect_accepts_tls_and_rejects_plaintext(target):
+    params = SimpleNamespace(
+        url="wss://example.invalid/ws", response=SimpleNamespace(headers={"location": target})
+    )
+    if target.startswith(("ws://", "http://")):
+        with pytest.raises(aiohttp.ClientError, match="plaintext"):
+            asyncio.run(_check_redirect(None, None, params))
+    else:
+        asyncio.run(_check_redirect(None, None, params))

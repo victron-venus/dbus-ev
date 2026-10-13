@@ -2,23 +2,22 @@
   "schema": 1,
   "repository": "victron-venus/dbus-ev",
   "reviewed_at": "2026-10-13",
-  "runtime_source_sha": "4ea5bfffa441e4c5259e5564f1348781fb7ee32b",
   "environment": {
     "platform": "macOS ARM64",
     "python": "3.12.13",
     "dependency_install": "uv sync --locked (build group, then dev extra without isolated build)"
   },
   "pytest": {
-    "passed": 288,
+    "passed": 348,
     "skipped": 1,
-    "command": "python -m pytest --cov=. --cov-report=json --cov-fail-under=60",
-    "scope": "hardware-free fixtures; normal assertions enabled",
+    "command": "python -m pytest --cov=dbus_ev --cov-report=json --cov-fail-under=80",
+    "scope": "Full application, TLS, bundle and archive suite; hardware-free fixtures with assertions enabled.",
     "skip_reason": "One Home Assistant dependency-based test skipped when the optional HA runtime is absent."
   },
   "runtime_statement_coverage": {
-    "covered": 1612,
-    "total": 1794,
-    "percent": 89.85507246376811,
+    "covered": 1704,
+    "total": 1904,
+    "percent": 89.49579831932773,
     "files": {
       "dbus_ev/__init__.py": {
         "covered_lines": 1,
@@ -91,14 +90,24 @@
         "percent_statements_covered_display": "100"
       },
       "dbus_ev/ha_client.py": {
-        "covered_lines": 162,
-        "num_statements": 168,
-        "percent_covered": 96.42857142857143,
+        "covered_lines": 164,
+        "num_statements": 170,
+        "percent_covered": 96.47058823529412,
         "percent_covered_display": "96",
         "missing_lines": 6,
         "excluded_lines": 0,
-        "percent_statements_covered": 96.42857142857143,
+        "percent_statements_covered": 96.47058823529412,
         "percent_statements_covered_display": "96"
+      },
+      "dbus_ev/ha_tls.py": {
+        "covered_lines": 23,
+        "num_statements": 27,
+        "percent_covered": 85.18518518518519,
+        "percent_covered_display": "85",
+        "missing_lines": 4,
+        "excluded_lines": 0,
+        "percent_statements_covered": 85.18518518518519,
+        "percent_statements_covered_display": "85"
       },
       "dbus_ev/main.py": {
         "covered_lines": 126,
@@ -121,23 +130,23 @@
         "percent_statements_covered_display": "100"
       },
       "dbus_ev/mercedes/auth.py": {
-        "covered_lines": 34,
-        "num_statements": 44,
-        "percent_covered": 77.27272727272727,
-        "percent_covered_display": "77",
+        "covered_lines": 35,
+        "num_statements": 45,
+        "percent_covered": 77.77777777777777,
+        "percent_covered_display": "78",
         "missing_lines": 10,
         "excluded_lines": 0,
-        "percent_statements_covered": 77.27272727272727,
-        "percent_statements_covered_display": "77"
+        "percent_statements_covered": 77.77777777777777,
+        "percent_statements_covered_display": "78"
       },
       "dbus_ev/mercedes/client.py": {
-        "covered_lines": 259,
-        "num_statements": 286,
-        "percent_covered": 90.55944055944056,
+        "covered_lines": 260,
+        "num_statements": 287,
+        "percent_covered": 90.59233449477352,
         "percent_covered_display": "91",
         "missing_lines": 27,
         "excluded_lines": 0,
-        "percent_statements_covered": 90.55944055944056,
+        "percent_statements_covered": 90.59233449477352,
         "percent_statements_covered_display": "91"
       },
       "dbus_ev/mercedes/oauth.py": {
@@ -180,6 +189,16 @@
         "percent_statements_covered": 97.61904761904762,
         "percent_statements_covered_display": "98"
       },
+      "dbus_ev/mercedes/tls.py": {
+        "covered_lines": 11,
+        "num_statements": 11,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
       "dbus_ev/mercedes/traffic.py": {
         "covered_lines": 63,
         "num_statements": 64,
@@ -219,6 +238,16 @@
         "excluded_lines": 0,
         "percent_statements_covered": 95.20547945205479,
         "percent_statements_covered_display": "95"
+      },
+      "dbus_ev/tls_policy.py": {
+        "covered_lines": 54,
+        "num_statements": 68,
+        "percent_covered": 79.41176470588235,
+        "percent_covered_display": "79",
+        "missing_lines": 14,
+        "excluded_lines": 0,
+        "percent_statements_covered": 79.41176470588235,
+        "percent_statements_covered_display": "79"
       },
       "dbus_ev/vehicle.py": {
         "covered_lines": 31,
@@ -551,7 +580,7 @@
   "go_2026_5932": {
     "advisory": "https://pkg.go.dev/vuln/GO-2026-5932",
     "scope": "Abandoned golang.org/x/crypto/openpgp packages, not every package in the module.",
-    "command": "GOOS=linux GOARCH=<arm|arm64> CGO_ENABLED=0 go list -deps ./... (GOARM=7 for arm)",
+    "command": "Hash-verify pinned module, copy to isolated directory, apply conservative.patch, create private modfile replace; GOOS=linux GOARCH=<arm|arm64> CGO_ENABLED=0 go list -mod=readonly -modfile=<isolated.mod> -deps ./... (GOARM=7 for arm)",
     "graphs": {
       "arm": {
         "GOOS": "linux",
@@ -573,5 +602,80 @@
       }
     },
     "conclusion": "Affected packages are absent from both target dependency graphs. Recheck after changing imports, dependencies, build tags or target."
-  }
+  },
+  "initial_runtime_source_sha": "4ea5bfffa441e4c5259e5564f1348781fb7ee32b",
+  "runtime_source_state": "Security update in this revision; exact changed runtime/patch files are hashed below.",
+  "security_update": {
+    "python_tls_tests": 48,
+    "cases": "Real TLS1.2/1.3 aiohttp+requests chains, exact2047-bit root, trust/hostname failures, private307redirect rejection, socket-lifetime and secureWSSredirect cases.",
+    "go_race_tests": "passed",
+    "go_vet": "passed",
+    "go_linux_armv7_cross_build": "passed",
+    "upstream_cci_rsa_test": "1024 and2047 rejected,2048 accepted; passed",
+    "bundle_contract_tests": 11,
+    "native_archive_contract_tests": 1,
+    "armv7_native_bundle_verification": "Required CI job builds and verifies the exact revision; see its published artifact/probe result. Local macOS checks do not claim native ARM execution.",
+    "legacy_provider_opt_in": [
+      "aiways",
+      "carwings",
+      "lexus",
+      "mg",
+      "niu-e-scooter",
+      "smart-hello",
+      "subaru",
+      "toyota"
+    ],
+    "local_python_wheel": "Built with python -m build --wheel --no-isolation; wheel contains cryptography dependency metadata.",
+    "native_source_archive": "Built with python scripts/package_release.py 0.2.8 rc; actual archive includes installer and both TLS/Mercedes requirement files. No release was published."
+  },
+  "runtime_and_patch_sha256": [
+    {
+      "path": "dbus_ev/tls_policy.py",
+      "sha256": "aa9827686548175badfa90a2f481b311bb4c03556bcec83fb4eacd0db1925060"
+    },
+    {
+      "path": "dbus_ev/ha_tls.py",
+      "sha256": "3de1b5a24e96161b5c761dcd3c62d23c9b6cadffff25d7f8dd6b4adb45831493"
+    },
+    {
+      "path": "dbus_ev/mercedes/tls.py",
+      "sha256": "949d6f9f76f75ae7357a888a03653b3fcf4eef3e3c414831a1272456fa317c44"
+    },
+    {
+      "path": "dbus_ev/mercedes/auth.py",
+      "sha256": "1cca291cf63b7d4acf3beccf6b4bc3be393b451066e651cbaa520b16ce594481"
+    },
+    {
+      "path": "dbus_ev/mercedes/client.py",
+      "sha256": "469e421d31186e9c990833bb4aeb6fbca8187ac4c00c36bd9fc060314c6a22b3"
+    },
+    {
+      "path": "dbus_ev/ha_client.py",
+      "sha256": "35a17a74471d51f90abbe0a8a90bee3ec613756b198c9b278c00b3322f280468"
+    },
+    {
+      "path": "vehicle-engine/crypto.go",
+      "sha256": "e1f444cb0567bd6b888abe5c97357322311c3771dd7d909872c280e009e80d0f"
+    },
+    {
+      "path": "vehicle-engine/traffic.go",
+      "sha256": "fde48b0052fcd091607dfa06348b169cf839312221afa33e8d8dae4fb2335912"
+    },
+    {
+      "path": "vehicle-engine/main.go",
+      "sha256": "6322afbd5500251d21d8728434d13ca1c547e3cc28d0d98581d39e7b27f1e55b"
+    },
+    {
+      "path": "vehicle-engine/build.py",
+      "sha256": "2c43d07437b00e6d2e3049d64b90eb2053e9d07b3e7f21c7b57256c079bce99d"
+    },
+    {
+      "path": "vehicle-engine/patches/conservative.patch",
+      "sha256": "182bb5cbaacec98e6cf4f846751ccbbb47bdb9f06cbed20c9642f81d290d48aa"
+    },
+    {
+      "path": "vehicle-engine/patches/inputs.json",
+      "sha256": "8c72b4b0d3d3d7a6943c0a5a0dca1f2520cae91cb9497a3db3edf1606d56eeb6"
+    }
+  ]
 }
