@@ -23,6 +23,10 @@
     "uv.lock",
     "README.md",
     "LICENSE",
-    ".python-version"
+    ".python-version",
+    "install-tls-deps.sh",
+    "requirements-tls.txt",
+    "docs/provider-cryptography.md",
+    "docs/tls-dependencies.md"
   ]
 }
