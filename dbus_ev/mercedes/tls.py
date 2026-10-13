@@ -7,7 +7,8 @@ import aiohttp
 from dbus_ev.tls_policy import client_context
 
 
-async def _check_redirect(_session, _context, params):
+# aiohttp TraceConfig requires coroutine callbacks even for checks with no I/O.
+async def _check_redirect(_session, _context, params):  # NOSONAR S7503: required async API
     location = params.response.headers.get("location", "")
     if urlsplit(urljoin(str(params.url), location)).scheme not in {"https", "wss"}:
         raise aiohttp.ClientError("Mercedes HTTPS redirect to plaintext is not allowed")

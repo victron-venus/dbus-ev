@@ -5,14 +5,16 @@ import (
 	"net/http"
 )
 
+const legacyPlainPKCE = "constant plain PKCE verifier and challenge"
+
 // These manufacturer protocols cannot be strengthened unilaterally by a client.
 // Keep them disabled unless the operator explicitly accepts the documented risk.
 var legacyCryptoProviders = map[string]string{
 	"aiways":        "MD5 password transform",
 	"carwings":      "fixed-key and fixed-IV AES-CBC password transform",
-	"lexus":         "constant plain PKCE verifier and challenge",
-	"subaru":        "constant plain PKCE verifier and challenge",
-	"toyota":        "constant plain PKCE verifier and challenge",
+	"lexus":         legacyPlainPKCE,
+	"subaru":        legacyPlainPKCE,
+	"toyota":        legacyPlainPKCE,
 	"mg":            "SHA-1 password, MD5 request derivation and fixed AES parameters",
 	"niu-e-scooter": "MD5 password transform",
 	"smart-hello":   "MD5 body hash and HMAC-SHA1 request signature",

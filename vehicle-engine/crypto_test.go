@@ -42,6 +42,9 @@ func TestLegacyCryptoRequiresExplicitBooleanConsent(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestLoadConfigConsumesLegacyConsent(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "vehicle.json")
 	for _, consent := range []bool{false, true} {
 		b, _ := json.Marshal(map[string]any{"template": "aiways", "allowLegacyCrypto": consent})

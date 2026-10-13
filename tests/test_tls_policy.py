@@ -237,7 +237,8 @@ def calibrate(chain: tuple[Path, Path, Path], version: ssl.TLSVersion) -> None:
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.set_ciphers("DEFAULT:@SECLEVEL=0")
     context.load_verify_locations(chain[2])
-    assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname
     with peer(chain, version) as (port, observed):
         connection = http.client.HTTPSConnection("localhost", port, context=context, timeout=5)
         try:
@@ -277,11 +278,12 @@ def test_clients_reject_weak_keys_before_credentials(chains, monkeypatch, backen
                 ):
                     assert response.status == 200
 
+            pending = request()
             if good:
-                asyncio.run(request())
+                asyncio.run(pending)
             else:
                 with pytest.raises((aiohttp.ClientError, ssl.SSLError)):
-                    asyncio.run(request())
+                    asyncio.run(pending)
         else:
             with requests.Session() as session:
                 session.mount("https://", VerifiedHTTPSAdapter())
@@ -350,8 +352,9 @@ def test_https_redirect_never_sends_private_data_to_plaintext(chains, monkeypatc
                     async with aiohttp.ClientSession(**session_options()) as session:
                         await session.post(url, headers=headers, data=b"synthetic-password")
 
+                pending = request()
                 with pytest.raises(aiohttp.ClientError, match="plaintext"):
-                    asyncio.run(request())
+                    asyncio.run(pending)
             else:
                 with requests.Session() as session:
                     session.mount("https://", VerifiedHTTPSAdapter())
@@ -375,6 +378,7 @@ def test_tls_socket_lifetime_after_handshake_error(
         raise error("synthetic handshake outcome")
 
     context = enforce_peer_key_policy(ssl.create_default_context())
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     left, right = socket.socketpair()
     with (
         right,
@@ -402,8 +406,9 @@ def test_websocket_redirect_accepts_tls_and_rejects_plaintext(target):
     params = SimpleNamespace(
         url="wss://example.invalid/ws", response=SimpleNamespace(headers={"location": target})
     )
+    pending = _check_redirect(None, None, params)
     if target.startswith(("ws://", "http://")):
         with pytest.raises(aiohttp.ClientError, match="plaintext"):
-            asyncio.run(_check_redirect(None, None, params))
+            asyncio.run(pending)
     else:
-        asyncio.run(_check_redirect(None, None, params))
+        asyncio.run(pending)

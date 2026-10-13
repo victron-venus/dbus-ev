@@ -20,6 +20,10 @@ else
             echo "ARMv7 requires the reviewed offline TLS bundle; see docs/tls-dependencies.md" >&2
             exit 2
             ;;
+        *)
+            # Other architectures use only matching hash-pinned binary wheels.
+            :
+            ;;
     esac
     python3 -m pip install --disable-pip-version-check --upgrade \
         --only-binary=:all: --require-hashes --target /data/setupOptions/dbus-ev/python \

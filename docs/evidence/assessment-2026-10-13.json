@@ -12,7 +12,8 @@
     "skipped": 1,
     "command": "python -m pytest --cov=dbus_ev --cov-report=json --cov-fail-under=80",
     "scope": "Full application, TLS, bundle and archive suite; hardware-free fixtures with assertions enabled.",
-    "skip_reason": "One Home Assistant dependency-based test skipped when the optional HA runtime is absent."
+    "skip_reason": "One Home Assistant dependency-based test skipped when the optional HA runtime is absent.",
+    "source_revision": "e2bc4188f151416f9c0d6cde917dee84774e20d3"
   },
   "runtime_statement_coverage": {
     "covered": 1704,
@@ -271,7 +272,8 @@
       }
     },
     "whole_project_coverage_claim": false,
-    "limitations": "Excludes tests from the numerator/denominator. Does not measure every delivery helper, shell/native dependency or optional component. EV vendor code, HA integration and Go code are not included in this Python runtime subtotal."
+    "limitations": "Excludes tests from the numerator/denominator. Does not measure every delivery helper, shell/native dependency or optional component. EV vendor code, HA integration and Go code are not included in this Python runtime subtotal.",
+    "source_revision": "e2bc4188f151416f9c0d6cde917dee84774e20d3"
   },
   "release_contract_tests": {
     "passed": 342,
@@ -631,7 +633,7 @@
   "runtime_and_patch_sha256": [
     {
       "path": "dbus_ev/tls_policy.py",
-      "sha256": "aa9827686548175badfa90a2f481b311bb4c03556bcec83fb4eacd0db1925060"
+      "sha256": "be5cfa3799ddc687a69853691607736bb86c6e40c075a39068f88b8effebf5e7"
     },
     {
       "path": "dbus_ev/ha_tls.py",
@@ -639,7 +641,7 @@
     },
     {
       "path": "dbus_ev/mercedes/tls.py",
-      "sha256": "949d6f9f76f75ae7357a888a03653b3fcf4eef3e3c414831a1272456fa317c44"
+      "sha256": "202ce9032c6961fd1281db8155a5b0d1bce225f9cfd416878787665c178b84e3"
     },
     {
       "path": "dbus_ev/mercedes/auth.py",
@@ -655,7 +657,7 @@
     },
     {
       "path": "vehicle-engine/crypto.go",
-      "sha256": "e1f444cb0567bd6b888abe5c97357322311c3771dd7d909872c280e009e80d0f"
+      "sha256": "c770e51682bab9cdc33d77ba6e52e9ce2d4be63986841804019d4b788586d90d"
     },
     {
       "path": "vehicle-engine/traffic.go",
@@ -677,5 +679,16 @@
       "path": "vehicle-engine/patches/inputs.json",
       "sha256": "8c72b4b0d3d3d7a6943c0a5a0dca1f2520cae91cb9497a3db3edf1606d56eeb6"
     }
-  ]
+  ],
+  "quality_cleanup": {
+    "scope": "Behavior-preserving helper extraction, explicit shell default, Go constant and test organization; no dependency, protocol or key-limit changes.",
+    "affected_tests": {
+      "python": 60,
+      "command": "uv run pytest --no-cov -q tests/test_tls_policy.py tests/test_tls_bundle.py tests/test_release_runtime_payload.py",
+      "coverage_note": "A focused regression run, not a replacement whole-project coverage measurement."
+    },
+    "go_race_tests": "passed",
+    "native_bundle": "CFFI wheel inputs are unchanged; the final-policy native verification is a separate receipt from the prior wheel build.",
+    "sonar_async_exception": "The aiohttp TraceConfig callback must be a coroutine even when its validation performs no I/O. The single S7503 annotation records this API requirement; no dummy await is introduced."
+  }
 }
