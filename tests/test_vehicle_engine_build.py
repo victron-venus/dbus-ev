@@ -29,6 +29,12 @@ def load_builder():
         ["test", "-count=0"],
         ["test", "-count=1; touch injected"],
         ["vet", "-vettool=/tmp/tool"],
+        ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-exec=sh"],
+        ["fuzz", "-fuzz=Fuzz.*"],
+        ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-parallel=99"],
+        ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-fuzztime=0s"],
+        ["fuzz", "-fuzz=^FuzzVehicleTelemetry$", "-timeout=301s"],
+        ["fuzz-build", "-modfile=/tmp/other.mod"],
     ],
 )
 def test_invalid_build_arguments_fail_before_any_process(builder, monkeypatch, arguments):
@@ -57,3 +63,30 @@ def test_supported_build_commands_and_literal_output(builder, tmp_path, monkeypa
     assert parse(["test", "-race", "-count=1", "./..."]) == ["test", "-race", "-count=1", "./..."]
     assert parse(["vet", "./..."]) == ["vet", "./..."]
     assert not (tmp_path / "injected").exists()
+
+
+def test_fuzz_build_uses_instrumentation_without_execution(builder):
+    command = builder["go_arguments"](["fuzz-build"])
+    assert command == ["test", "-c", "-fuzz=Fuzz", f"-o={builder['os'].devnull}", "."]
+
+
+def test_fuzz_limits_preserve_patched_module_wrapper(builder):
+    assert builder["go_arguments"](
+        [
+            "fuzz",
+            "-fuzz=^FuzzVehicleTelemetry$",
+            "-fuzztime=60s",
+            "-fuzzminimizetime=10s",
+            "-parallel=2",
+            "-timeout=120s",
+        ]
+    ) == [
+        "test",
+        "-run=^$",
+        "-fuzz=^FuzzVehicleTelemetry$",
+        "-fuzztime=60s",
+        "-fuzzminimizetime=10s",
+        "-parallel=2",
+        "-timeout=120s",
+        ".",
+    ]

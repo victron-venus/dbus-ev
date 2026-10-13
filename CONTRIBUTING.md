@@ -43,3 +43,9 @@ Automated tests use mocks or controlled fixtures where available. A passing unit
 - [ha/README.md](ha/README.md)
 
 See [README.md](README.md) for acquisition, configuration and usage, and [the evidence index](docs/openssf-evidence.md) for the public development-process references.
+
+## Fuzz regression tests
+
+See [the fuzzing guide](docs/fuzzing.md) for target scope and local commands. Keep
+new seeds synthetic, preserve minimized regressions with fixes, and keep mutation
+campaigns restricted to public release candidates.
