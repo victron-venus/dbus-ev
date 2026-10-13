@@ -1,6 +1,6 @@
 # OpenSSF Best Practices evidence: dbus-ev
 
-This index supports review against the [OpenSSF Passing criteria](https://www.bestpractices.dev/en/criteria/0). It is not an awarded badge, a security guarantee or a completed self-attestation. Initial source inventory: `094d6f1eb23aad5a24723f022b14d926cf3895ea`. Re-check the final merged commit and its CI before submitting an assessment.
+This index supports review against the [OpenSSF criteria](https://www.bestpractices.dev/en/criteria). The [live assessment](https://www.bestpractices.dev/projects/15456) is authoritative for awarded status. Current source review: `4ea5bfffa441e4c5259e5564f1348781fb7ee32b` (2026-10-13); later changes require corresponding evidence. This is a self-assessment, not a guarantee of security.
 
 ## Project and contribution process
 
@@ -44,17 +44,16 @@ The local validation entry point is [scripts/ci.sh](../scripts/ci.sh). Its actua
 
 Do not equate a green metadata or release job with successful application tests. Record actual test results, coverage limitations and security-analysis results for the submitted revision. Test execution does not establish physical-device behavior.
 
-## Items requiring explicit verification before submission
+## Current assessment and remaining work
 
-- Confirm the private reporting channel works and examine issue/advisory history. Historical response-time claims require actual reports and responses, including any reports outside GitHub.
-- Obtain primary-developer attestations about secure-design and vulnerability-prevention knowledge; repository text cannot establish a person's knowledge.
-- Verify every user-facing release has useful release notes and upgrade impact, and includes any assigned vulnerability identifiers for fixes.
-- Review dependency, code-scanning and secret-scanning findings and their age. A workflow success result is not proof that all findings are resolved.
-- Review the actual cryptographic libraries, protocols, key lengths, randomness, certificate checks and password storage applicable to this project. Do not copy another project's answers.
-- Verify build reproducibility from source, test policy adherence in recent substantive changes, dynamic analysis and any manual-memory-code checks.
-- Link only this project's real awarded badge once the assessment is accepted.
+- [Governance](../GOVERNANCE.md), [code of conduct](../CODE_OF_CONDUCT.md) and [roadmap](../ROADMAP.md) define roles, review and open work.
+- [Security assurance](security-assurance.md) records actual trust boundaries, cryptography and the scope of analysis.
+- [Quality and build evidence](quality-and-build.md) distinguishes measured runtime coverage, whole-project gaps, builds and target acceptance.
+- [Machine-readable review](evidence/assessment-2026-10-13.json) records source, checks and public GitHub findings. It contains no credentials or private reports.
 
-The live assessment, when created, is the source of truth for the badge level. Unverified criteria remain open.
+The owner attested to knowledge of secure design and common Python/network vulnerabilities and reported no external bug, enhancement or vulnerability reports in the preceding 12 months. The public GitHub audit found no ordinary issues or security advisories. Private vulnerability reporting is enabled. These are dated observations and attestations, not promises about future history.
+
+Access continuity remains Unmet. Do not infer signed releases, full-project coverage, complete reproducibility or production hardware acceptance from these checks. Later fuzzing or release changes require their own reviewed evidence.
 
 ## Release-note source
 

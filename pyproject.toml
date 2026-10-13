@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,10 +7,11 @@ name = "dbus-ev"
 version = "0.2.8"
 description = "Unified EV and charger bridge for Victron Venus OS with optional multi-brand providers"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "requests>=2.31",
+    "cryptography>=50.0.2",
 ]
 
 [project.optional-dependencies]

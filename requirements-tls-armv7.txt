@@ -1,0 +1,5 @@
+# Reviewed CPython 3.12 ARMv7 wheel closure; independent and CI builds matched.
+# Update only after source verification, reproducible build and native checks.
+cffi==2.1.1 --hash=sha256:07d29e2de620b42ee41e9497bf923c7454115ad8cf223ebb27dc1dd9d411bec1
+cryptography==50.0.2 --hash=sha256:ac9ed99d81760c62fe89d5f0815cdfa1ba9a35141cf30f1c2d044f04b4803d2e
+pycparser==3.11 --hash=sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80

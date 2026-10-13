@@ -242,6 +242,8 @@ class HaClient:
         # requests. Keep the requests/urllib3 stack out of that backend.
         import requests  # pylint: disable=import-outside-toplevel
 
+        from .ha_tls import VerifiedHTTPSAdapter  # pylint: disable=import-outside-toplevel
+
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.soc_entity = soc_entity
@@ -289,6 +291,7 @@ class HaClient:
         )
         self._configured = bool(base_url and token)
         self._session = requests.Session()
+        self._session.mount("https://", VerifiedHTTPSAdapter())
         self._timeout_error = requests.exceptions.Timeout
         self._request_error = requests.exceptions.RequestException
         if token:

@@ -46,6 +46,16 @@ exactly the redirect URI registered with the manufacturer. MQTT-only bridges,
 HA readers, intermediary services and deprecated integrations are not advertised
 as direct manufacturer providers by this engine.
 
+## Cryptographic compatibility
+
+Aiways, CarWings, Lexus, MG, NIU, Smart Hello, Subaru and Toyota require an explicit
+`"allowLegacyCrypto": true` setting in the private vehicle JSON. Without that
+boolean the engine rejects these templates before contacting the provider. Read
+[the provider cryptography policy](provider-cryptography.md) before enabling one.
+This is an intentional change for existing experimental configurations; rebuild
+the optional engine to receive the checks and TLS changes. Other templates do
+not require the compatibility setting.
+
 ## Build and install the optional engine
 
 The normal Python package and Mercedes installation do not require Go. Build the
