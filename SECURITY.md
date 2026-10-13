@@ -21,3 +21,7 @@ Validate external values at trust boundaries, reject unsupported or malformed co
 Obtain source and published artifacts through the repository's HTTPS URLs. Verify published checksums or provenance when provided, over an authenticated channel. Keep local configuration, credentials and private keys out of source control and logs. Report suspected exposure through the private channel so credentials can be revoked and replaced; deleting a file alone does not revoke it.
 
 [OpenSSF evidence and remaining verification](docs/openssf-evidence.md) is maintained separately from this policy.
+
+## Review and reporter credit
+
+The [security assurance case](docs/security-assurance.md) documents the current architecture, assumptions and evidence. Reassess it when security-relevant behavior changes. Credit vulnerability reporters in the advisory or release notes with their consent; honor requests for anonymity and coordinate disclosure before publishing identifying details.

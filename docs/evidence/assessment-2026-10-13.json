@@ -1,0 +1,577 @@
+{
+  "schema": 1,
+  "repository": "victron-venus/dbus-ev",
+  "reviewed_at": "2026-10-13",
+  "runtime_source_sha": "4ea5bfffa441e4c5259e5564f1348781fb7ee32b",
+  "environment": {
+    "platform": "macOS ARM64",
+    "python": "3.12.13",
+    "dependency_install": "uv sync --locked (build group, then dev extra without isolated build)"
+  },
+  "pytest": {
+    "passed": 288,
+    "skipped": 1,
+    "command": "python -m pytest --cov=. --cov-report=json --cov-fail-under=60",
+    "scope": "hardware-free fixtures; normal assertions enabled",
+    "skip_reason": "One Home Assistant dependency-based test skipped when the optional HA runtime is absent."
+  },
+  "runtime_statement_coverage": {
+    "covered": 1612,
+    "total": 1794,
+    "percent": 89.85507246376811,
+    "files": {
+      "dbus_ev/__init__.py": {
+        "covered_lines": 1,
+        "num_statements": 1,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/__main__.py": {
+        "covered_lines": 0,
+        "num_statements": 3,
+        "percent_covered": 0.0,
+        "percent_covered_display": "0",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 0.0,
+        "percent_statements_covered_display": "0"
+      },
+      "dbus_ev/cerbo_mqtt.py": {
+        "covered_lines": 128,
+        "num_statements": 146,
+        "percent_covered": 87.67123287671232,
+        "percent_covered_display": "88",
+        "missing_lines": 18,
+        "excluded_lines": 0,
+        "percent_statements_covered": 87.67123287671232,
+        "percent_statements_covered_display": "88"
+      },
+      "dbus_ev/charger.py": {
+        "covered_lines": 47,
+        "num_statements": 48,
+        "percent_covered": 97.91666666666667,
+        "percent_covered_display": "98",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.91666666666667,
+        "percent_statements_covered_display": "98"
+      },
+      "dbus_ev/charger_service.py": {
+        "covered_lines": 152,
+        "num_statements": 193,
+        "percent_covered": 78.75647668393782,
+        "percent_covered_display": "79",
+        "missing_lines": 41,
+        "excluded_lines": 0,
+        "percent_statements_covered": 78.75647668393782,
+        "percent_statements_covered_display": "79"
+      },
+      "dbus_ev/config.py": {
+        "covered_lines": 78,
+        "num_statements": 90,
+        "percent_covered": 86.66666666666667,
+        "percent_covered_display": "87",
+        "missing_lines": 12,
+        "excluded_lines": 0,
+        "percent_statements_covered": 86.66666666666667,
+        "percent_statements_covered_display": "87"
+      },
+      "dbus_ev/control.py": {
+        "covered_lines": 45,
+        "num_statements": 45,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/ha_client.py": {
+        "covered_lines": 162,
+        "num_statements": 168,
+        "percent_covered": 96.42857142857143,
+        "percent_covered_display": "96",
+        "missing_lines": 6,
+        "excluded_lines": 0,
+        "percent_statements_covered": 96.42857142857143,
+        "percent_statements_covered_display": "96"
+      },
+      "dbus_ev/main.py": {
+        "covered_lines": 126,
+        "num_statements": 160,
+        "percent_covered": 78.75,
+        "percent_covered_display": "79",
+        "missing_lines": 34,
+        "excluded_lines": 0,
+        "percent_statements_covered": 78.75,
+        "percent_statements_covered_display": "79"
+      },
+      "dbus_ev/mercedes/__init__.py": {
+        "covered_lines": 0,
+        "num_statements": 0,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/mercedes/auth.py": {
+        "covered_lines": 34,
+        "num_statements": 44,
+        "percent_covered": 77.27272727272727,
+        "percent_covered_display": "77",
+        "missing_lines": 10,
+        "excluded_lines": 0,
+        "percent_statements_covered": 77.27272727272727,
+        "percent_statements_covered_display": "77"
+      },
+      "dbus_ev/mercedes/client.py": {
+        "covered_lines": 259,
+        "num_statements": 286,
+        "percent_covered": 90.55944055944056,
+        "percent_covered_display": "91",
+        "missing_lines": 27,
+        "excluded_lines": 0,
+        "percent_statements_covered": 90.55944055944056,
+        "percent_statements_covered_display": "91"
+      },
+      "dbus_ev/mercedes/oauth.py": {
+        "covered_lines": 2,
+        "num_statements": 2,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/mercedes/protocol.py": {
+        "covered_lines": 67,
+        "num_statements": 75,
+        "percent_covered": 89.33333333333333,
+        "percent_covered_display": "89",
+        "missing_lines": 8,
+        "excluded_lines": 0,
+        "percent_statements_covered": 89.33333333333333,
+        "percent_statements_covered_display": "89"
+      },
+      "dbus_ev/mercedes/recovery.py": {
+        "covered_lines": 39,
+        "num_statements": 40,
+        "percent_covered": 97.5,
+        "percent_covered_display": "98",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.5,
+        "percent_statements_covered_display": "98"
+      },
+      "dbus_ev/mercedes/store.py": {
+        "covered_lines": 41,
+        "num_statements": 42,
+        "percent_covered": 97.61904761904762,
+        "percent_covered_display": "98",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.61904761904762,
+        "percent_statements_covered_display": "98"
+      },
+      "dbus_ev/mercedes/traffic.py": {
+        "covered_lines": 63,
+        "num_statements": 64,
+        "percent_covered": 98.4375,
+        "percent_covered_display": "98",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 98.4375,
+        "percent_statements_covered_display": "98"
+      },
+      "dbus_ev/providers/__init__.py": {
+        "covered_lines": 0,
+        "num_statements": 0,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/providers/evcc.py": {
+        "covered_lines": 146,
+        "num_statements": 157,
+        "percent_covered": 92.99363057324841,
+        "percent_covered_display": "93",
+        "missing_lines": 11,
+        "excluded_lines": 0,
+        "percent_statements_covered": 92.99363057324841,
+        "percent_statements_covered_display": "93"
+      },
+      "dbus_ev/service.py": {
+        "covered_lines": 139,
+        "num_statements": 146,
+        "percent_covered": 95.20547945205479,
+        "percent_covered_display": "95",
+        "missing_lines": 7,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.20547945205479,
+        "percent_statements_covered_display": "95"
+      },
+      "dbus_ev/vehicle.py": {
+        "covered_lines": 31,
+        "num_statements": 31,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100"
+      },
+      "dbus_ev/worker.py": {
+        "covered_lines": 52,
+        "num_statements": 53,
+        "percent_covered": 98.11320754716981,
+        "percent_covered_display": "98",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 98.11320754716981,
+        "percent_statements_covered_display": "98"
+      }
+    },
+    "whole_project_coverage_claim": false,
+    "limitations": "Excludes tests from the numerator/denominator. Does not measure every delivery helper, shell/native dependency or optional component. EV vendor code, HA integration and Go code are not included in this Python runtime subtotal."
+  },
+  "release_contract_tests": {
+    "passed": 342,
+    "command": "python -m unittest discover -s .github/release-tests -q"
+  },
+  "ruff": {
+    "lint": "passed",
+    "format": "passed"
+  },
+  "wheel_build": {
+    "command": "python -m build --no-isolation --wheel",
+    "result": "passed",
+    "scope": "local package construction only; not native/device acceptance"
+  },
+  "github": {
+    "private_vulnerability_reporting": true,
+    "open_dependabot_alerts": 0,
+    "open_secret_scanning_alerts": 0,
+    "open_code_scanning_alerts": [
+      {
+        "number": 15,
+        "rule": "VulnerabilitiesID",
+        "tool": "Scorecard",
+        "url": "https://github.com/victron-venus/dbus-ev/security/code-scanning/15"
+      },
+      {
+        "number": 9,
+        "rule": "MaintainedID",
+        "tool": "Scorecard",
+        "url": "https://github.com/victron-venus/dbus-ev/security/code-scanning/9"
+      },
+      {
+        "number": 8,
+        "rule": "FuzzingID",
+        "tool": "Scorecard",
+        "url": "https://github.com/victron-venus/dbus-ev/security/code-scanning/8"
+      },
+      {
+        "number": 6,
+        "rule": "CIIBestPracticesID",
+        "tool": "Scorecard",
+        "url": "https://github.com/victron-venus/dbus-ev/security/code-scanning/6"
+      },
+      {
+        "number": 1,
+        "rule": "BranchProtectionID",
+        "tool": "Scorecard",
+        "url": "https://github.com/victron-venus/dbus-ev/security/code-scanning/1"
+      }
+    ],
+    "public_security_advisories": 0,
+    "release_bodies_reviewed": 84,
+    "ordinary_issues_reviewed": 0
+  },
+  "bandit": {
+    "version": "1.9.2",
+    "source_lines": 17584,
+    "errors": [],
+    "findings": [
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 9,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 70,
+        "rule": "B607",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 70,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 85,
+        "rule": "B607",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 85,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 95,
+        "rule": "B607",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "./vehicle-engine/build.py",
+        "line": 97,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "dbus_ev/config.py",
+        "line": 135,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/ha_client.py",
+        "line": 196,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/ha_client.py",
+        "line": 198,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/mercedes/vendor/const.py",
+        "line": 21,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/mercedes/vendor/const.py",
+        "line": 22,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/mercedes/vendor/const.py",
+        "line": 30,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "dbus_ev/providers/evcc.py",
+        "line": 10,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local provider executable is explicitly selected by the operator, validated and invoked without a shell; external telemetry cannot select it."
+      },
+      {
+        "path": "dbus_ev/providers/evcc.py",
+        "line": 31,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local provider executable is explicitly selected by the operator, validated and invoked without a shell; external telemetry cannot select it."
+      },
+      {
+        "path": "dbus_ev/providers/evcc.py",
+        "line": 237,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local provider executable is explicitly selected by the operator, validated and invoked without a shell; external telemetry cannot select it."
+      },
+      {
+        "path": "ha/custom_components/mbapi2020/const.py",
+        "line": 65,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "ha/custom_components/mbapi2020/const.py",
+        "line": 66,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "ha/custom_components/mbapi2020/const.py",
+        "line": 82,
+        "rule": "B105",
+        "severity": "LOW",
+        "review": "Field name, empty placeholder or cache filename rather than a credential."
+      },
+      {
+        "path": "scripts/change_scope.py",
+        "line": 18,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/change_scope.py",
+        "line": 183,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 10,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 38,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 69,
+        "rule": "B607",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 69,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 149,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/package_release.py",
+        "line": 154,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/release.py",
+        "line": 19,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/release.py",
+        "line": 34,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/release_container_labels.py",
+        "line": 13,
+        "rule": "B404",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/release_container_labels.py",
+        "line": 30,
+        "rule": "B607",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      },
+      {
+        "path": "scripts/release_container_labels.py",
+        "line": 30,
+        "rule": "B603",
+        "severity": "LOW",
+        "review": "Local build/release tool uses fixed executable/argument structure without a shell; repository policy and PATH are trusted developer inputs."
+      }
+    ]
+  },
+  "owner_attestations": {
+    "secure_design_and_common_vulnerability_knowledge": true,
+    "external_bug_enhancement_vulnerability_reports_last_12_months": false,
+    "access_continuity": false
+  },
+  "limitations": [
+    "No production device, broker, vehicle/account or actuator was used.",
+    "No new stable release or signature claim.",
+    "No real access-continuity arrangement exists."
+  ],
+  "go_checks": {
+    "race_tests": "passed",
+    "vet": "passed",
+    "commands": [
+      "python3 vehicle-engine/build.py test -race ./...",
+      "python3 vehicle-engine/build.py vet ./..."
+    ],
+    "native_platform": "macOS ARM64",
+    "hardware_or_cloud_accounts": false
+  },
+  "go_2026_5932": {
+    "advisory": "https://pkg.go.dev/vuln/GO-2026-5932",
+    "scope": "Abandoned golang.org/x/crypto/openpgp packages, not every package in the module.",
+    "command": "GOOS=linux GOARCH=<arm|arm64> CGO_ENABLED=0 go list -deps ./... (GOARM=7 for arm)",
+    "graphs": {
+      "arm": {
+        "GOOS": "linux",
+        "GOARCH": "arm",
+        "GOARM": "7",
+        "CGO_ENABLED": "0",
+        "packages": 949,
+        "openpgp_packages": [],
+        "sha256": "8247b67a0af22d05fb0ade590ddd2c710f84a7f1bdb2976a7a0a684a2dd031f5"
+      },
+      "arm64": {
+        "GOOS": "linux",
+        "GOARCH": "arm64",
+        "GOARM": null,
+        "CGO_ENABLED": "0",
+        "packages": 949,
+        "openpgp_packages": [],
+        "sha256": "523bf60f6cc21daf683e8014fa4b5bd2c5f4d5271626eefab02af2c5ddebd709"
+      }
+    },
+    "conclusion": "Affected packages are absent from both target dependency graphs. Recheck after changing imports, dependencies, build tags or target."
+  }
+}

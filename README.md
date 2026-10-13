@@ -1,5 +1,8 @@
 # Venus OS vehicle and charger bridge
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15456/badge)](https://www.bestpractices.dev/projects/15456)
+
+
 Optional experimental multi-brand providers are documented in [docs/vehicles.md](docs/vehicles.md). They reuse pinned evcc vehicle libraries, publish raw MQTT only (no automatic HA sensors), and require a separately built optional engine.
 
 This service exports vehicle data from Mercedes or Home Assistant as
@@ -329,3 +332,7 @@ loop ticks, expiry, single outstanding work item, recovery and safe shutdown.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
 [SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
 and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
+
+## Project maintenance
+
+[Governance and continuity](GOVERNANCE.md), [code of conduct](CODE_OF_CONDUCT.md), [roadmap](ROADMAP.md), [security assurance](docs/security-assurance.md) and [quality evidence](docs/quality-and-build.md) describe the current process and its limitations. The dynamic OpenSSF badge links to the live self-assessment; repository documents do not award a badge.

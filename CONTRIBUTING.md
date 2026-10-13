@@ -43,3 +43,9 @@ Automated tests use mocks or controlled fixtures where available. A passing unit
 - [ha/README.md](ha/README.md)
 
 See [README.md](README.md) for acquisition, configuration and usage, and [the evidence index](docs/openssf-evidence.md) for the public development-process references.
+
+## Review and evidence requirements
+
+Apply these test and documentation requirements to every nontrivial change, including maintainer changes. Record a regression test for each corrected bug unless the PR explains why an automated regression is infeasible and documents a repeatable manual check. New major functionality must have automated tests. Review the tests themselves, not only a reported percentage. Keep architecture, configuration, interface and security documentation synchronized with the code.
+
+Follow [governance](GOVERNANCE.md) and the [code of conduct](CODE_OF_CONDUCT.md). Do not claim hardware acceptance from mocks, GitHub security status from a workflow name, or signed artifacts from checksums alone. See [quality and build evidence](docs/quality-and-build.md).
