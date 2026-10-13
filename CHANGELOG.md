@@ -10,9 +10,13 @@
 
 ### Upgrade
 
-This cycle preserves existing configuration and authentication data. New provider integrations remain experimental; automated tests do not establish live vehicle acceptance. Beta and RC artifacts will be built under the new base version without reusing the existing 0.2.7 release tag.
+Existing configuration and authentication data are retained. The optional engine now requires explicit `allowLegacyCrypto: true` for eight legacy provider templates; review [the compatibility policy](docs/provider-cryptography.md) and rebuild the engine before enabling them. New provider integrations remain experimental; automated tests do not establish live vehicle acceptance. Beta and RC artifacts will be built under the new base version without reusing the existing 0.2.7 release tag.
 
 ### Security
+
+- Require TLS 1.2 or newer, forward-secret AEAD TLS 1.2 suites and strong verified certificate keys throughout the optional engine, including BMW MQTT and Fiat Cognito.
+- Use cryptographic randomness for provider OAuth state/nonces and reject Bluelink CCI RSA encryption keys shorter than 2048 bits.
+- Disable known weak manufacturer crypto/authentication mechanisms by default, with a named per-configuration opt-in for compatibility. No live provider/account acceptance is implied.
 
 Keep provider tokens and credentials in the existing protected local configuration and exclude them from exported telemetry and logs. The charger projection remains read-only, and existing freshness checks continue to reject stale readings.
 

@@ -73,7 +73,7 @@ type gatedTransport struct {
 }
 
 func (g *traffic) wrap(base http.RoundTripper) http.RoundTripper {
-	return &gatedTransport{g, base}
+	return &httpsOnlyTransport{base: &gatedTransport{g, base}}
 }
 
 func (t *gatedTransport) RoundTrip(req *http.Request) (*http.Response, error) {

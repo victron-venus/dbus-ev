@@ -1,0 +1,2590 @@
+{
+  "date": "2026-10-13",
+  "scope": "All 35 supported templates; selected factory and transitive vehicle provider packages, supplemented by shared transport/auth and external SDK reviews. Source graph is an overapproximation; unselected factories are not instantiated.",
+  "upstream_revision": "0bd94d01de8d4d5702a8727a6ec3144313d7a246",
+  "upstream_source_url": "https://github.com/evcc-io/evcc/tree/0bd94d01de8d4d5702a8727a6ec3144313d7a246",
+  "template_count": 35,
+  "shared_policy_files": [
+    "vehicle-engine/main.go",
+    "vehicle-engine/crypto.go",
+    "vehicle-engine/crypto_test.go",
+    "vehicle-engine/patches/conservative.patch",
+    "vehicle-engine/patches/inputs.json"
+  ],
+  "shared_upstream_review": [
+    "util/request/helper.go",
+    "util/transport/default.go",
+    "plugin/auth",
+    "util/auth",
+    "util/oauth",
+    "util/templates"
+  ],
+  "external_reviews": {
+    "github.com/joeshaw/carwings@v0.0.0-20250704173606-1708e349f36c": "carwings.go uses fixed AES key/IV for login; caller-provided HTTP client is used; explicit legacy opt-in.",
+    "github.com/aws/aws-sdk-go-v2": "Fiat Cognito config.WithHTTPClient now pins caller request client; SigV4 uses SDK cryptography.",
+    "github.com/eclipse/paho.mqtt.golang": "BMW supplies transport.SecureTLSConfig to MQTT options before connection.",
+    "github.com/teslamotors/vehicle-command": "Fleet HTTP uses caller-provided client; no command session or control method is invoked by the engine."
+  },
+  "templates": [
+    {
+      "template": "aiways",
+      "template_source": "templates/definition/vehicle/aiways.yaml",
+      "rendered_type": "aiways",
+      "factory_source": "vehicle/aiways.go",
+      "provider_packages": [
+        "vehicle/aiways"
+      ],
+      "reviewed_source_files": [
+        "vehicle/aiways.go",
+        "vehicle/aiways/api.go",
+        "vehicle/aiways/identity.go",
+        "vehicle/aiways/provider.go",
+        "vehicle/aiways/types.go"
+      ],
+      "authentication": "HTTPS account authentication with MD5 password transform; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/aiways.go",
+          "line": 52,
+          "code": "identity := aiways.NewIdentity(log)"
+        },
+        {
+          "path": "vehicle/aiways.go",
+          "line": 60,
+          "code": "api := aiways.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/aiways.go",
+          "line": 66,
+          "code": "v.Provider = aiways.NewProvider(api, user, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/aiways/api.go",
+          "line": 23,
+          "code": "func NewAPI(log *util.Logger, identity TokenProvider) *API {"
+        },
+        {
+          "path": "vehicle/aiways/api.go",
+          "line": 25,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/aiways/identity.go",
+          "line": 23,
+          "code": "// NewIdentity creates BMW identity"
+        },
+        {
+          "path": "vehicle/aiways/identity.go",
+          "line": 24,
+          "code": "func NewIdentity(log *util.Logger) *Identity {"
+        },
+        {
+          "path": "vehicle/aiways/identity.go",
+          "line": 26,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/aiways/provider.go",
+          "line": 16,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/aiways/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, user int64, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "myalpine",
+      "template_source": "templates/definition/vehicle/alpine.yaml",
+      "rendered_type": "myalpine",
+      "factory_source": "vehicle/renault.go",
+      "provider_packages": [
+        "vehicle/renault",
+        "vehicle/renault/gigya",
+        "vehicle/renault/kamereon",
+        "vehicle/renault/keys"
+      ],
+      "reviewed_source_files": [
+        "vehicle/renault.go",
+        "vehicle/renault/gigya/identity.go",
+        "vehicle/renault/kamereon/api.go",
+        "vehicle/renault/kamereon/auth.go",
+        "vehicle/renault/kamereon/types.go",
+        "vehicle/renault/keys/keys.go",
+        "vehicle/renault/provider.go"
+      ],
+      "authentication": "Renault HTTPS account login via Gigya and bearer-token Kamereon API.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/renault.go",
+          "line": 73,
+          "code": "identity := gigya.NewIdentity(log, keys.Gigya)"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 78,
+          "code": "api := kamereon.NewAPI(log, keys.Kamereon, identity, func() error {"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 101,
+          "code": "v.Provider = renault.NewProvider(api, accountID, vehicle.VIN, cc.WakeupMode, cc.Cache)"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 36,
+          "code": "func NewIdentity(log *util.Logger, gigya keys.ConfigServer) *Identity {"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 38,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 28,
+          "code": "func NewAPI(log *util.Logger, keys keys.ConfigServer, identity *gigya.Identity, login func() error) *API {"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 30,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/keys/keys.go",
+          "line": 33,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 27,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 28,
+          "code": "func NewProvider(api *kamereon.API, accountID, vin string, wakeupMode string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "audi",
+      "template_source": "templates/definition/vehicle/audi.yaml",
+      "rendered_type": "drivesomethinggreater",
+      "factory_source": "vehicle/drivesomethinggreater.go",
+      "provider_packages": [
+        "vehicle/vag",
+        "vehicle/vag/vwidentity",
+        "vehicle/vw/eudataact"
+      ],
+      "reviewed_source_files": [
+        "vehicle/drivesomethinggreater.go",
+        "vehicle/vag/challenge.go",
+        "vehicle/vag/token.go",
+        "vehicle/vag/tokensource.go",
+        "vehicle/vag/vwidentity/endpoint.go",
+        "vehicle/vag/vwidentity/forms.go",
+        "vehicle/vw/eudataact/api.go",
+        "vehicle/vw/eudataact/provider.go",
+        "vehicle/vw/eudataact/store.go",
+        "vehicle/vw/eudataact/types.go"
+      ],
+      "authentication": "VW EU Data Act HTTPS login via VAG VW identity; S256 PKCE and crypto/rand nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 49,
+          "code": "api, err := eudataact.NewAPI(log, cc.Brand, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 63,
+          "code": "v.Provider = eudataact.NewProvider(log, api, vehicle.Vin(), cc.Cache)"
+        },
+        {
+          "path": "vehicle/vag/vwidentity/endpoint.go",
+          "line": 70,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 64,
+          "code": "// NewAPI returns the EU Data Act client for the given brand and user, performing"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 68,
+          "code": "func NewAPI(log *util.Logger, brandName, user, password string) (*API, error) {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 84,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 32,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 33,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/store.go",
+          "line": 39,
+          "code": "// creating it on first use. Since NewAPI already returns one client per username"
+        }
+      ]
+    },
+    {
+      "template": "cardata",
+      "template_source": "templates/definition/vehicle/cardata.yaml",
+      "rendered_type": "cardata",
+      "factory_source": "vehicle/cardata.go",
+      "provider_packages": [
+        "vehicle/bmw/cardata"
+      ],
+      "reviewed_source_files": [
+        "vehicle/bmw/cardata/api.go",
+        "vehicle/bmw/cardata/mqtt.go",
+        "vehicle/bmw/cardata/oauth2.go",
+        "vehicle/bmw/cardata/provider.go",
+        "vehicle/bmw/cardata/token.go",
+        "vehicle/bmw/cardata/types.go",
+        "vehicle/cardata.go"
+      ],
+      "authentication": "BMW OAuth device flow through util/auth; CarData HTTPS and separate authenticated MQTT/TLS with patched TLS policy.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/bmw/cardata/api.go",
+          "line": 45,
+          "code": "func NewAPI(log *util.Logger, ts oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/bmw/cardata/api.go",
+          "line": 47,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bmw/cardata/api.go",
+          "line": 52,
+          "code": "Base: &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/bmw/cardata/api.go",
+          "line": 53,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/bmw/cardata/mqtt.go",
+          "line": 169,
+          "code": "paho := mqtt.NewClient("
+        },
+        {
+          "path": "vehicle/bmw/cardata/mqtt.go",
+          "line": 170,
+          "code": "mqtt.NewClientOptions()."
+        },
+        {
+          "path": "vehicle/bmw/cardata/mqtt.go",
+          "line": 171,
+          "code": "SetTLSConfig(transport.SecureTLSConfig())."
+        },
+        {
+          "path": "vehicle/bmw/cardata/provider.go",
+          "line": 36,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/bmw/cardata/provider.go",
+          "line": 37,
+          "code": "func NewProvider(ctx context.Context, log *util.Logger, api *API, ts oauth2.TokenSource, clientID, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/cardata.go",
+          "line": 64,
+          "code": "api := cardata.NewAPI(log, ts)"
+        },
+        {
+          "path": "vehicle/cardata.go",
+          "line": 66,
+          "code": "v.Provider = cardata.NewProvider(ctx, log, api, ts, cc.ClientID, cc.VIN, cc.Cache)"
+        }
+      ]
+    },
+    {
+      "template": "carwings",
+      "template_source": "templates/definition/vehicle/carwings.yaml",
+      "rendered_type": "carwings",
+      "factory_source": "vehicle/carwings.go",
+      "provider_packages": [],
+      "reviewed_source_files": [
+        "vehicle/carwings.go"
+      ],
+      "authentication": "HTTPS account authentication with fixed-key/fixed-IV AES-CBC transform in github.com/joeshaw/carwings; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through explicitly patched http.Transport passed to carwings.NewClient",
+      "construction_evidence": [
+        {
+          "path": "vehicle/carwings.go",
+          "line": 60,
+          "code": "transport := request.NewTripper(log, &http.Transport{"
+        },
+        {
+          "path": "vehicle/carwings.go",
+          "line": 61,
+          "code": "TLSClientConfig: transport.SecureTLSConfig(),"
+        },
+        {
+          "path": "vehicle/carwings.go",
+          "line": 74,
+          "code": "carwings.Client = &http.Client{"
+        }
+      ]
+    },
+    {
+      "template": "citroen",
+      "template_source": "templates/definition/vehicle/citroen.yaml",
+      "rendered_type": "citroen",
+      "factory_source": "vehicle/psa.go",
+      "provider_packages": [
+        "vehicle/psa"
+      ],
+      "reviewed_source_files": [
+        "vehicle/psa.go",
+        "vehicle/psa/api.go",
+        "vehicle/psa/duration.go",
+        "vehicle/psa/helper.go",
+        "vehicle/psa/identity.go",
+        "vehicle/psa/oauth2.go",
+        "vehicle/psa/provider.go",
+        "vehicle/psa/types.go"
+      ],
+      "authentication": "PSA HTTPS OAuth bearer-token flow.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/psa.go",
+          "line": 71,
+          "code": "identity, err := psa.NewIdentity(log, brand, cc.User, oc, token)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 77,
+          "code": "api := psa.NewAPI(log, identity, realm, oc.ClientID)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 89,
+          "code": "v.Provider = psa.NewProvider(api, vehicle.ID, cc.Cache)"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 25,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 26,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource, realm, id string) *API {"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 28,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 34,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 39,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 20,
+          "code": "// NewIdentity creates PSA identity"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 21,
+          "code": "func NewIdentity(log *util.Logger, brand, user string, oc *oauth2.Config, token *oauth2.Token) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 52,
+          "code": "client := request.NewClient(v.log)"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 16,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, vid string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "dacia",
+      "template_source": "templates/definition/vehicle/dacia.yaml",
+      "rendered_type": "dacia",
+      "factory_source": "vehicle/renault.go",
+      "provider_packages": [
+        "vehicle/renault",
+        "vehicle/renault/gigya",
+        "vehicle/renault/kamereon",
+        "vehicle/renault/keys"
+      ],
+      "reviewed_source_files": [
+        "vehicle/renault.go",
+        "vehicle/renault/gigya/identity.go",
+        "vehicle/renault/kamereon/api.go",
+        "vehicle/renault/kamereon/auth.go",
+        "vehicle/renault/kamereon/types.go",
+        "vehicle/renault/keys/keys.go",
+        "vehicle/renault/provider.go"
+      ],
+      "authentication": "Renault HTTPS account login via Gigya and bearer-token Kamereon API.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/renault.go",
+          "line": 73,
+          "code": "identity := gigya.NewIdentity(log, keys.Gigya)"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 78,
+          "code": "api := kamereon.NewAPI(log, keys.Kamereon, identity, func() error {"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 101,
+          "code": "v.Provider = renault.NewProvider(api, accountID, vehicle.VIN, cc.WakeupMode, cc.Cache)"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 36,
+          "code": "func NewIdentity(log *util.Logger, gigya keys.ConfigServer) *Identity {"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 38,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 28,
+          "code": "func NewAPI(log *util.Logger, keys keys.ConfigServer, identity *gigya.Identity, login func() error) *API {"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 30,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/keys/keys.go",
+          "line": 33,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 27,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 28,
+          "code": "func NewProvider(api *kamereon.API, accountID, vin string, wakeupMode string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "ds",
+      "template_source": "templates/definition/vehicle/ds.yaml",
+      "rendered_type": "ds",
+      "factory_source": "vehicle/psa.go",
+      "provider_packages": [
+        "vehicle/psa"
+      ],
+      "reviewed_source_files": [
+        "vehicle/psa.go",
+        "vehicle/psa/api.go",
+        "vehicle/psa/duration.go",
+        "vehicle/psa/helper.go",
+        "vehicle/psa/identity.go",
+        "vehicle/psa/oauth2.go",
+        "vehicle/psa/provider.go",
+        "vehicle/psa/types.go"
+      ],
+      "authentication": "PSA HTTPS OAuth bearer-token flow.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/psa.go",
+          "line": 71,
+          "code": "identity, err := psa.NewIdentity(log, brand, cc.User, oc, token)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 77,
+          "code": "api := psa.NewAPI(log, identity, realm, oc.ClientID)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 89,
+          "code": "v.Provider = psa.NewProvider(api, vehicle.ID, cc.Cache)"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 25,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 26,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource, realm, id string) *API {"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 28,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 34,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 39,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 20,
+          "code": "// NewIdentity creates PSA identity"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 21,
+          "code": "func NewIdentity(log *util.Logger, brand, user string, oc *oauth2.Config, token *oauth2.Token) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 52,
+          "code": "client := request.NewClient(v.log)"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 16,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, vid string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "fiat",
+      "template_source": "templates/definition/vehicle/fiat.yaml",
+      "rendered_type": "fiat",
+      "factory_source": "vehicle/fiat.go",
+      "provider_packages": [
+        "vehicle/fiat"
+      ],
+      "reviewed_source_files": [
+        "vehicle/fiat.go",
+        "vehicle/fiat/api.go",
+        "vehicle/fiat/controller.go",
+        "vehicle/fiat/identity.go",
+        "vehicle/fiat/provider.go",
+        "vehicle/fiat/types.go"
+      ],
+      "authentication": "Gigya account login plus AWS Cognito credentials and SigV4 request signing; Cognito receives the patched HTTP client.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/fiat.go",
+          "line": 51,
+          "code": "identity := fiat.NewIdentity(log, ctx, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/fiat.go",
+          "line": 58,
+          "code": "api := fiat.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/fiat.go",
+          "line": 63,
+          "code": "v.Provider = fiat.NewProvider(api, cc.VIN, \"\", cc.Expiry, cc.Cache)"
+        },
+        {
+          "path": "vehicle/fiat/api.go",
+          "line": 30,
+          "code": "func NewAPI(log *util.Logger, identity *Identity) *API {"
+        },
+        {
+          "path": "vehicle/fiat/api.go",
+          "line": 33,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/fiat/identity.go",
+          "line": 40,
+          "code": "// NewIdentity creates Fiat identity"
+        },
+        {
+          "path": "vehicle/fiat/identity.go",
+          "line": 41,
+          "code": "func NewIdentity(log *util.Logger, ctx context.Context, user, password string) *Identity {"
+        },
+        {
+          "path": "vehicle/fiat/identity.go",
+          "line": 43,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/fiat/identity.go",
+          "line": 165,
+          "code": "cfg, err := config.LoadDefaultConfig(v.ctx, config.WithRegion(Region), config.WithHTTPClient(v.Client))"
+        },
+        {
+          "path": "vehicle/fiat/provider.go",
+          "line": 24,
+          "code": "func NewProvider(api *API, vin, pin string, expiry, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "ford-connect-query",
+      "template_source": "templates/definition/vehicle/ford-connect-query.yaml",
+      "rendered_type": "ford-connect-query",
+      "factory_source": "vehicle/ford-connect-query.go",
+      "provider_packages": [
+        "vehicle/ford/query"
+      ],
+      "reviewed_source_files": [
+        "vehicle/ford-connect-query.go",
+        "vehicle/ford/query/api.go",
+        "vehicle/ford/query/oauth2.go",
+        "vehicle/ford/query/provider.go",
+        "vehicle/ford/query/types.go"
+      ],
+      "authentication": "Ford OAuth authorization-code/refresh flow through util/auth; per-flow state is generated by engine crypto/rand.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/ford-connect-query.go",
+          "line": 57,
+          "code": "api := query.NewAPI(log, ts)"
+        },
+        {
+          "path": "vehicle/ford-connect-query.go",
+          "line": 65,
+          "code": "v.Provider = query.NewProvider(api, vehicle.VehicleID, cc.Cache)"
+        },
+        {
+          "path": "vehicle/ford/query/api.go",
+          "line": 18,
+          "code": "// NewAPI creates a new api client"
+        },
+        {
+          "path": "vehicle/ford/query/api.go",
+          "line": 19,
+          "code": "func NewAPI(log *util.Logger, ts oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/ford/query/api.go",
+          "line": 21,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/ford/query/provider.go",
+          "line": 14,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "genesis",
+      "template_source": "templates/definition/vehicle/genesis.yaml",
+      "rendered_type": "genesis",
+      "factory_source": "vehicle/bluelink.go",
+      "provider_packages": [
+        "vehicle/bluelink"
+      ],
+      "reviewed_source_files": [
+        "vehicle/bluelink.go",
+        "vehicle/bluelink/api.go",
+        "vehicle/bluelink/cci.go",
+        "vehicle/bluelink/identity.go",
+        "vehicle/bluelink/provider.go",
+        "vehicle/bluelink/types.go"
+      ],
+      "authentication": "Bluelink regional password/OAuth flow; secure random device nonce; public application stamps are not secret keys.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 153,
+          "code": "identity := bluelink.NewIdentity(log, settings)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 159,
+          "code": "api := bluelink.NewAPI(log, settings.URI, identity.Request)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 173,
+          "code": "Provider: bluelink.NewProvider(api, vehicle, cc.Cache),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 36,
+          "code": "func NewAPI(log *util.Logger, baseURI string, decorator func(*http.Request) error) *API {"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 38,
+          "code": "Helper:  request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 46,
+          "code": "transport.TLSHandshakeTimeout = 30 * time.Second"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 49,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 64,
+          "code": "// NewIdentity creates BlueLink Identity"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 65,
+          "code": "func NewIdentity(log *util.Logger, config Config) *Identity {"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 68,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 17,
+          "code": "// NewProvider creates a new BlueLink API"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 18,
+          "code": "func NewProvider(api *API, vehicle Vehicle, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "hyundai-us",
+      "template_source": "templates/definition/vehicle/hyundai-us.yaml",
+      "rendered_type": "hyundai-us",
+      "factory_source": "vehicle/bluelink_us.go",
+      "provider_packages": [
+        "vehicle/bluelink_us"
+      ],
+      "reviewed_source_files": [
+        "vehicle/bluelink_us.go",
+        "vehicle/bluelink_us/api.go",
+        "vehicle/bluelink_us/identity.go",
+        "vehicle/bluelink_us/provider.go",
+        "vehicle/bluelink_us/types.go"
+      ],
+      "authentication": "HTTPS account login and bearer-token refresh in bluelink/us.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/bluelink_us.go",
+          "line": 45,
+          "code": "identity := bluelink_us.NewIdentity(log, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/bluelink_us.go",
+          "line": 54,
+          "code": "tempAPI := bluelink_us.NewAPI(log, identity, tempCfg)"
+        },
+        {
+          "path": "vehicle/bluelink_us.go",
+          "line": 78,
+          "code": "vehicleAPI := bluelink_us.NewAPI(log, identity, apiCfg)"
+        },
+        {
+          "path": "vehicle/bluelink_us.go",
+          "line": 82,
+          "code": "Provider: bluelink_us.NewProvider(vehicleAPI, cc.Cache),"
+        },
+        {
+          "path": "vehicle/bluelink_us/api.go",
+          "line": 37,
+          "code": "func NewAPI(log *util.Logger, ts oauth2.TokenSource, cfg APIConfig) *API {"
+        },
+        {
+          "path": "vehicle/bluelink_us/api.go",
+          "line": 39,
+          "code": "Helper:  request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink_us/api.go",
+          "line": 48,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/bluelink_us/identity.go",
+          "line": 50,
+          "code": "func NewIdentity(log *util.Logger, user, password string) *Identity {"
+        },
+        {
+          "path": "vehicle/bluelink_us/identity.go",
+          "line": 52,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink_us/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "hyundai",
+      "template_source": "templates/definition/vehicle/hyundai.yaml",
+      "rendered_type": "hyundai",
+      "factory_source": "vehicle/bluelink.go",
+      "provider_packages": [
+        "vehicle/bluelink"
+      ],
+      "reviewed_source_files": [
+        "vehicle/bluelink.go",
+        "vehicle/bluelink/api.go",
+        "vehicle/bluelink/cci.go",
+        "vehicle/bluelink/identity.go",
+        "vehicle/bluelink/provider.go",
+        "vehicle/bluelink/types.go"
+      ],
+      "authentication": "Bluelink regional password/OAuth flow; CCI password RSA uses crypto/rand and enforces 2048-bit modulus; device nonce uses crypto/rand. Public app stamps are identifiers, not confidential keys.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 153,
+          "code": "identity := bluelink.NewIdentity(log, settings)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 159,
+          "code": "api := bluelink.NewAPI(log, settings.URI, identity.Request)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 173,
+          "code": "Provider: bluelink.NewProvider(api, vehicle, cc.Cache),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 36,
+          "code": "func NewAPI(log *util.Logger, baseURI string, decorator func(*http.Request) error) *API {"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 38,
+          "code": "Helper:  request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 46,
+          "code": "transport.TLSHandshakeTimeout = 30 * time.Second"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 49,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 64,
+          "code": "// NewIdentity creates BlueLink Identity"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 65,
+          "code": "func NewIdentity(log *util.Logger, config Config) *Identity {"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 68,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 17,
+          "code": "// NewProvider creates a new BlueLink API"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 18,
+          "code": "func NewProvider(api *API, vehicle Vehicle, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "kia",
+      "template_source": "templates/definition/vehicle/kia.yaml",
+      "rendered_type": "kia",
+      "factory_source": "vehicle/bluelink.go",
+      "provider_packages": [
+        "vehicle/bluelink"
+      ],
+      "reviewed_source_files": [
+        "vehicle/bluelink.go",
+        "vehicle/bluelink/api.go",
+        "vehicle/bluelink/cci.go",
+        "vehicle/bluelink/identity.go",
+        "vehicle/bluelink/provider.go",
+        "vehicle/bluelink/types.go"
+      ],
+      "authentication": "Bluelink regional password/OAuth flow; CCI password RSA uses crypto/rand and enforces 2048-bit modulus; device nonce uses crypto/rand. Public app stamps are identifiers, not confidential keys.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 153,
+          "code": "identity := bluelink.NewIdentity(log, settings)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 159,
+          "code": "api := bluelink.NewAPI(log, settings.URI, identity.Request)"
+        },
+        {
+          "path": "vehicle/bluelink.go",
+          "line": 173,
+          "code": "Provider: bluelink.NewProvider(api, vehicle, cc.Cache),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 36,
+          "code": "func NewAPI(log *util.Logger, baseURI string, decorator func(*http.Request) error) *API {"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 38,
+          "code": "Helper:  request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 46,
+          "code": "transport.TLSHandshakeTimeout = 30 * time.Second"
+        },
+        {
+          "path": "vehicle/bluelink/api.go",
+          "line": 49,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 64,
+          "code": "// NewIdentity creates BlueLink Identity"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 65,
+          "code": "func NewIdentity(log *util.Logger, config Config) *Identity {"
+        },
+        {
+          "path": "vehicle/bluelink/identity.go",
+          "line": 68,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 17,
+          "code": "// NewProvider creates a new BlueLink API"
+        },
+        {
+          "path": "vehicle/bluelink/provider.go",
+          "line": 18,
+          "code": "func NewProvider(api *API, vehicle Vehicle, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "lexus",
+      "template_source": "templates/definition/vehicle/lexus.yaml",
+      "rendered_type": "lexus",
+      "factory_source": "vehicle/toyota.go",
+      "provider_packages": [
+        "vehicle/toyota"
+      ],
+      "reviewed_source_files": [
+        "vehicle/toyota.go",
+        "vehicle/toyota/api.go",
+        "vehicle/toyota/identity.go",
+        "vehicle/toyota/provider.go",
+        "vehicle/toyota/types.go"
+      ],
+      "authentication": "Toyota HTTPS login; constant plain PKCE verifier/challenge; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/toyota.go",
+          "line": 50,
+          "code": "identity := toyota.NewIdentity(log, brandCode)"
+        },
+        {
+          "path": "vehicle/toyota.go",
+          "line": 57,
+          "code": "api := toyota.NewAPI(log, identity, brandCode)"
+        },
+        {
+          "path": "vehicle/toyota.go",
+          "line": 61,
+          "code": "v.Provider = toyota.NewProvider(log, api, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 37,
+          "code": "func NewAPI(log *util.Logger, identity *Identity, brandCode string) *API {"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 39,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 52,
+          "code": "v.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 53,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/toyota/identity.go",
+          "line": 33,
+          "code": "func NewIdentity(log *util.Logger, brandCode string) *Identity {"
+        },
+        {
+          "path": "vehicle/toyota/identity.go",
+          "line": 36,
+          "code": "Helper:    request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/toyota/provider.go",
+          "line": 18,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "livewire",
+      "template_source": "templates/definition/vehicle/livewire.yaml",
+      "rendered_type": "livewire",
+      "factory_source": "vehicle/livewire.go",
+      "provider_packages": [
+        "vehicle/livewire"
+      ],
+      "reviewed_source_files": [
+        "vehicle/livewire.go",
+        "vehicle/livewire/api.go",
+        "vehicle/livewire/identity.go",
+        "vehicle/livewire/provider.go",
+        "vehicle/livewire/types.go"
+      ],
+      "authentication": "HTTPS account-token authentication through LiveWire API.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/livewire.go",
+          "line": 53,
+          "code": "identity := livewire.NewIdentity(log, cc.User, cc.Password, cc.DeviceUUID)"
+        },
+        {
+          "path": "vehicle/livewire.go",
+          "line": 58,
+          "code": "res := livewire.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/livewire.go",
+          "line": 75,
+          "code": "Provider: livewire.NewProvider(res, vehicle.ID, cc.Cache),"
+        },
+        {
+          "path": "vehicle/livewire/api.go",
+          "line": 21,
+          "code": "// NewAPI creates a new api client authenticated by identity"
+        },
+        {
+          "path": "vehicle/livewire/api.go",
+          "line": 22,
+          "code": "func NewAPI(log *util.Logger, identity *Identity) *API {"
+        },
+        {
+          "path": "vehicle/livewire/api.go",
+          "line": 24,
+          "code": "Helper:     request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/livewire/identity.go",
+          "line": 56,
+          "code": "// NewIdentity creates a LiveWire identity for the given account and paired device uuid"
+        },
+        {
+          "path": "vehicle/livewire/identity.go",
+          "line": 57,
+          "code": "func NewIdentity(log *util.Logger, user, password, deviceUUID string) *Identity {"
+        },
+        {
+          "path": "vehicle/livewire/identity.go",
+          "line": 59,
+          "code": "Helper:     request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/livewire/identity.go",
+          "line": 197,
+          "code": "return &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/livewire/provider.go",
+          "line": 21,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/livewire/provider.go",
+          "line": 22,
+          "code": "func NewProvider(api *API, bikeID string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "mg",
+      "template_source": "templates/definition/vehicle/mg.yaml",
+      "rendered_type": "mg",
+      "factory_source": "vehicle/mg.go",
+      "provider_packages": [
+        "vehicle/saic",
+        "vehicle/saic/requests"
+      ],
+      "reviewed_source_files": [
+        "vehicle/mg.go",
+        "vehicle/saic/api.go",
+        "vehicle/saic/identity.go",
+        "vehicle/saic/provider.go",
+        "vehicle/saic/requests/encryption.go",
+        "vehicle/saic/requests/helper.go",
+        "vehicle/saic/requests/request.go",
+        "vehicle/saic/requests/types.go"
+      ],
+      "authentication": "SAIC SHA-1 password/MD5 request derivation and fixed AES parameters; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/mg.go",
+          "line": 51,
+          "code": "identity := saic.NewIdentity(log, cc.User, cc.Password, baseUrl)"
+        },
+        {
+          "path": "vehicle/mg.go",
+          "line": 57,
+          "code": "api := saic.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/mg.go",
+          "line": 61,
+          "code": "Provider: saic.NewProvider(api, cc.VIN, cc.Cache),"
+        },
+        {
+          "path": "vehicle/saic/api.go",
+          "line": 42,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/saic/api.go",
+          "line": 43,
+          "code": "func NewAPI(log *util.Logger, identity *Identity) *API {"
+        },
+        {
+          "path": "vehicle/saic/api.go",
+          "line": 45,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/saic/api.go",
+          "line": 50,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/saic/identity.go",
+          "line": 29,
+          "code": "// NewIdentity creates SAIC identity"
+        },
+        {
+          "path": "vehicle/saic/identity.go",
+          "line": 30,
+          "code": "func NewIdentity(log *util.Logger, user, password, baseUrl string) *Identity {"
+        },
+        {
+          "path": "vehicle/saic/identity.go",
+          "line": 32,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/saic/identity.go",
+          "line": 41,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/saic/provider.go",
+          "line": 32,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/saic/provider.go",
+          "line": 33,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "myskoda",
+      "template_source": "templates/definition/vehicle/myskoda.yaml",
+      "rendered_type": "myskoda",
+      "factory_source": "vehicle/myskoda.go",
+      "provider_packages": [
+        "vehicle/myskoda"
+      ],
+      "reviewed_source_files": [
+        "vehicle/myskoda.go",
+        "vehicle/myskoda/api.go",
+        "vehicle/myskoda/provider.go",
+        "vehicle/myskoda/types.go"
+      ],
+      "authentication": "Skoda HTTPS account token flow; VAG identity helpers use S256 PKCE and cryptographic nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/myskoda.go",
+          "line": 56,
+          "code": "apiC := myskoda.NewAPI(log, uri, cc.ApiKey)"
+        },
+        {
+          "path": "vehicle/myskoda.go",
+          "line": 70,
+          "code": "v.Provider = myskoda.NewProvider(apiC, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/myskoda/api.go",
+          "line": 31,
+          "code": "// NewAPI creates a new api client"
+        },
+        {
+          "path": "vehicle/myskoda/api.go",
+          "line": 32,
+          "code": "func NewAPI(log *util.Logger, uri, apiKey string) *API {"
+        },
+        {
+          "path": "vehicle/myskoda/api.go",
+          "line": 34,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/myskoda/api.go",
+          "line": 38,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/myskoda/api.go",
+          "line": 39,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/myskoda/provider.go",
+          "line": 19,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/myskoda/provider.go",
+          "line": 20,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "nissan-ariya",
+      "template_source": "templates/definition/vehicle/nissan-ariya.yaml",
+      "rendered_type": "nissan",
+      "factory_source": "vehicle/nissan.go",
+      "provider_packages": [
+        "vehicle/nissan"
+      ],
+      "reviewed_source_files": [
+        "vehicle/nissan.go",
+        "vehicle/nissan/api.go",
+        "vehicle/nissan/identity.go",
+        "vehicle/nissan/provider.go",
+        "vehicle/nissan/types.go"
+      ],
+      "authentication": "HTTPS login/token flow with cryptographically random state; regional Nissan provider.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/nissan.go",
+          "line": 56,
+          "code": "identity, err := nissan.NewIdentity(log, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/nissan.go",
+          "line": 61,
+          "code": "api := nissan.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/nissan.go",
+          "line": 66,
+          "code": "v.Provider = nissan.NewProvider(api, cc.VIN, cc.Version, cc.Expiry, cc.Cache)"
+        },
+        {
+          "path": "vehicle/nissan/api.go",
+          "line": 24,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/nissan/api.go",
+          "line": 26,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 66,
+          "code": "// NewIdentity performs the MyNISSAN OneID login and returns a Kamereon token source"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 67,
+          "code": "func NewIdentity(log *util.Logger, user, password string) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 69,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/nissan/provider.go",
+          "line": 20,
+          "code": "// NewProvider returns a kamereon provider"
+        },
+        {
+          "path": "vehicle/nissan/provider.go",
+          "line": 21,
+          "code": "func NewProvider(api *API, vin, version string, expiry, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "nissan",
+      "template_source": "templates/definition/vehicle/nissan.yaml",
+      "rendered_type": "nissan",
+      "factory_source": "vehicle/nissan.go",
+      "provider_packages": [
+        "vehicle/nissan"
+      ],
+      "reviewed_source_files": [
+        "vehicle/nissan.go",
+        "vehicle/nissan/api.go",
+        "vehicle/nissan/identity.go",
+        "vehicle/nissan/provider.go",
+        "vehicle/nissan/types.go"
+      ],
+      "authentication": "HTTPS login/token flow with cryptographically random state; regional Nissan provider.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/nissan.go",
+          "line": 56,
+          "code": "identity, err := nissan.NewIdentity(log, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/nissan.go",
+          "line": 61,
+          "code": "api := nissan.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/nissan.go",
+          "line": 66,
+          "code": "v.Provider = nissan.NewProvider(api, cc.VIN, cc.Version, cc.Expiry, cc.Cache)"
+        },
+        {
+          "path": "vehicle/nissan/api.go",
+          "line": 24,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/nissan/api.go",
+          "line": 26,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 66,
+          "code": "// NewIdentity performs the MyNISSAN OneID login and returns a Kamereon token source"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 67,
+          "code": "func NewIdentity(log *util.Logger, user, password string) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/nissan/identity.go",
+          "line": 69,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/nissan/provider.go",
+          "line": 20,
+          "code": "// NewProvider returns a kamereon provider"
+        },
+        {
+          "path": "vehicle/nissan/provider.go",
+          "line": 21,
+          "code": "func NewProvider(api *API, vin, version string, expiry, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "niu-e-scooter",
+      "template_source": "templates/definition/vehicle/niu-e-scooter.yaml",
+      "rendered_type": "niu",
+      "factory_source": "vehicle/niu.go",
+      "provider_packages": [
+        "vehicle/niu"
+      ],
+      "reviewed_source_files": [
+        "vehicle/niu.go",
+        "vehicle/niu/types.go"
+      ],
+      "authentication": "NIU account login using MD5 password; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/niu.go",
+          "line": 59,
+          "code": "Helper:   request.NewHelper(log),"
+        }
+      ]
+    },
+    {
+      "template": "opel",
+      "template_source": "templates/definition/vehicle/opel.yaml",
+      "rendered_type": "opel",
+      "factory_source": "vehicle/psa.go",
+      "provider_packages": [
+        "vehicle/psa"
+      ],
+      "reviewed_source_files": [
+        "vehicle/psa.go",
+        "vehicle/psa/api.go",
+        "vehicle/psa/duration.go",
+        "vehicle/psa/helper.go",
+        "vehicle/psa/identity.go",
+        "vehicle/psa/oauth2.go",
+        "vehicle/psa/provider.go",
+        "vehicle/psa/types.go"
+      ],
+      "authentication": "PSA HTTPS OAuth bearer-token flow.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/psa.go",
+          "line": 71,
+          "code": "identity, err := psa.NewIdentity(log, brand, cc.User, oc, token)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 77,
+          "code": "api := psa.NewAPI(log, identity, realm, oc.ClientID)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 89,
+          "code": "v.Provider = psa.NewProvider(api, vehicle.ID, cc.Cache)"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 25,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 26,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource, realm, id string) *API {"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 28,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 34,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 39,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 20,
+          "code": "// NewIdentity creates PSA identity"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 21,
+          "code": "func NewIdentity(log *util.Logger, brand, user string, oc *oauth2.Config, token *oauth2.Token) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 52,
+          "code": "client := request.NewClient(v.log)"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 16,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, vid string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "peugeot",
+      "template_source": "templates/definition/vehicle/peugeot.yaml",
+      "rendered_type": "peugeot",
+      "factory_source": "vehicle/psa.go",
+      "provider_packages": [
+        "vehicle/psa"
+      ],
+      "reviewed_source_files": [
+        "vehicle/psa.go",
+        "vehicle/psa/api.go",
+        "vehicle/psa/duration.go",
+        "vehicle/psa/helper.go",
+        "vehicle/psa/identity.go",
+        "vehicle/psa/oauth2.go",
+        "vehicle/psa/provider.go",
+        "vehicle/psa/types.go"
+      ],
+      "authentication": "PSA HTTPS OAuth bearer-token flow.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/psa.go",
+          "line": 71,
+          "code": "identity, err := psa.NewIdentity(log, brand, cc.User, oc, token)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 77,
+          "code": "api := psa.NewAPI(log, identity, realm, oc.ClientID)"
+        },
+        {
+          "path": "vehicle/psa.go",
+          "line": 89,
+          "code": "v.Provider = psa.NewProvider(api, vehicle.ID, cc.Cache)"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 25,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 26,
+          "code": "func NewAPI(log *util.Logger, identity oauth2.TokenSource, realm, id string) *API {"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 28,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 34,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/psa/api.go",
+          "line": 39,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 20,
+          "code": "// NewIdentity creates PSA identity"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 21,
+          "code": "func NewIdentity(log *util.Logger, brand, user string, oc *oauth2.Config, token *oauth2.Token) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/psa/identity.go",
+          "line": 52,
+          "code": "client := request.NewClient(v.log)"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 16,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/psa/provider.go",
+          "line": 17,
+          "code": "func NewProvider(api *API, vid string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "polestar-data-portal",
+      "template_source": "templates/definition/vehicle/polestar-data-portal.yaml",
+      "rendered_type": "polestar-data-portal",
+      "factory_source": "vehicle/polestardataportal.go",
+      "provider_packages": [
+        "vehicle/polestar/dataportal"
+      ],
+      "reviewed_source_files": [
+        "vehicle/polestar/dataportal/api.go",
+        "vehicle/polestar/dataportal/identity.go",
+        "vehicle/polestar/dataportal/provider.go",
+        "vehicle/polestar/dataportal/types.go",
+        "vehicle/polestardataportal.go"
+      ],
+      "authentication": "HTTPS Polestar Data Portal OAuth token authentication.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/polestar/dataportal/api.go",
+          "line": 23,
+          "code": "// NewAPI creates a Polestar Data Portal API client. The accountID is sent as"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/api.go",
+          "line": 25,
+          "code": "func NewAPI(log *util.Logger, ts oauth2.TokenSource, accountID string) *API {"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/api.go",
+          "line": 27,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/api.go",
+          "line": 32,
+          "code": "Base: &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/api.go",
+          "line": 33,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/identity.go",
+          "line": 26,
+          "code": "// NewIdentity creates a Polestar Data Portal client-credentials token source"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/identity.go",
+          "line": 27,
+          "code": "func NewIdentity(log *util.Logger, clientID, clientSecret string) oauth2.TokenSource {"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/identity.go",
+          "line": 29,
+          "code": "Helper:       request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/provider.go",
+          "line": 17,
+          "code": "// NewProvider creates a Polestar Data Portal vehicle data provider"
+        },
+        {
+          "path": "vehicle/polestar/dataportal/provider.go",
+          "line": 18,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/polestardataportal.go",
+          "line": 44,
+          "code": "identity := dataportal.NewIdentity(log, cc.ClientID, cc.ClientSecret)"
+        },
+        {
+          "path": "vehicle/polestardataportal.go",
+          "line": 45,
+          "code": "api := dataportal.NewAPI(log, identity, cc.AccountID)"
+        },
+        {
+          "path": "vehicle/polestardataportal.go",
+          "line": 54,
+          "code": "Provider: dataportal.NewProvider(api, strings.ToUpper(vin), cc.Cache),"
+        }
+      ]
+    },
+    {
+      "template": "renault",
+      "template_source": "templates/definition/vehicle/renault.yaml",
+      "rendered_type": "renault",
+      "factory_source": "vehicle/renault.go",
+      "provider_packages": [
+        "vehicle/renault",
+        "vehicle/renault/gigya",
+        "vehicle/renault/kamereon",
+        "vehicle/renault/keys"
+      ],
+      "reviewed_source_files": [
+        "vehicle/renault.go",
+        "vehicle/renault/gigya/identity.go",
+        "vehicle/renault/kamereon/api.go",
+        "vehicle/renault/kamereon/auth.go",
+        "vehicle/renault/kamereon/types.go",
+        "vehicle/renault/keys/keys.go",
+        "vehicle/renault/provider.go"
+      ],
+      "authentication": "Renault HTTPS account login via Gigya and bearer-token Kamereon API.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/renault.go",
+          "line": 73,
+          "code": "identity := gigya.NewIdentity(log, keys.Gigya)"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 78,
+          "code": "api := kamereon.NewAPI(log, keys.Kamereon, identity, func() error {"
+        },
+        {
+          "path": "vehicle/renault.go",
+          "line": 101,
+          "code": "v.Provider = renault.NewProvider(api, accountID, vehicle.VIN, cc.WakeupMode, cc.Cache)"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 36,
+          "code": "func NewIdentity(log *util.Logger, gigya keys.ConfigServer) *Identity {"
+        },
+        {
+          "path": "vehicle/renault/gigya/identity.go",
+          "line": 38,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 28,
+          "code": "func NewAPI(log *util.Logger, keys keys.ConfigServer, identity *gigya.Identity, login func() error) *API {"
+        },
+        {
+          "path": "vehicle/renault/kamereon/api.go",
+          "line": 30,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/keys/keys.go",
+          "line": 33,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 27,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/renault/provider.go",
+          "line": 28,
+          "code": "func NewProvider(api *kamereon.API, accountID, vin string, wakeupMode string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "cupra",
+      "template_source": "templates/definition/vehicle/seat-cupra.yaml",
+      "rendered_type": "drivesomethinggreater",
+      "factory_source": "vehicle/drivesomethinggreater.go",
+      "provider_packages": [
+        "vehicle/vag",
+        "vehicle/vag/vwidentity",
+        "vehicle/vw/eudataact"
+      ],
+      "reviewed_source_files": [
+        "vehicle/drivesomethinggreater.go",
+        "vehicle/vag/challenge.go",
+        "vehicle/vag/token.go",
+        "vehicle/vag/tokensource.go",
+        "vehicle/vag/vwidentity/endpoint.go",
+        "vehicle/vag/vwidentity/forms.go",
+        "vehicle/vw/eudataact/api.go",
+        "vehicle/vw/eudataact/provider.go",
+        "vehicle/vw/eudataact/store.go",
+        "vehicle/vw/eudataact/types.go"
+      ],
+      "authentication": "VW EU Data Act HTTPS login via VAG VW identity; S256 PKCE and crypto/rand nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 49,
+          "code": "api, err := eudataact.NewAPI(log, cc.Brand, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 63,
+          "code": "v.Provider = eudataact.NewProvider(log, api, vehicle.Vin(), cc.Cache)"
+        },
+        {
+          "path": "vehicle/vag/vwidentity/endpoint.go",
+          "line": 70,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 64,
+          "code": "// NewAPI returns the EU Data Act client for the given brand and user, performing"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 68,
+          "code": "func NewAPI(log *util.Logger, brandName, user, password string) (*API, error) {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 84,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 32,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 33,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/store.go",
+          "line": 39,
+          "code": "// creating it on first use. Since NewAPI already returns one client per username"
+        }
+      ]
+    },
+    {
+      "template": "seat",
+      "template_source": "templates/definition/vehicle/seat.yaml",
+      "rendered_type": "drivesomethinggreater",
+      "factory_source": "vehicle/drivesomethinggreater.go",
+      "provider_packages": [
+        "vehicle/vag",
+        "vehicle/vag/vwidentity",
+        "vehicle/vw/eudataact"
+      ],
+      "reviewed_source_files": [
+        "vehicle/drivesomethinggreater.go",
+        "vehicle/vag/challenge.go",
+        "vehicle/vag/token.go",
+        "vehicle/vag/tokensource.go",
+        "vehicle/vag/vwidentity/endpoint.go",
+        "vehicle/vag/vwidentity/forms.go",
+        "vehicle/vw/eudataact/api.go",
+        "vehicle/vw/eudataact/provider.go",
+        "vehicle/vw/eudataact/store.go",
+        "vehicle/vw/eudataact/types.go"
+      ],
+      "authentication": "VW EU Data Act HTTPS login via VAG VW identity; S256 PKCE and crypto/rand nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 49,
+          "code": "api, err := eudataact.NewAPI(log, cc.Brand, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 63,
+          "code": "v.Provider = eudataact.NewProvider(log, api, vehicle.Vin(), cc.Cache)"
+        },
+        {
+          "path": "vehicle/vag/vwidentity/endpoint.go",
+          "line": 70,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 64,
+          "code": "// NewAPI returns the EU Data Act client for the given brand and user, performing"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 68,
+          "code": "func NewAPI(log *util.Logger, brandName, user, password string) (*API, error) {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 84,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 32,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 33,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/store.go",
+          "line": 39,
+          "code": "// creating it on first use. Since NewAPI already returns one client per username"
+        }
+      ]
+    },
+    {
+      "template": "skoda",
+      "template_source": "templates/definition/vehicle/skoda.yaml",
+      "rendered_type": "skoda",
+      "factory_source": "vehicle/skoda.go",
+      "provider_packages": [
+        "vehicle/skoda",
+        "vehicle/skoda/service",
+        "vehicle/skoda/tokenrefreshservice",
+        "vehicle/vag",
+        "vehicle/vag/vwidentity"
+      ],
+      "reviewed_source_files": [
+        "vehicle/skoda.go",
+        "vehicle/skoda/api.go",
+        "vehicle/skoda/params.go",
+        "vehicle/skoda/provider.go",
+        "vehicle/skoda/service/tokenrefreshservice.go",
+        "vehicle/skoda/tokenrefreshservice/endpoint.go",
+        "vehicle/skoda/types.go",
+        "vehicle/vag/challenge.go",
+        "vehicle/vag/token.go",
+        "vehicle/vag/tokensource.go",
+        "vehicle/vag/vwidentity/endpoint.go",
+        "vehicle/vag/vwidentity/forms.go"
+      ],
+      "authentication": "Skoda HTTPS account token flow via VAG OAuth identity helpers using S256 PKCE and cryptographic nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/skoda.go",
+          "line": 58,
+          "code": "api := skoda.NewAPI(log, ts)"
+        },
+        {
+          "path": "vehicle/skoda.go",
+          "line": 78,
+          "code": "api := skoda.NewAPI(log, ts)"
+        },
+        {
+          "path": "vehicle/skoda.go",
+          "line": 81,
+          "code": "v.Provider = skoda.NewProvider(api, vehicle.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/skoda/api.go",
+          "line": 22,
+          "code": "// NewAPI creates a new api client"
+        },
+        {
+          "path": "vehicle/skoda/api.go",
+          "line": 23,
+          "code": "func NewAPI(log *util.Logger, ts oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/skoda/api.go",
+          "line": 25,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/skoda/provider.go",
+          "line": 21,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/skoda/provider.go",
+          "line": 22,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/skoda/tokenrefreshservice/endpoint.go",
+          "line": 43,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vag/vwidentity/endpoint.go",
+          "line": 70,
+          "code": "Helper: request.NewHelper(log),"
+        }
+      ]
+    },
+    {
+      "template": "smart-hello",
+      "template_source": "templates/definition/vehicle/smart-hello.yaml",
+      "rendered_type": "smart-hello",
+      "factory_source": "vehicle/smart-hello.go",
+      "provider_packages": [
+        "vehicle/smart/hello"
+      ],
+      "reviewed_source_files": [
+        "vehicle/smart-hello.go",
+        "vehicle/smart/hello/api.go",
+        "vehicle/smart/hello/const.go",
+        "vehicle/smart/hello/helper.go",
+        "vehicle/smart/hello/identity.go",
+        "vehicle/smart/hello/provider.go",
+        "vehicle/smart/hello/types.go"
+      ],
+      "authentication": "HTTPS login/request signing with MD5 and HMAC-SHA1 using public app key; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/smart-hello.go",
+          "line": 47,
+          "code": "identity, err := hello.NewIdentity(log, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/smart-hello.go",
+          "line": 52,
+          "code": "api := hello.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/smart-hello.go",
+          "line": 63,
+          "code": "v.Provider = hello.NewProvider(log, api, vehicle.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/smart/hello/api.go",
+          "line": 25,
+          "code": "func NewAPI(log *util.Logger, identity *Identity) *API {"
+        },
+        {
+          "path": "vehicle/smart/hello/api.go",
+          "line": 27,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/smart/hello/api.go",
+          "line": 32,
+          "code": "v.Client.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/smart/hello/api.go",
+          "line": 33,
+          "code": "Base: &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/smart/hello/api.go",
+          "line": 47,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/smart/hello/identity.go",
+          "line": 39,
+          "code": "func NewIdentity(log *util.Logger, user, password string) (*Identity, error) {"
+        },
+        {
+          "path": "vehicle/smart/hello/identity.go",
+          "line": 41,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/smart/hello/provider.go",
+          "line": 17,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "subaru",
+      "template_source": "templates/definition/vehicle/subaru.yaml",
+      "rendered_type": "subaru",
+      "factory_source": "vehicle/subaru.go",
+      "provider_packages": [
+        "vehicle/subaru"
+      ],
+      "reviewed_source_files": [
+        "vehicle/subaru.go",
+        "vehicle/subaru/api.go",
+        "vehicle/subaru/identity.go",
+        "vehicle/subaru/provider.go",
+        "vehicle/subaru/types.go"
+      ],
+      "authentication": "HTTPS account login; constant plain PKCE verifier/challenge; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/subaru.go",
+          "line": 45,
+          "code": "identity := subaru.NewIdentity(log)"
+        },
+        {
+          "path": "vehicle/subaru.go",
+          "line": 52,
+          "code": "api := subaru.NewAPI(log, identity)"
+        },
+        {
+          "path": "vehicle/subaru.go",
+          "line": 56,
+          "code": "v.Provider = subaru.NewProvider(api, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/subaru/api.go",
+          "line": 37,
+          "code": "func NewAPI(log *util.Logger, identity *Identity) *API {"
+        },
+        {
+          "path": "vehicle/subaru/api.go",
+          "line": 39,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/subaru/api.go",
+          "line": 65,
+          "code": "v.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/subaru/api.go",
+          "line": 66,
+          "code": "Decorator: transport.DecorateHeaders(headers),"
+        },
+        {
+          "path": "vehicle/subaru/identity.go",
+          "line": 32,
+          "code": "func NewIdentity(log *util.Logger) *Identity {"
+        },
+        {
+          "path": "vehicle/subaru/identity.go",
+          "line": 35,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/subaru/provider.go",
+          "line": 13,
+          "code": "func NewProvider(api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "tesla",
+      "template_source": "templates/definition/vehicle/tesla.yaml",
+      "rendered_type": "tesla",
+      "factory_source": "vehicle/tesla.go",
+      "provider_packages": [
+        "vehicle/tesla"
+      ],
+      "reviewed_source_files": [
+        "vehicle/tesla.go",
+        "vehicle/tesla/controller.go",
+        "vehicle/tesla/fleet.go",
+        "vehicle/tesla/helper.go",
+        "vehicle/tesla/identity.go",
+        "vehicle/tesla/provider.go",
+        "vehicle/tesla/types.go"
+      ],
+      "authentication": "HTTPS Tesla Fleet OAuth bearer tokens; provided request client also passed into tesla-api SDK; control interfaces are not invoked by engine.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/tesla.go",
+          "line": 72,
+          "code": "pc := request.NewClient(log)"
+        },
+        {
+          "path": "vehicle/tesla.go",
+          "line": 73,
+          "code": "pc.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/tesla.go",
+          "line": 74,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/tesla.go",
+          "line": 80,
+          "code": "tcc, err := teslaclient.NewClient(context.Background(), teslaclient.WithClient(pc))"
+        },
+        {
+          "path": "vehicle/tesla.go",
+          "line": 88,
+          "code": "Provider:   tesla.NewProvider(vehicle, cc.Cache),"
+        },
+        {
+          "path": "vehicle/tesla/fleet.go",
+          "line": 52,
+          "code": "identity, err := NewIdentity(log, OAuth2Config(c.Credentials.ID, c.Credentials.Secret), token)"
+        },
+        {
+          "path": "vehicle/tesla/fleet.go",
+          "line": 57,
+          "code": "hc := request.NewClient(log)"
+        },
+        {
+          "path": "vehicle/tesla/fleet.go",
+          "line": 60,
+          "code": "tc, err := teslaclient.NewClient(context.Background(), teslaclient.WithClient(hc))"
+        },
+        {
+          "path": "vehicle/tesla/identity.go",
+          "line": 44,
+          "code": "func NewIdentity(log *util.Logger, oc *oauth2.Config, token *oauth2.Token) (oauth2.TokenSource, error) {"
+        },
+        {
+          "path": "vehicle/tesla/identity.go",
+          "line": 88,
+          "code": "ctx := context.WithValue(context.Background(), oauth2.HTTPClient, request.NewClient(v.log))"
+        },
+        {
+          "path": "vehicle/tesla/provider.go",
+          "line": 16,
+          "code": "func NewProvider(vehicle *tesla.Vehicle, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "toyota",
+      "template_source": "templates/definition/vehicle/toyota.yaml",
+      "rendered_type": "toyota",
+      "factory_source": "vehicle/toyota.go",
+      "provider_packages": [
+        "vehicle/toyota"
+      ],
+      "reviewed_source_files": [
+        "vehicle/toyota.go",
+        "vehicle/toyota/api.go",
+        "vehicle/toyota/identity.go",
+        "vehicle/toyota/provider.go",
+        "vehicle/toyota/types.go"
+      ],
+      "authentication": "Toyota HTTPS login; constant plain PKCE verifier/challenge; blocked by default.",
+      "legacy_crypto_opt_in_required": true,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/toyota.go",
+          "line": 50,
+          "code": "identity := toyota.NewIdentity(log, brandCode)"
+        },
+        {
+          "path": "vehicle/toyota.go",
+          "line": 57,
+          "code": "api := toyota.NewAPI(log, identity, brandCode)"
+        },
+        {
+          "path": "vehicle/toyota.go",
+          "line": 61,
+          "code": "v.Provider = toyota.NewProvider(log, api, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 37,
+          "code": "func NewAPI(log *util.Logger, identity *Identity, brandCode string) *API {"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 39,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 52,
+          "code": "v.Transport = &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/toyota/api.go",
+          "line": 53,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/toyota/identity.go",
+          "line": 33,
+          "code": "func NewIdentity(log *util.Logger, brandCode string) *Identity {"
+        },
+        {
+          "path": "vehicle/toyota/identity.go",
+          "line": 36,
+          "code": "Helper:    request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/toyota/provider.go",
+          "line": 18,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "volvo-connected",
+      "template_source": "templates/definition/vehicle/volvo-connected.yaml",
+      "rendered_type": "volvo-connected",
+      "factory_source": "vehicle/volvo-connected.go",
+      "provider_packages": [
+        "vehicle/volvo/connected"
+      ],
+      "reviewed_source_files": [
+        "vehicle/volvo-connected.go",
+        "vehicle/volvo/connected/api.go",
+        "vehicle/volvo/connected/oauth2.go",
+        "vehicle/volvo/connected/provider.go",
+        "vehicle/volvo/connected/types.go"
+      ],
+      "authentication": "HTTPS Volvo Connected OAuth through util/auth with per-flow state from engine crypto/rand.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/volvo-connected.go",
+          "line": 57,
+          "code": "api := connected.NewAPI(log, cc.VccApiKey, ts)"
+        },
+        {
+          "path": "vehicle/volvo-connected.go",
+          "line": 66,
+          "code": "v.Provider = connected.NewProvider(api, ts, cc.VIN, cc.Cache)"
+        },
+        {
+          "path": "vehicle/volvo/connected/api.go",
+          "line": 23,
+          "code": "// NewAPI creates a new api client"
+        },
+        {
+          "path": "vehicle/volvo/connected/api.go",
+          "line": 24,
+          "code": "func NewAPI(log *util.Logger, vccapikey string, ts oauth2.TokenSource) *API {"
+        },
+        {
+          "path": "vehicle/volvo/connected/api.go",
+          "line": 26,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/volvo/connected/api.go",
+          "line": 31,
+          "code": "Base: &transport.Decorator{"
+        },
+        {
+          "path": "vehicle/volvo/connected/api.go",
+          "line": 32,
+          "code": "Decorator: transport.DecorateHeaders(map[string]string{"
+        },
+        {
+          "path": "vehicle/volvo/connected/provider.go",
+          "line": 27,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/volvo/connected/provider.go",
+          "line": 28,
+          "code": "func NewProvider(api *API, ts oauth2.TokenSource, vin string, cache time.Duration) *Provider {"
+        }
+      ]
+    },
+    {
+      "template": "vw",
+      "template_source": "templates/definition/vehicle/vw.yaml",
+      "rendered_type": "drivesomethinggreater",
+      "factory_source": "vehicle/drivesomethinggreater.go",
+      "provider_packages": [
+        "vehicle/vag",
+        "vehicle/vag/vwidentity",
+        "vehicle/vw/eudataact"
+      ],
+      "reviewed_source_files": [
+        "vehicle/drivesomethinggreater.go",
+        "vehicle/vag/challenge.go",
+        "vehicle/vag/token.go",
+        "vehicle/vag/tokensource.go",
+        "vehicle/vag/vwidentity/endpoint.go",
+        "vehicle/vag/vwidentity/forms.go",
+        "vehicle/vw/eudataact/api.go",
+        "vehicle/vw/eudataact/provider.go",
+        "vehicle/vw/eudataact/store.go",
+        "vehicle/vw/eudataact/types.go"
+      ],
+      "authentication": "VW EU Data Act HTTPS login via VAG VW identity; S256 PKCE and crypto/rand nonce.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 49,
+          "code": "api, err := eudataact.NewAPI(log, cc.Brand, cc.User, cc.Password)"
+        },
+        {
+          "path": "vehicle/drivesomethinggreater.go",
+          "line": 63,
+          "code": "v.Provider = eudataact.NewProvider(log, api, vehicle.Vin(), cc.Cache)"
+        },
+        {
+          "path": "vehicle/vag/vwidentity/endpoint.go",
+          "line": 70,
+          "code": "Helper: request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 64,
+          "code": "// NewAPI returns the EU Data Act client for the given brand and user, performing"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 68,
+          "code": "func NewAPI(log *util.Logger, brandName, user, password string) (*API, error) {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/api.go",
+          "line": 84,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 32,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/vw/eudataact/provider.go",
+          "line": 33,
+          "code": "func NewProvider(log *util.Logger, api *API, vin string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/vw/eudataact/store.go",
+          "line": 39,
+          "code": "// creating it on first use. Since NewAPI already returns one client per username"
+        }
+      ]
+    },
+    {
+      "template": "zero",
+      "template_source": "templates/definition/vehicle/zero.yaml",
+      "rendered_type": "zero",
+      "factory_source": "vehicle/zeromotorcycles.go",
+      "provider_packages": [
+        "vehicle/zero"
+      ],
+      "reviewed_source_files": [
+        "vehicle/zero/api.go",
+        "vehicle/zero/provider.go",
+        "vehicle/zero/types.go",
+        "vehicle/zeromotorcycles.go"
+      ],
+      "authentication": "HTTPS Basic/query account credentials to Zero API; provider logs are discarded, but remote server still sees the credential-bearing request.",
+      "legacy_crypto_opt_in_required": false,
+      "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
+      "construction_evidence": [
+        {
+          "path": "vehicle/zero/api.go",
+          "line": 27,
+          "code": "// NewAPI creates a new vehicle"
+        },
+        {
+          "path": "vehicle/zero/api.go",
+          "line": 28,
+          "code": "func NewAPI(log *util.Logger, user, password string) (*API, error) {"
+        },
+        {
+          "path": "vehicle/zero/api.go",
+          "line": 31,
+          "code": "Helper:   request.NewHelper(log),"
+        },
+        {
+          "path": "vehicle/zero/provider.go",
+          "line": 15,
+          "code": "// NewProvider creates a vehicle api provider"
+        },
+        {
+          "path": "vehicle/zero/provider.go",
+          "line": 16,
+          "code": "func NewProvider(api *API, unitId string, cache time.Duration) *Provider {"
+        },
+        {
+          "path": "vehicle/zeromotorcycles.go",
+          "line": 44,
+          "code": "if res, err = zero.NewAPI(log, cc.User, cc.Password); err != nil {"
+        },
+        {
+          "path": "vehicle/zeromotorcycles.go",
+          "line": 59,
+          "code": "Provider: zero.NewProvider(res, vehicle.UnitNumber, cc.Cache),"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No live manufacturer accounts or endpoint probing; actual provider acceptance remains experimental.",
+    "Local HA HTTP/MQTT is outside optional engine TLS policy.",
+    "Compiled unused provider code and dependency presence alone do not imply runtime use."
+  ],
+  "patch_sha256": "182bb5cbaacec98e6cf4f846751ccbbb47bdb9f06cbed20c9642f81d290d48aa"
+}

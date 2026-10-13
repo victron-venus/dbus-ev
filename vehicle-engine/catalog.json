@@ -32,7 +32,8 @@
         "user",
         "password",
         "vin"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "myalpine",
@@ -65,7 +66,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "audi",
@@ -98,7 +100,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "cardata",
@@ -130,7 +133,8 @@
       "required_parameters": [
         "vin",
         "clientid"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "carwings",
@@ -160,12 +164,13 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "citroen",
       "brands": [
-        "Citroën"
+        "Citro\u00ebn"
       ],
       "oauth": false,
       "parameters": [
@@ -193,7 +198,8 @@
         "user",
         "accessToken",
         "refreshToken"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "dacia",
@@ -226,7 +232,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "ds",
@@ -259,7 +266,8 @@
         "user",
         "accessToken",
         "refreshToken"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "fiat",
@@ -294,7 +302,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "ford-connect-query",
@@ -326,7 +335,8 @@
         "clientid",
         "clientsecret",
         "redirecturi"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "genesis",
@@ -357,7 +367,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "hyundai-us",
@@ -389,7 +400,8 @@
         "user",
         "password",
         "pin"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "hyundai",
@@ -421,7 +433,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "kia",
@@ -452,7 +465,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "lexus",
@@ -482,7 +496,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "livewire",
@@ -514,7 +529,8 @@
         "user",
         "password",
         "deviceuuid"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "mg",
@@ -547,12 +563,13 @@
         "password",
         "vin",
         "region"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "myskoda",
       "brands": [
-        "Škoda"
+        "\u0160koda"
       ],
       "oauth": false,
       "parameters": [
@@ -579,7 +596,8 @@
       "required_parameters": [
         "apikey",
         "vin"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "nissan-ariya",
@@ -610,7 +628,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "nissan",
@@ -640,7 +659,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "niu-e-scooter",
@@ -663,7 +683,8 @@
         "user",
         "password",
         "serial"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "opel",
@@ -696,7 +717,8 @@
         "user",
         "accessToken",
         "refreshToken"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "peugeot",
@@ -729,7 +751,8 @@
         "user",
         "accessToken",
         "refreshToken"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "polestar-data-portal",
@@ -761,7 +784,8 @@
         "clientid",
         "clientsecret",
         "accountid"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "renault",
@@ -796,7 +820,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "cupra",
@@ -829,7 +854,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "seat",
@@ -862,12 +888,13 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "skoda",
       "brands": [
-        "Škoda"
+        "\u0160koda"
       ],
       "oauth": false,
       "parameters": [
@@ -894,7 +921,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "smart-hello",
@@ -927,7 +955,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "subaru",
@@ -957,7 +986,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "tesla",
@@ -992,7 +1022,8 @@
         "clientId",
         "accessToken",
         "refreshToken"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "toyota",
@@ -1022,7 +1053,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": true
     },
     {
       "template": "volvo-connected",
@@ -1057,7 +1089,8 @@
         "clientId",
         "clientSecret",
         "redirectUri"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "vw",
@@ -1091,7 +1124,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     },
     {
       "template": "zero",
@@ -1121,7 +1155,8 @@
       "required_parameters": [
         "user",
         "password"
-      ]
+      ],
+      "requires_legacy_crypto_opt_in": false
     }
   ]
 }

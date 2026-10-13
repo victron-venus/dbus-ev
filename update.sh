@@ -28,7 +28,7 @@ fi
 LOCAL_ONLY="local_config.py"
 
 # Runtime items shipped at the repo root and installed at INSTALL_DIR root.
-RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py configure.py ha install-mercedes-deps.sh"
+RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py configure.py ha install-mercedes-deps.sh install-tls-deps.sh requirements-mercedes.txt requirements-tls.txt"
 
 # Flat-file leftovers that must never survive an update (we run `python3 -m
 # dbus_ev`; a stale root main.py would shadow the package).
@@ -44,6 +44,16 @@ from pathlib import Path
 if sys.version_info[:2] != (3, 12):
     raise SystemExit("Python 3.12.x from Venus OS is required")
 import requests, dbus
+try:
+    import cryptography, cffi, _cffi_backend
+    from cryptography import x509
+    from importlib.metadata import version
+    if tuple(int(v) for v in version("cryptography").split(".")[:3]) < (50, 0, 2):
+        raise ImportError("cryptography 50.0.2 or newer is required")
+    if tuple(int(v) for v in version("cffi").split(".")[:2]) < (2, 0):
+        raise ImportError("cffi 2.0 or newer is required")
+except ImportError as exc:
+    raise SystemExit("Missing TLS dependency: run install-tls-deps.sh before updating") from exc
 sys.path.insert(0, "/opt/victronenergy/dbus-systemcalc-py/ext/velib_python")
 from gi.repository import GLib
 from vedbus import VeDbusService

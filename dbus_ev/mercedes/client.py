@@ -18,6 +18,7 @@ from .oauth import MBAuthError, Oauth
 from .protocol import Protocol, finite
 from .recovery import SessionRecovery
 from .store import TokenStore
+from .tls import session_options
 from .traffic import LOGIN_INTERVAL, TrafficLimits, retry_delay
 from .vendor.app_version import AppVersionManager
 from .vendor.decoder import Decoder
@@ -159,7 +160,10 @@ class MercedesClient:
         self._next_pull = time.monotonic() + INITIAL_PULL_DELAY
         retry = RECONNECT_MIN
         protocol = Protocol(self.vin)
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30),
+            **session_options(),
+        ) as session:
             versions = AppVersionManager(self.region)
             auth = Oauth(session, self.region, self.store, versions)
             while not self._stop.is_set():

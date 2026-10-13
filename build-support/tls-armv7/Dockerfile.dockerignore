@@ -1,0 +1,12 @@
+# Send only the files required to construct this dependency artifact.
+**
+!build-support/
+!build-support/tls-armv7/
+!build-support/tls-armv7/**
+!scripts/
+!scripts/build_tls_wheel.py
+!scripts/finalize_tls_bundle.py
+!dbus_ev/
+!dbus_ev/tls_policy.py
+!tests/
+!tests/tls_bundle_probe.py

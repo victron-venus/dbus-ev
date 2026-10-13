@@ -1,3 +1,31 @@
+--- /dev/null
++++ b/util/crypto_random.go
+@@ -0,0 +1,25 @@
++package util
++
++import (
++	"crypto/rand"
++	"math/big"
++)
++
++// CryptoRandomString uses the OS cryptographic source for provider nonces and state.
++// The caller supplies a fixed public alphabet, not key material. Entropy failures
++// stop the process instead of silently falling back to predictable randomness.
++func CryptoRandomString(size int, alphabet []rune) string {
++	if size < 0 || len(alphabet) < 2 {
++		panic("invalid random string parameters")
++	}
++	out := make([]rune, size)
++	bound := big.NewInt(int64(len(alphabet)))
++	for i := range out {
++		n, err := rand.Int(rand.Reader, bound)
++		if err != nil {
++			panic(err)
++		}
++		out[i] = alphabet[n.Int64()]
++	}
++	return string(out)
++}
 --- a/util/request/roundtrip.go
 +++ b/util/request/roundtrip.go
 @@ -14,6 +14,9 @@
@@ -19,9 +47,169 @@
  	}
  
  	return tripper
+--- a/util/transport/default.go
++++ b/util/transport/default.go
+@@ -10,7 +10,8 @@
+ // Default returns an http.DefaultTransport as http.Transport with reduced dial timeout
+ func Default() *http.Transport {
+ 	return &http.Transport{
+-		Proxy: http.ProxyFromEnvironment,
++		TLSClientConfig: SecureTLSConfig(),
++		Proxy:           http.ProxyFromEnvironment,
+ 		DialContext: (&net.Dialer{
+ 			Timeout:   5 * time.Second, // reduced from 30s
+ 			KeepAlive: 30 * time.Second,
+--- /dev/null
++++ b/util/transport/security.go
+@@ -0,0 +1,54 @@
++package transport
++
++import (
++	"crypto/ecdsa"
++	"crypto/ed25519"
++	"crypto/rsa"
++	"crypto/tls"
++	"crypto/x509"
++	"errors"
++)
++
++// SecureTLSConfig retains normal chain/hostname verification and rejects weak
++// certificate keys before an HTTP request or MQTT credentials can be sent.
++func SecureTLSConfig() *tls.Config {
++	return &tls.Config{
++		MinVersion: tls.VersionTLS12,
++		CipherSuites: []uint16{
++			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
++			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
++			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
++			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
++			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
++			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
++		},
++		VerifyConnection: func(state tls.ConnectionState) error {
++			for _, chain := range state.VerifiedChains {
++				valid := len(chain) > 0
++				for _, cert := range chain {
++					if !strongKey(cert) {
++						valid = false
++						break
++					}
++				}
++				if valid {
++					return nil
++				}
++			}
++			return errors.New("no verified chain with strong certificate keys")
++		},
++	}
++}
++
++func strongKey(cert *x509.Certificate) bool {
++	switch key := cert.PublicKey.(type) {
++	case *rsa.PublicKey:
++		return key.N.BitLen() >= 2048
++	case *ecdsa.PublicKey:
++		return key.Curve.Params().BitSize >= 224
++	case ed25519.PublicKey:
++		return len(key) == ed25519.PublicKeySize
++	default:
++		return false
++	}
++}
+--- a/vehicle/bluelink/cci.go
++++ b/vehicle/bluelink/cci.go
+@@ -431,6 +431,10 @@
+ 		E: e,
+ 	}
+ 
++	if pub.N.BitLen() < 2048 {
++		return "", fmt.Errorf("RSA encryption key must be at least 2048 bits")
++	}
++
+ 	ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, pub, []byte(password))
+ 	if err != nil {
+ 		return "", err
+--- a/vehicle/bluelink/identity.go
++++ b/vehicle/bluelink/identity.go
+@@ -15,7 +15,6 @@
+ 	"github.com/evcc-io/evcc/util"
+ 	"github.com/evcc-io/evcc/util/oauth"
+ 	"github.com/evcc-io/evcc/util/request"
+-	"github.com/samber/lo"
+ 	"golang.org/x/oauth2"
+ )
+ 
+@@ -81,7 +80,7 @@
+ 
+ 	id := uuid.New().String()
+ 	data := map[string]any{
+-		"pushRegId": lo.RandomString(64, []rune("0123456789ABCDEF")),
++		"pushRegId": util.CryptoRandomString(64, []rune("0123456789ABCDEF")),
+ 		"pushType":  v.config.PushType,
+ 		"uuid":      id,
+ 	}
+--- a/vehicle/bmw/cardata/mqtt.go
++++ b/vehicle/bmw/cardata/mqtt.go
+@@ -16,6 +16,7 @@
+ 	"github.com/eclipse/paho.mqtt.golang/packets"
+ 	"github.com/evcc-io/evcc/api"
+ 	"github.com/evcc-io/evcc/util"
++	"github.com/evcc-io/evcc/util/transport"
+ 	"golang.org/x/oauth2"
+ )
+ 
+@@ -132,7 +133,7 @@
+ }
+ 
+ func (v *MqttConnector) run(ctx context.Context, ts oauth2.TokenSource) {
+-	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(time.Second), backoff.WithMaxInterval(time.Minute), backoff.WithMaxElapsedTime(0))
++	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(5*time.Minute), backoff.WithMaxInterval(6*time.Hour), backoff.WithRandomizationFactor(0), backoff.WithMaxElapsedTime(0))
+ 
+ 	for ctx.Err() == nil {
+ 		time.Sleep(bo.NextBackOff())
+@@ -167,8 +168,9 @@
+ 
+ 	paho := mqtt.NewClient(
+ 		mqtt.NewClientOptions().
++			SetTLSConfig(transport.SecureTLSConfig()).
+ 			AddBroker(StreamingURL).
+-			SetAutoReconnect(true).
++			SetAutoReconnect(false).
+ 			SetUsername(gcid).
+ 			SetPassword(idToken))
+ 
+--- a/vehicle/bmw/cardata/provider.go
++++ b/vehicle/bmw/cardata/provider.go
+@@ -72,7 +72,7 @@
+ 	}
+ 
+ 	// obsolete containers keep streaming, resulting in duplicate messages
+-	defer v.deleteObsoleteContainers(containers)
++	// dbus-ev does not delete containers owned by other installations.
+ 
+ 	if i := slices.IndexFunc(containers, func(c Container) bool {
+ 		return c.Name == containerName && c.Purpose == requiredVersion
 --- a/vehicle/carwings.go
 +++ b/vehicle/carwings.go
-@@ -105,33 +105,9 @@
+@@ -10,6 +10,7 @@
+ 	"github.com/evcc-io/evcc/api"
+ 	"github.com/evcc-io/evcc/util"
+ 	"github.com/evcc-io/evcc/util/request"
++	"github.com/evcc-io/evcc/util/transport"
+ 	"github.com/joeshaw/carwings"
+ )
+ 
+@@ -57,7 +58,8 @@
+ 
+ 	// http client with high dial/handshake timeout
+ 	transport := request.NewTripper(log, &http.Transport{
+-		Proxy: http.ProxyFromEnvironment, // default
++		TLSClientConfig: transport.SecureTLSConfig(),
++		Proxy:           http.ProxyFromEnvironment, // default
+ 		DialContext: (&net.Dialer{
+ 			Timeout:   carwingsRequestTimeout,
+ 			KeepAlive: 30 * time.Second, // default
+@@ -105,33 +107,9 @@
  	return err
  }
  
@@ -53,10 +241,63 @@
 -	}
 -
 -	return bs, err
-+    return v.session.BatteryStatus()
++	return v.session.BatteryStatus()
  }
  
  // refreshResult triggers an update if not already in progress, otherwise gets result
+--- a/vehicle/fiat/api.go
++++ b/vehicle/fiat/api.go
+@@ -41,7 +41,7 @@
+ 		"Content-Type":        "application/json",
+ 		"Accept":              "application/json",
+ 		"X-Clientapp-Version": "1.0",
+-		"ClientrequestId":     lo.RandomString(16, lo.LettersCharset),
++		"ClientrequestId":     util.CryptoRandomString(16, lo.LettersCharset),
+ 		"X-Api-Key":           XApiKey,
+ 		"X-Originator-Type":   "web",
+ 		"locale":              "de_de", // only required for pinAuth
+--- a/vehicle/fiat/identity.go
++++ b/vehicle/fiat/identity.go
+@@ -152,7 +152,7 @@
+ 	headers := map[string]string{
+ 		"Content-Type":        "application/json",
+ 		"X-Clientapp-Version": "1.0",
+-		"ClientRequestId":     lo.RandomString(16, lo.LettersCharset),
++		"ClientRequestId":     util.CryptoRandomString(16, lo.LettersCharset),
+ 		"X-Api-Key":           XApiKey,
+ 		"X-Originator-Type":   "web",
+ 	}
+@@ -162,7 +162,7 @@
+ 		return err
+ 	}
+ 
+-	cfg, err := config.LoadDefaultConfig(v.ctx, config.WithRegion(Region))
++	cfg, err := config.LoadDefaultConfig(v.ctx, config.WithRegion(Region), config.WithHTTPClient(v.Client))
+ 	if err != nil {
+ 		return err
+ 	}
+--- a/vehicle/fiat.go
++++ b/vehicle/fiat.go
+@@ -60,7 +60,7 @@
+ 	cc.VIN, err = ensureVehicle(cc.VIN, api.Vehicles)
+ 
+ 	if err == nil {
+-		v.Provider = fiat.NewProvider(api, cc.VIN, cc.PIN, cc.Expiry, cc.Cache)
++		v.Provider = fiat.NewProvider(api, cc.VIN, "", cc.Expiry, cc.Cache)
+ 		v.Controller = fiat.NewController(v.Provider, api, log, cc.VIN, cc.PIN)
+ 	}
+ 
+--- a/vehicle/nissan/identity.go
++++ b/vehicle/nissan/identity.go
+@@ -128,7 +128,7 @@
+ 	}()
+ 
+ 	cv := oauth2.GenerateVerifier()
+-	state := lo.RandomString(32, lo.AlphanumericCharset)
++	state := util.CryptoRandomString(32, lo.AlphanumericCharset)
+ 
+ 	uri := OAuth2Config.AuthCodeURL(state, oauth2.S256ChallengeOption(cv),
+ 		oauth2.SetAuthURLParam("locale", Locale),
 --- a/vehicle/nissan/provider.go
 +++ b/vehicle/nissan/provider.go
 @@ -1,7 +1,6 @@
@@ -112,10 +353,64 @@
 -	}
 -
 -	return res, err
-+    return battery()
++	return battery()
  }
  
  var _ api.Battery = (*Provider)(nil)
+--- a/vehicle/saic/api.go
++++ b/vehicle/saic/api.go
+@@ -103,8 +103,8 @@
+ 
+ // repeatRequest polls for the deferred answer in the background
+ func (v *API) repeatRequest(path string, event_id string) {
+-	for count := range 20 {
+-		time.Sleep(2 * time.Second)
++	for count := range 3 {
++		time.Sleep(20 * time.Second)
+ 		v.log.TRACE.Printf("repeated query %d", count)
+ 		// success stores the value (stateValid); a hard error stops the loop
+ 		if err := v.doRepeatedRequest(path, event_id); err != api.ErrMustRetry {
+--- a/vehicle/saic/identity.go
++++ b/vehicle/saic/identity.go
+@@ -36,7 +36,7 @@
+ 		baseUrl:  baseUrl,
+ 	}
+ 
+-	v.deviceId = lo.RandomString(64, lo.AlphanumericCharset) + "###com.saicmotor.europecar"
++	v.deviceId = util.CryptoRandomString(64, lo.AlphanumericCharset) + "###com.saicmotor.europecar"
+ 
+ 	v.Client.Transport = &transport.Decorator{
+ 		Decorator: requests.Decorate,
+--- a/vehicle/smart/hello/helper.go
++++ b/vehicle/smart/hello/helper.go
+@@ -6,6 +6,7 @@
+ 	"crypto/sha1"
+ 	"encoding/base64"
+ 	"fmt"
++	"github.com/evcc-io/evcc/util"
+ 	"io"
+ 	"net/url"
+ 	"strconv"
+@@ -15,7 +16,7 @@
+ )
+ 
+ func createSignature(method, path string, params url.Values, body io.Reader) (string, string, string, error) {
+-	nonce := lo.RandomString(16, lo.AlphanumericCharset)
++	nonce := util.CryptoRandomString(16, lo.AlphanumericCharset)
+ 	ts := strconv.FormatInt(time.Now().UnixMilli(), 10)
+ 
+ 	md5Hash := "1B2M2Y8AsgTpgAmY7PhCfg=="
+--- a/vehicle/smart/hello/identity.go
++++ b/vehicle/smart/hello/identity.go
+@@ -51,7 +51,7 @@
+ 			v.log.WARN.Printf("load state: %v", err)
+ 		}
+ 		// no usable persisted state — generate a fresh device ID (sent in login headers)
+-		state.DeviceID = lo.RandomString(16, lo.AlphanumericCharset)
++		state.DeviceID = util.CryptoRandomString(16, lo.AlphanumericCharset)
+ 	}
+ 
+ 	// deviceID must be set before any login — it is sent in request headers.
 --- a/vehicle/toyota/provider.go
 +++ b/vehicle/toyota/provider.go
 @@ -1,8 +1,6 @@
@@ -146,7 +441,10 @@
 -			mu.Unlock()
 -		}
 -		return err
--	}
++	return &Provider{
++		status:  util.Cached(func() (Status, error) { return api.Status(vin) }, cache),
++		refresh: func() error { return api.RefreshStatus(vin) },
+ 	}
 -
 -	impl := &Provider{
 -		status: util.Cached(func() (Status, error) {
@@ -172,65 +470,28 @@
 -	}
 -
 -	return impl
-+    return &Provider{
-+        status: util.Cached(func() (Status, error) { return api.Status(vin) }, cache),
-+        refresh: func() error { return api.RefreshStatus(vin) },
-+    }
  }
  
  var _ api.Resurrector = (*Provider)(nil)
---- a/vehicle/fiat.go
-+++ b/vehicle/fiat.go
-@@ -60,7 +60,7 @@
- 	cc.VIN, err = ensureVehicle(cc.VIN, api.Vehicles)
+--- a/vehicle/vag/vwidentity/endpoint.go
++++ b/vehicle/vag/vwidentity/endpoint.go
+@@ -90,7 +90,7 @@
  
- 	if err == nil {
--		v.Provider = fiat.NewProvider(api, cc.VIN, cc.PIN, cc.Expiry, cc.Cache)
-+		v.Provider = fiat.NewProvider(api, cc.VIN, "", cc.Expiry, cc.Cache)
- 		v.Controller = fiat.NewController(v.Provider, api, log, cc.VIN, cc.PIN)
+ 	// add nonce and state
+ 	query := url.Values{
+-		"nonce": {lo.RandomString(43, lo.LettersCharset)},
++		"nonce": {util.CryptoRandomString(43, lo.LettersCharset)},
+ 		"state": {uuid.New().String()},
  	}
  
---- a/vehicle/bmw/cardata/provider.go
-+++ b/vehicle/bmw/cardata/provider.go
-@@ -72,7 +72,7 @@
+--- a/vehicle/vw/eudataact/api.go
++++ b/vehicle/vw/eudataact/api.go
+@@ -129,7 +129,7 @@
+ 		"state":         {fmt.Sprintf("de__en__%s", v.brand.state)},
+ 		"redirect_uri":  {RedirectURI},
+ 		"prompt":        {"login"},
+-		"nonce":         {lo.RandomString(43, lo.LettersCharset)},
++		"nonce":         {util.CryptoRandomString(43, lo.LettersCharset)},
  	}
  
- 	// obsolete containers keep streaming, resulting in duplicate messages
--	defer v.deleteObsoleteContainers(containers)
-+	// dbus-ev does not delete containers owned by other installations.
- 
- 	if i := slices.IndexFunc(containers, func(c Container) bool {
- 		return c.Name == containerName && c.Purpose == requiredVersion
---- a/vehicle/bmw/cardata/mqtt.go
-+++ b/vehicle/bmw/cardata/mqtt.go
-@@ -132,7 +132,7 @@
- }
- 
- func (v *MqttConnector) run(ctx context.Context, ts oauth2.TokenSource) {
--	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(time.Second), backoff.WithMaxInterval(time.Minute), backoff.WithMaxElapsedTime(0))
-+	bo := backoff.NewExponentialBackOff(backoff.WithInitialInterval(5*time.Minute), backoff.WithMaxInterval(6*time.Hour), backoff.WithRandomizationFactor(0), backoff.WithMaxElapsedTime(0))
- 
- 	for ctx.Err() == nil {
- 		time.Sleep(bo.NextBackOff())
-@@ -168,7 +168,7 @@
- 	paho := mqtt.NewClient(
- 		mqtt.NewClientOptions().
- 			AddBroker(StreamingURL).
--			SetAutoReconnect(true).
-+			SetAutoReconnect(false).
- 			SetUsername(gcid).
- 			SetPassword(idToken))
- 
---- a/vehicle/saic/api.go
-+++ b/vehicle/saic/api.go
-@@ -103,8 +103,8 @@
- 
- // repeatRequest polls for the deferred answer in the background
- func (v *API) repeatRequest(path string, event_id string) {
--	for count := range 20 {
--		time.Sleep(2 * time.Second)
-+	for count := range 3 {
-+		time.Sleep(20 * time.Second)
- 		v.log.TRACE.Printf("repeated query %d", count)
- 		// success stores the value (stateValid); a hard error stops the loop
- 		if err := v.doRepeatedRequest(path, event_id); err != api.ErrMustRetry {
+ 	resp, err := v.Get(vwidentity.Config.AuthURL + "?" + q.Encode())

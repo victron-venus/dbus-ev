@@ -1,14 +1,14 @@
 # Quality, build and assessment evidence
 
-The [machine-readable review](evidence/assessment-2026-10-13.json) records checks on application source `4ea5bfffa441e4c5259e5564f1348781fb7ee32b` on 2026-10-13. Documentation additions do not substitute for these checks.
+The [machine-readable review](evidence/assessment-2026-10-13.json) records the initial application audit and the subsequent security update on 2026-10-13. The [provider policy and graph](provider-cryptography.md) describe the new transport checks; documentation does not substitute for tests.
 
 ## Reproduction and results
 
-Use the locked Python 3.12.13 environment described in [CONTRIBUTING.md](../CONTRIBUTING.md). The application pytest suite passed **288 tests**, with **1 skipped**; the receipt explains the optional-environment skips. A separate release-contract run passed **342 tests**. Ruff lint and formatting passed. Local wheel construction passed; it does not install or validate Venus OS native libraries.
+Use the locked Python 3.12.13 environment described in [CONTRIBUTING.md](../CONTRIBUTING.md). The security update application pytest suite passed **328 tests**, with **1 skipped**; the receipt explains the optional-environment skips. A separate release-contract run passed **342 tests**. Ruff lint and formatting passed. Local wheel construction passed for the initial metadata change; it does not install or validate Venus OS native libraries. The new [ARMv7 dependency bundle](tls-dependencies.md) has a dedicated offline native verifier; require a successful job for the exact revision before using it.
 
-Runtime-only statement coverage, excluding tests, measured **1612/1794 (89.86%)** in the listed Python files. The generic `--cov=.` total includes tests and is not a defensible whole-project percentage. This review therefore does **not** claim OpenSSF Silver 80% whole-project coverage: release helpers, shell code, optional integrations and native dependencies need an explicit accounting. Do not silently remove these components from the denominator.
+Runtime-only statement coverage, excluding tests, measured **1702/1902 (89.48%)** in the listed Python files. The generic `--cov=.` total includes tests and is not a defensible whole-project percentage. This review therefore does **not** claim OpenSSF Silver 80% whole-project coverage: release helpers, shell code, optional integrations and native dependencies need an explicit accounting. Do not silently remove these components from the denominator.
 
-The all-severity Bandit 1.9.2 review found 32 low-severity warnings and no medium/high findings. The receipt includes each location and review; the warnings concern placeholder/key-name strings and local subprocess trust boundaries. The optional Go engine passed its mandatory-patch wrapper's race tests and vet on macOS ARM64. Target Linux ARMv7/ARM64 import graphs support the scoped GO-2026-5932 non-applicability finding in the security case. This is not a live-provider test or a claim that every module is free of advisories.
+The all-severity Bandit 1.9.2 review found 32 low-severity warnings and no medium/high findings. The receipt includes each location and review; the warnings concern placeholder/key-name strings and local subprocess trust boundaries. The optional Go engine passed its mandatory-patch wrapper's race tests and vet on macOS ARM64, plus cross-compilation for Linux ARMv7. Forty real Python TLS tests cover accepted and rejected certificate chains and redirect downgrades; Go tests cover TLS policy, the entire provider compatibility gate and redirect rejection. Target Linux ARMv7/ARM64 import graphs support the scoped GO-2026-5932 non-applicability finding in the security case. This is not a live-provider test or a claim that every module is free of advisories.
 
 ## Dependencies, installation and delivery
 
@@ -20,6 +20,6 @@ Source and release downloads use GitHub HTTPS. Existing release assets include S
 
 ## Review limits and next work
 
-The public GitHub review found enabled private vulnerability reporting and no open Dependabot or secret alerts. Code-scanning observations are listed individually in the receipt. Release bodies are present; older retrospective release notes still require the separate release-note quality review before claiming complete coverage. No public project vulnerability advisory or ordinary issue was found, and the owner reported no external reports in the preceding twelve months.
+The public GitHub review found enabled private vulnerability reporting and no open Dependabot or secret alerts. Code-scanning observations are listed individually in the receipt. The historical release-note review confirmed source-based human-readable change summaries and upgrade guidance; older notes are explicitly labelled retrospective. No public project vulnerability advisory or ordinary issue was found, and the owner reported no external reports in the preceding twelve months.
 
 The Markdown uses headings and descriptive links, but this review is not an accessibility certification or a tested translation system. Full release reproducibility, cryptographic signing, comprehensive coverage, optional-runtime accessibility and actual [access continuity](../GOVERNANCE.md) remain work in [the roadmap](../ROADMAP.md). Unsupported criteria must stay unmet in the public assessment.

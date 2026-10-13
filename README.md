@@ -266,11 +266,26 @@ read-only firmware filesystem. Firmware updates can replace system Python
 packages; check dependencies after each update before assuming the service is
 healthy. The installer does not run `pip` or upgrade system packages.
 
+HTTPS and Mercedes require `cryptography>=50.0.2` for exact verified certificate
+key checks. Provision its pinned binary wheels once, before updating:
+
+```sh
+./install-tls-deps.sh
+```
+
+The script installs only into persistent `/data/setupOptions/dbus-ev/python`.
+`install-mercedes-deps.sh` includes the same step. ARMv7 requires the reviewed [offline TLS bundle](docs/tls-dependencies.md),
+CPython 3.12, glibc 2.36 or newer and `libffi.so.8`; pass its directory to the
+script. Unsupported targets fail before installation instead of compiling on
+the device. The updater checks the dependency before stopping the old service.
+No live-device compatibility or new release acceptance is implied by a wheel
+availability check.
+
 Before installation, check the target interpreter:
 
 ```sh
 python3 --version
-python3 -c "import requests, dbus; from gi.repository import GLib"
+PYTHONPATH=/data/setupOptions/dbus-ev/python python3 -c "import requests, cryptography, dbus; from gi.repository import GLib"
 ```
 
 Verify a running process and its D-Bus data after installation:
