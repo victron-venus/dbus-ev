@@ -5,12 +5,26 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 
 ALL_PACKAGES = "./..."
+
+
+def fuzz_seconds(value):
+    match = re.fullmatch(r"([1-9]\d*)s", value, re.ASCII)
+    if match is None or int(match[1]) > 300:
+        raise argparse.ArgumentTypeError("fuzz limits must be 1s through 300s")
+    return value
+
+
+def fuzz_target(value):
+    if re.fullmatch(r"\^Fuzz\w+\$", value, re.ASCII) is None:
+        raise argparse.ArgumentTypeError("select one exact anchored Fuzz function")
+    return value
 
 
 def build_arguments(args):
@@ -50,11 +64,33 @@ def go_arguments(argv=None):
     test.add_argument("package", nargs="?", choices=(".", ALL_PACKAGES), default=ALL_PACKAGES)
     vet = commands.add_parser("vet")
     vet.add_argument("package", nargs="?", choices=(".", ALL_PACKAGES), default=ALL_PACKAGES)
+    fuzz = commands.add_parser("fuzz")
+    fuzz.add_argument("-fuzz", type=fuzz_target, required=True)
+    fuzz.add_argument("-fuzztime", type=fuzz_seconds, default="60s")
+    fuzz.add_argument("-fuzzminimizetime", type=fuzz_seconds, default="10s")
+    fuzz.add_argument("-parallel", type=int, choices=(1, 2), default=2)
+    fuzz.add_argument("-timeout", type=fuzz_seconds, default="120s")
+    commands.add_parser("fuzz-build")
     args = parser.parse_args(argv)
     if args.command == "build":
         command = build_arguments(args)
     elif args.command == "test":
         command = test_arguments(args, parser)
+    elif args.command == "fuzz":
+        return [
+            "test",
+            "-run=^$",
+            f"-fuzz={args.fuzz}",
+            f"-fuzztime={args.fuzztime}",
+            f"-fuzzminimizetime={args.fuzzminimizetime}",
+            f"-parallel={args.parallel}",
+            f"-timeout={args.timeout}",
+            ".",
+        ]
+    elif args.command == "fuzz-build":
+        # Compile the instrumented test binary during dependency setup. This
+        # primes the Go cache without executing seeds or mutation campaigns.
+        return ["test", "-c", "-fuzz=Fuzz", f"-o={os.devnull}", "."]
     else:
         command = ["vet"]
     command.append("." if args.package == "." else ALL_PACKAGES)

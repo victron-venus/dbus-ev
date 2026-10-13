@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "language": "go",
+  "go-version-file": "vehicle-engine/go.mod",
+  "setup": [
+    [
+      "go",
+      "-C",
+      "vehicle-engine",
+      "mod",
+      "download"
+    ],
+    [
+      "python3",
+      "vehicle-engine/build.py",
+      "fuzz-build"
+    ]
+  ],
+  "targets": [
+    {
+      "name": "vehicle-telemetry",
+      "engine": "go",
+      "command": [
+        "python3",
+        "vehicle-engine/build.py",
+        "fuzz",
+        "-fuzz=^FuzzVehicleTelemetry$"
+      ],
+      "seconds": 60,
+      "cwd": "."
+    },
+    {
+      "name": "provider-retry-policy",
+      "engine": "go",
+      "command": [
+        "python3",
+        "vehicle-engine/build.py",
+        "fuzz",
+        "-fuzz=^FuzzProviderRetryAfter$"
+      ],
+      "seconds": 60,
+      "cwd": "."
+    },
+    {
+      "name": "oauth-state-boundary",
+      "engine": "go",
+      "command": [
+        "python3",
+        "vehicle-engine/build.py",
+        "fuzz",
+        "-fuzz=^FuzzOAuthStateBoundary$"
+      ],
+      "seconds": 60,
+      "cwd": "."
+    }
+  ]
+}
