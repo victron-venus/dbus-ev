@@ -17,7 +17,27 @@ IMAGES = {
 }
 
 
-def finalize(bundle: Path) -> None:
+def read_trusted_hashes(lock: Path) -> dict[str, str]:
+    """Accept only the exact reviewed dependency closure from the source checkout."""
+    result = {}
+    for line in lock.read_text().splitlines():
+        if not line or line.startswith("#"):
+            continue
+        match = re.fullmatch(r"([a-z0-9-]+)==(\S+) --hash=sha256:([a-f0-9]{64})", line)
+        if not match:
+            raise ValueError("Malformed trusted TLS wheel lock")
+        name, version, digest = match.groups()
+        if name in result or EXPECTED.get(name) != version:
+            raise ValueError("Unexpected/duplicate trusted wheel lock entry")
+        result[name] = digest
+    if result.keys() != EXPECTED.keys():
+        raise ValueError("Incomplete trusted TLS wheel lock")
+    return result
+
+
+def finalize(bundle: Path, trusted_lock: Path) -> None:
+    """Verify produced wheel bytes against source-controlled pins, then record them."""
+    trusted_hashes = read_trusted_hashes(trusted_lock)
     revision = os.environ.get("SOURCE_REVISION", "")
     if not re.fullmatch(r"[a-f0-9]{40}", revision):
         raise ValueError("SOURCE_REVISION must identify the reviewed Git commit")
@@ -36,13 +56,16 @@ def finalize(bundle: Path) -> None:
         name, version = fields["Name"], fields["Version"]
         if name in names or EXPECTED.get(name) != version:
             raise ValueError(f"Unexpected/duplicate wheel: {name} {version}")
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != trusted_hashes[name]:
+            raise ValueError(f"Wheel differs from trusted source lock: {name}")
         names.add(name)
         wheels.append(
             {
                 "name": name,
                 "version": version,
                 "file": path.name,
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "sha256": digest,
             }
         )
     if names != EXPECTED.keys():
@@ -72,4 +95,4 @@ def finalize(bundle: Path) -> None:
 
 if __name__ == "__main__":
     # This image-local entrypoint writes only the fixed build artifact directory.
-    finalize(Path("/bundle"))
+    finalize(Path("/bundle"), Path("/build/requirements-tls-armv7.txt"))

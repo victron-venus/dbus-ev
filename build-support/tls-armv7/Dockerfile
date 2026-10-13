@@ -26,7 +26,7 @@ RUN --network=none mkdir /build/cffi && \
     tar -xzf /sources/cffi-2.1.1.tar.gz --strip-components=1 -C /build/cffi
 COPY scripts/build_tls_wheel.py ./
 RUN --network=none /tools/bin/python build_tls_wheel.py
-COPY scripts/finalize_tls_bundle.py ./
+COPY scripts/finalize_tls_bundle.py requirements-tls-armv7.txt ./
 RUN --network=none python finalize_tls_bundle.py && \
     cp requirements-*.txt /bundle/ && \
     dpkg-query -W > /bundle/builder-packages.txt && \

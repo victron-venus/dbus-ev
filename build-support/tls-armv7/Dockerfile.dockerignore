@@ -10,3 +10,4 @@
 !dbus_ev/tls_policy.py
 !tests/
 !tests/tls_bundle_probe.py
+!requirements-tls-armv7.txt

@@ -1304,7 +1304,7 @@
         "vehicle/myskoda/provider.go",
         "vehicle/myskoda/types.go"
       ],
-      "authentication": "Skoda HTTPS account token flow; VAG identity helpers use S256 PKCE and cryptographic nonce.",
+      "authentication": "Skoda HTTPS API-key requests through util/request.",
       "legacy_crypto_opt_in_required": false,
       "transport": "HTTPS through patched util/request and/or engine http.DefaultTransport; BMW MQTT TLS separately patched",
       "construction_evidence": [

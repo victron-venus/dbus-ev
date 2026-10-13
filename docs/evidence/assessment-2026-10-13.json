@@ -609,11 +609,11 @@
   "runtime_source_state": "Security update in this revision; exact changed runtime/patch files are hashed below.",
   "security_update": {
     "python_tls_tests": 48,
-    "cases": "Real TLS1.2/1.3 aiohttp+requests chains, exact2047-bit root, trust/hostname failures, private307redirect rejection, socket-lifetime and secureWSSredirect cases.",
+    "cases": "Real TLS 1.2/1.3 aiohttp+requests chains, exact 2047-bit root, trust/hostname failures, private 307 redirect rejection, socket-lifetime and secure WSS redirect cases.",
     "go_race_tests": "passed",
     "go_vet": "passed",
     "go_linux_armv7_cross_build": "passed",
-    "upstream_cci_rsa_test": "1024 and2047 rejected,2048 accepted; passed",
+    "upstream_cci_rsa_test": "1024 and 2047 rejected, 2048 accepted; passed",
     "bundle_contract_tests": 11,
     "native_archive_contract_tests": 1,
     "armv7_native_bundle_verification": "Required CI job builds and verifies the exact revision; see its published artifact/probe result. Local macOS checks do not claim native ARM execution.",
@@ -690,5 +690,44 @@
     "go_race_tests": "passed",
     "native_bundle": "CFFI wheel inputs are unchanged; the final-policy native verification is a separate receipt from the prior wheel build.",
     "sonar_async_exception": "The aiohttp TraceConfig callback must be a coroutine even when its validation performs no I/O. The single S7503 annotation records this API requirement; no dummy await is introduced."
+  },
+  "runtime_and_patch_source_revision": "33d03076ed071853784eb26eb7cd1ada39cc060c",
+  "trusted_bundle_update": {
+    "purpose": "Require source-controlled wheel hashes for offline installation and for CI bundle finalization; the supplied bundle cannot authorize replacement bytes.",
+    "tests": {
+      "bundle_contract": 16,
+      "real_offline_installer_tampering": 1,
+      "native_archive_payload": 1,
+      "command": "uv run pytest --no-cov -q tests/test_tls_bundle.py tests/test_tls_installer.py tests/test_release_runtime_payload.py",
+      "result": "18 passed"
+    },
+    "wheel_source": "The pinned CFFI bytes match two clean independent ARMv7 builds and the successful CI bundle for 33d0307 (GitHub test merge 1ec0aa808490848d9455fec8b2548c597eade99c). The cryptography and pycparser pins also match requirements-tls.txt.",
+    "scope": "The TLS policy, Go code and native compiler inputs are unchanged. This is integrity checking relative to the trusted source checkout, not a release-signature claim.",
+    "files": [
+      {
+        "path": "requirements-tls-armv7.txt",
+        "sha256": "4aebe21620ad299a916872df0e85d8ffa98144754b587824d324677c4fc5a5c8"
+      },
+      {
+        "path": "install-tls-deps.sh",
+        "sha256": "414e2ef70228a07be58696edf60e813412f3ed5cbccb0f71b7556f28693df968"
+      },
+      {
+        "path": "scripts/finalize_tls_bundle.py",
+        "sha256": "7c10431623fa31940e36689f7f23f0876b67173c47063baa52789e174af1f06c"
+      },
+      {
+        "path": "build-support/tls-armv7/Dockerfile",
+        "sha256": "c9d2742937507369b4fda008d9f02c87b62873eb43b3cbcd7a332c218a55c615"
+      },
+      {
+        "path": "build-support/tls-armv7/Dockerfile.dockerignore",
+        "sha256": "f145b074460cc5c73d4ab839c12781bef2cb8b27f2cca4a0982d22376407acf1"
+      },
+      {
+        "path": "tests/test_tls_installer.py",
+        "sha256": "ee205b3d5c7780a1ae04b81c0fe0d9af31ca3a6ab98dcd8953197cab29ceb4c5"
+      }
+    ]
   }
 }

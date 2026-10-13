@@ -12,6 +12,8 @@ The all-severity Bandit 1.9.2 review found 32 low-severity warnings and no mediu
 
 The subsequent behavior-preserving quality cleanup passed the 60 affected Python TLS, bundle and archive tests plus the Go race suite. Full coverage above remains tied to its measured revision; current-revision CI is required before merge. The aiohttp redirect callback has one documented Sonar S7503 exception because its API requires an async callback for a validation step with no asynchronous I/O.
 
+A further offline-installation integrity update passed 18 focused checks: 16 bundle contracts, a real pip tampering test and the native archive contract. A replacement wheel with an attacker-rewritten bundle manifest is rejected against the trusted repository lock; the actual independently built and CI-produced wheels match that lock.
+
 ## Dependencies, installation and delivery
 
 `pyproject.toml` and `uv.lock` record Python dependencies and the build group; the README identifies Venus OS D-Bus/GLib prerequisites. The optional engine records Go modules/checksums and patch inputs under `vehicle-engine`; the HA adapter retains its upstream notices. Dependabot and scheduled security checks monitor dependencies. Resolve findings and re-test lockfile updates; do not modify installed third-party source without a reviewed, recorded patch.

@@ -9,11 +9,10 @@ fi
 python3 -c 'import sys; assert sys.version_info[:2] == (3, 12), "Python 3.12.x required"'
 BUNDLE=${1:-}
 if [ -n "$BUNDLE" ]; then
-    test -f "$BUNDLE/requirements.txt"
     test -d "$BUNDLE/wheels"
     python3 -m pip install --disable-pip-version-check --upgrade --no-index \
         --only-binary=:all: --require-hashes --find-links "$BUNDLE/wheels" \
-        --target /data/setupOptions/dbus-ev/python -r "$BUNDLE/requirements.txt"
+        --target /data/setupOptions/dbus-ev/python -r "${SCRIPT_DIR}/requirements-tls-armv7.txt"
 else
     case "$(uname -m)" in
         armv7*|armv8l)

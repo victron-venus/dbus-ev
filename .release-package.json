@@ -27,6 +27,7 @@
     "install-tls-deps.sh",
     "requirements-tls.txt",
     "docs/provider-cryptography.md",
-    "docs/tls-dependencies.md"
+    "docs/tls-dependencies.md",
+    "requirements-tls-armv7.txt"
   ]
 }

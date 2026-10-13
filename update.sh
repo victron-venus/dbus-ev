@@ -28,7 +28,7 @@ fi
 LOCAL_ONLY="local_config.py"
 
 # Runtime items shipped at the repo root and installed at INSTALL_DIR root.
-RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py configure.py ha install-mercedes-deps.sh install-tls-deps.sh requirements-mercedes.txt requirements-tls.txt"
+RUNTIME_ITEMS="update.sh dbus_ev version setup gitHubInfo local_config.example.py configure.py ha install-mercedes-deps.sh install-tls-deps.sh requirements-mercedes.txt requirements-tls.txt requirements-tls-armv7.txt"
 
 # Flat-file leftovers that must never survive an update (we run `python3 -m
 # dbus_ev`; a stale root main.py would shadow the package).

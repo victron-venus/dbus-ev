@@ -40,8 +40,11 @@ the build. A separate non-root verifier installs only the produced wheels with
 networking disabled, runs `pip check`, imports their native extensions and
 checks certificate-key boundaries. Read `provenance.json`, `repeatability.json`,
 `verification.json`, `builder-packages.txt` and the input requirements. The
-compiled wheel's generated hash must match `requirements.txt` in that reviewed
-artifact. These records are not cryptographic release signatures.
+compiled wheel must match the independently reproduced SHA-256 pinned in the
+source-controlled `requirements-tls-armv7.txt`. The finalizer rejects any produced
+wheel that differs from this lock; a changed rebuild requires explicit review
+and a lock update. The cryptography and pycparser entries also pin their reviewed
+official wheel bytes. These records are not cryptographic release signatures.
 
 ## Installation
 
@@ -53,6 +56,11 @@ credentials. From the source directory, provision only package-local storage:
 # For a new Mercedes installation, this also provisions its optional packages:
 ./install-mercedes-deps.sh /path/to/tls-dependencies-cp312-armv7
 ```
+
+The offline installer takes its trusted hashes from `requirements-tls-armv7.txt`
+in the source checkout, never from the supplied bundle's `requirements.txt`.
+Changing a wheel and regenerating the bundle metadata cannot authorize new bytes.
+Obtain the source checkout through the reviewed GitHub HTTPS revision as well.
 
 The scripts use wheel-only, hash-checked installation under
 `/data/setupOptions/dbus-ev/python`, preserving system Python. `update.sh` checks

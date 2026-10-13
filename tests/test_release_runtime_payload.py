@@ -24,7 +24,12 @@ def test_native_archive_contains_installer_and_tls_inputs(tmp_path):
         for item in runtime:
             prefix = f"{config['name']}/{item}"
             assert any(name == prefix or name.startswith(prefix + "/") for name in names), item
-        for name in ("requirements-tls.txt", "requirements-mercedes.txt", "install-tls-deps.sh"):
+        for name in (
+            "requirements-tls.txt",
+            "requirements-tls-armv7.txt",
+            "requirements-mercedes.txt",
+            "install-tls-deps.sh",
+        ):
             member = package.getmember(f"{config['name']}/{name}")
             assert package.extractfile(member).read() == (root / name).read_bytes()
         assert package.getmember(f"{config['name']}/install-tls-deps.sh").mode == 0o755
