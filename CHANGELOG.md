@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.9] - Development line
+
+### Changes
+
+- Retain generated Go fuzz corpus when the optional vehicle engine is launched
+  through its reviewed Python build adapter, using the selected Go toolchain.
+- Require valid committed seed corpora and preserve bounded, source-bound
+  release-candidate evidence with the shared runner.
+
+### Upgrade
+
+- Use the documented update procedure and retain existing configuration and
+  provider credentials. This patch introduces no configuration migration or
+  changes to the read-only charger telemetry interface.
+- Beta and RC packages are prereleases. Automated offline qualification does
+  not establish live vehicle, provider-account or Venus OS hardware acceptance.
+
+### Security
+
+- Strengthen release validation and diagnostics without changing runtime TLS,
+  authentication, provider opt-in or freshness policies. No new project security
+  advisory is introduced by this build-system change.
+
 ## [0.2.8] - Development line
 
 ### Fixed
