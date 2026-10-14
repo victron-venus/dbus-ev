@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Add bounded native Go fuzz qualification for public release candidates, with
+  source-bound evidence, synthetic seeds and documented reproduction. PRs, betas
+  and nightlies retain ordinary tests without mutation campaigns.
+
 - Expose the charger projection as read-only telemetry and retain the existing freshness boundaries.
 - Update the optional vehicle engine's HTTP/2 dependencies and simplify Mercedes decoding, connection failures and HTTP client handling.
 - Interpret GitHub response status from the authoritative HTTP headers during release publication.

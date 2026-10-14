@@ -1,7 +1,8 @@
 # Venus OS vehicle and charger bridge
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15456/badge)](https://www.bestpractices.dev/projects/15456)
+[![Fuzzing: RC only](https://img.shields.io/badge/Fuzzing-RC%20only-blue)](docs/fuzzing.md)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15456/badge)](https://www.bestpractices.dev/projects/15456)
 
 Optional experimental multi-brand providers are documented in [docs/vehicles.md](docs/vehicles.md). They reuse pinned evcc vehicle libraries, publish raw MQTT only (no automatic HA sensors), and require a separately built optional engine.
 
@@ -347,6 +348,13 @@ loop ticks, expiry, single outstanding work item, recovery and safe shutdown.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for reports, development checks and pull requests,
 [SECURITY.md](SECURITY.md) for private vulnerability reporting and deployment trust boundaries,
 and the [OpenSSF evidence index](docs/openssf-evidence.md) for assessment references and remaining verification.
+
+## Release-candidate fuzzing
+
+Public release candidates run bounded native fuzzing of the input boundaries
+described in the [fuzzing guide](docs/fuzzing.md). Mutation campaigns do not run on
+PRs, betas or nightlies. The guide covers scope, budgets, evidence and regression
+reproduction.
 
 ## Project maintenance
 
