@@ -1,5 +1,9 @@
 # Release-candidate fuzzing
 
+See the [illustrated RC fuzzing process and verified rollout results](https://github.com/victron-venus/venus-os-ci-toolkit/blob/main/docs/rc-fuzzing-results.md)
+for the shared release flow, evidence requirements and a dated cross-project
+snapshot. The project-specific scope and reproduction guidance below still apply.
+
 The optional Go vehicle engine handles cloud-provider values and OAuth redirects.
 Its native fuzz tests exercise that normalization boundary using only synthetic
 providers and in-memory HTTP metadata. They do not log in to a manufacturer,
