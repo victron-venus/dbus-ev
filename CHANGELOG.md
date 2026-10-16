@@ -8,6 +8,8 @@
   through its reviewed Python build adapter, using the selected Go toolchain.
 - Require valid committed seed corpora and preserve bounded, source-bound
   release-candidate evidence with the shared runner.
+- Install the real Jinja2 parser in the development environment and require
+  the Home Assistant template regression test to run instead of silently skipping it.
 
 ### Upgrade
 

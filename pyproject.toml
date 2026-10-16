@@ -24,6 +24,7 @@ dev = [
     "aiohttp>=3.9",
     "protobuf>=6.31.1,<7",
     "paho-mqtt>=2.0",
+    "jinja2>=3.1.6",
 ]
 
 [tool.setuptools.packages.find]
