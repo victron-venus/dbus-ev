@@ -7,6 +7,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
+from jinja2 import Environment
 from requests.exceptions import ConnectionError as ReqConnError
 from requests.exceptions import Timeout
 
@@ -19,11 +20,6 @@ from dbus_ev.ha_client import (
     map_charging_state,
     state_is_on,
 )
-
-try:
-    from jinja2 import Environment
-except ImportError:  # pragma: no cover - jinja2 optional
-    Environment = None
 
 
 class FakeClock:
@@ -193,8 +189,6 @@ def test_build_template_entity_vin_uses_states():
 def test_build_template_renders_in_jinja():
     """Rendered template must parse in real Jinja2 — proves the expression
     is well-formed (the fix for /api/template 400)."""
-    pytest.importorskip("jinja2")
-    assert Environment is not None
     t = build_template(
         soc_entity="sensor.soc",
         target_soc_entity="",
