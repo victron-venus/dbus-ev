@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.10] - 2026-10-17
+
+### Changed
+
+- Link the maintained source-bound RC fuzzing process and verified results.
+
+### Upgrade
+
+Use the existing installation procedure and preserve local configuration. This documentation maintenance release leaves runtime behavior and configuration unchanged.
+
+### Security
+
+No new runtime vulnerability fix or target-device acceptance is claimed. Existing release, integration and device validation remain required.
+
 ## [0.2.9] - Development line
 
 ### Changes
