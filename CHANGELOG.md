@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.11] - 2026-10-18
+
+### Changed
+
+- Route Dependabot metadata approval through the trusted default branch while preserving the existing author and review policy.
+- Refresh pinned shared CI workflows and their source-bound release validation.
+
+### Upgrade
+
+Use the documented upgrade procedure and preserve local configuration and data. No configuration migration is required. Keep the previous immutable release available for rollback.
+
+### Security
+
+This maintenance release preserves the existing security and release-validation requirements. Publication does not deploy the service or establish physical-device acceptance.
+
 ## [0.2.10] - 2026-10-17
 
 ### Changed
