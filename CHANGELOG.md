@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.12] - 2026-10-20
+
+### Changed
+
+- Update the locked aiohttp client to 3.14.4. Install local validation dependencies from the same uv lock used by CI and retain the hashed Bandit tool environment.
+
+### Upgrade
+
+Use the existing update procedure, preserve local configuration and retain the previous immutable package for rollback. No configuration migration is required.
+
+### Security
+
+Required dependency, source and release checks remain enabled. This maintenance beta does not claim a new application vulnerability fix or device acceptance.
+
 ## [0.2.11] - 2026-10-18
 
 ### Changed

@@ -55,3 +55,7 @@ campaigns restricted to public release candidates.
 Apply these test and documentation requirements to every nontrivial change, including maintainer changes. Record a regression test for each corrected bug unless the PR explains why an automated regression is infeasible and documents a repeatable manual check. New major functionality must have automated tests. Review the tests themselves, not only a reported percentage. Keep architecture, configuration, interface and security documentation synchronized with the code.
 
 Follow [governance](GOVERNANCE.md) and the [code of conduct](CODE_OF_CONDUCT.md). Do not claim hardware acceptance from mocks, GitHub security status from a workflow name, or signed artifacts from checksums alone. See [quality and build evidence](docs/quality-and-build.md).
+
+### Reproducing the CI dependency environment
+
+Run `bash scripts/ci.sh --install` to prepare `.venv-ci` from the committed `uv.lock`, then `bash scripts/ci.sh`. The installer uses `--locked` and fails if the project manifest and lock disagree. Update the lock deliberately with the dependency change; local validation must not silently select newer packages.
