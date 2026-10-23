@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Update certifi to 2026.10.19 and the optional vehicle engine SDK to Go 1.27.3.
+- Allow the release API status to catch up for up to five minutes while preserving exact run identity, attempt and required-check validation.
 - Update the locked aiohttp client to 3.14.4. Install local validation dependencies from the same uv lock used by CI and retain the hashed Bandit tool environment.
 
 ### Upgrade
@@ -12,7 +14,7 @@ Use the existing update procedure, preserve local configuration and retain the p
 
 ### Security
 
-Required dependency, source and release checks remain enabled. This maintenance beta does not claim a new application vulnerability fix or device acceptance.
+The certificate bundle removes the distrusted emSign ECC Root CA - G3 (GHSA-6q48-6c7w-9gw2). Go 1.27.3 fixes GO-2026-6809 in the optional vehicle engine certificate-verification path. Certificate and hostname verification remain enabled. Offline checks do not establish live vehicle, provider-account or device acceptance.
 
 ## [0.2.11] - 2026-10-18
 

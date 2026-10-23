@@ -1,6 +1,6 @@
 module github.com/victron-venus/dbus-ev/vehicle-engine
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/evcc-io/evcc v0.0.0-20260920172707-0bd94d01de8d
