@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13] - 2026-10-27
+
+### Changed
+
+- Ship the rebuilt, hash-verified CPython 3.12 ARMv7 CFFI wheel used by the optional TLS runtime.
+- Refresh the pinned wheel build backend to setuptools 84.1.0 while preserving the reviewed wheel-only runtime closure.
+
 ## [0.2.12] - 2026-10-20
 
 ### Changed
