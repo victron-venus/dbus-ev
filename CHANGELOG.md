@@ -7,6 +7,14 @@
 - Ship the rebuilt, hash-verified CPython 3.12 ARMv7 CFFI wheel used by the optional TLS runtime.
 - Refresh the pinned wheel build backend to setuptools 84.1.0 while preserving the reviewed wheel-only runtime closure.
 
+### Upgrade
+
+Install the new package through the existing update procedure, preserving local configuration and the previous immutable package for rollback. Use the supplied, hash-verified wheel set for the optional TLS runtime; do not mix it with an older dependency closure. No configuration migration is required.
+
+### Security
+
+Keep certificate and hostname verification enabled and retain the wheel integrity checks. The ARMv7 wheel rebuild changes packaging, not the transport trust policy; it does not establish live vehicle, provider-account or device acceptance.
+
 ## [0.2.12] - 2026-10-20
 
 ### Changed
