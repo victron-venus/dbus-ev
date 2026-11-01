@@ -98,12 +98,17 @@ class DetachedProvenanceTests(BuildInputsFixture):
 
     def setUp(self):
         super().setUp()
-        self.enterContext(patch.dict(os.environ, {
-            "GITHUB_ACTIONS": "true",
-            "GITHUB_REPOSITORY": self.policy["repository"],
-            "GITHUB_RUN_ID": "99",
-            "GITHUB_RUN_ATTEMPT": "1",
-        }))
+        self.enterContext(
+            patch.dict(
+                os.environ,
+                {
+                    "GITHUB_ACTIONS": "true",
+                    "GITHUB_REPOSITORY": self.policy["repository"],
+                    "GITHUB_RUN_ID": "99",
+                    "GITHUB_RUN_ATTEMPT": "1",
+                },
+            )
+        )
         self.pair = {
             "image": "image.oci.tar",
             "sidecar": "image.provenance.json",
@@ -275,7 +280,10 @@ class DetachedProvenanceTests(BuildInputsFixture):
     def test_valid_pair_has_a_publisher_accepted_receipt(self):
         receipt = self.create()
         verified = version_receipt.verify_receipts(
-            self.assets, self.plan, self.inventory(), self.policy,
+            self.assets,
+            self.plan,
+            self.inventory(),
+            self.policy,
             version_receipt.producer_identity(
                 self.policy["repository"], 99, 1, self.plan["source_sha"]
             ),
