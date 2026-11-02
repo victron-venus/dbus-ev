@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.14] - Unreleased
+
+### Security
+
+- Update the optional vehicle engine to `golang.org/x/net` 0.62.0 and its required compatible Go module dependencies, fixing the HTML parser and renderer issues GO-2026-6860 and GO-2026-6866 in its provider dependency graph.
+- Retain the exact reviewed provider source and conservative patches, TLS verification, and hash-verified optional runtime assets.
+
+### Upgrade
+
+Use the existing update procedure and preserve local configuration. No configuration migration is required. Offline engine tests and package checks do not establish live vehicle, account or hardware acceptance.
+
 ## [0.2.13] - 2026-10-27
 
 ### Changed
