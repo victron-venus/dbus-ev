@@ -11,7 +11,7 @@ jobs:
     name: CI
     # Reusable workflows must be called at the JOB level (no runs-on/steps);
     # a step-level `uses` of a workflow_call workflow is rejected by GitHub.
-    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@a1068073ef4b60b52542cd48954a99b4bc0be008 # main
+    uses: victron-venus/venus-os-ci-toolkit/.github/workflows/python-ci.yml@2439b9eb60cdbcd02edf43b62c551a357be3accc # main
     with:
       use-uv-lock: true
       dependency-extras: "dev"
