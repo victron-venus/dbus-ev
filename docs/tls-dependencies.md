@@ -68,3 +68,22 @@ native imports and minimum versions before stopping the old service. The
 source archive alone does not include these wheels. Other supported platforms
 with the complete official wheel closure can run `install-tls-deps.sh` without
 an artifact directory. ARMv7 deliberately requires the offline bundle.
+
+## Optional Mercedes dependency updates
+
+Renovate updates the exact pins in `requirements-mercedes.in` and regenerates
+`requirements-mercedes.txt` in the same branch using this fixed command with
+uv 0.13.4:
+
+```sh
+uv pip compile requirements-mercedes.in --no-deps --no-build --generate-hashes --universal --python-version 3.12 --no-annotate --output-file requirements-mercedes.txt
+```
+
+The `--no-deps` boundary keeps this bundle limited to protobuf and paho-mqtt;
+aiohttp, requests, D-Bus and GLib continue to come from Venus OS. Protobuf stays
+within the existing `>=6.31.1,<7` project compatibility range. The command cannot
+run build backends, and only the named hashed output is retained. Normal and
+security updates use the same source and generation path.
+
+This independent bundle does not replace the separately qualified TLS wheel
+closure or its ARMv7 source-build and verification procedure above.
