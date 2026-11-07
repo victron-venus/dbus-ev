@@ -1,6 +1,121 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>victron-venus/venus-os-ci-toolkit:renovate-ci"
-  ]
+    "local>victron-venus/venus-os-ci-toolkit:renovate-fleet"
+  ],
+  "enabledManagers": [
+    "custom.jsonata",
+    "custom.regex",
+    "github-actions",
+    "gomod",
+    "pep621",
+    "pip-compile",
+    "pip_requirements"
+  ],
+  "ignorePaths": [
+    "**/vendor/**",
+    "**/node_modules/**",
+    "**/fixtures/**",
+    "**/tools/browser-compatibility/**",
+    "security/provider/**",
+    "build-support/tls-armv7/**",
+    "requirements-mercedes.txt",
+    "requirements-tls.txt",
+    "requirements-tls-armv7.txt"
+  ],
+  "packageRules": [
+    {
+      "description": "The reviewed TLS wheel closure stays on its reproducible ARMv7 source-build and native verification workflow.",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "matchFileNames": [
+        "requirements-tls.txt"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Preserve the explicitly named legacy Bandit 1.9.2 toolchain while allowing its transitive lock maintenance.",
+      "matchManagers": [
+        "pip-compile"
+      ],
+      "matchFileNames": [
+        ".github/requirements-bandit-1.9.2.in"
+      ],
+      "matchPackageNames": [
+        "bandit"
+      ],
+      "allowedVersions": "==1.9.2"
+    },
+    {
+      "description": "Regenerate the optional Mercedes bundle from its exact native input without adding transitive device dependencies.",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "matchFileNames": [
+        "requirements-mercedes.in"
+      ],
+      "constraints": {
+        "uv": "0.13.4"
+      },
+      "postUpgradeTasks": {
+        "commands": [
+          "uv pip compile requirements-mercedes.in --no-deps --no-build --generate-hashes --universal --python-version 3.12 --no-annotate --output-file requirements-mercedes.txt"
+        ],
+        "fileFilters": [
+          "requirements-mercedes.txt"
+        ],
+        "executionMode": "update",
+        "installTools": {
+          "uv": {}
+        }
+      }
+    },
+    {
+      "description": "Retain the existing protobuf compatibility range used by the generated Mercedes decoder.",
+      "matchManagers": [
+        "pep621",
+        "pip_requirements"
+      ],
+      "matchFileNames": [
+        "pyproject.toml",
+        "requirements-mercedes.in"
+      ],
+      "matchPackageNames": [
+        "protobuf"
+      ],
+      "allowedVersions": ">=6.31.1 <7"
+    }
+  ],
+  "pip_requirements": {
+    "managerFilePatterns": [
+      "/(^|/)requirements[^/]*\\.(txt|pip)$/",
+      "/^requirements-mercedes\\.in$/"
+    ],
+    "ignorePaths": [
+      "**/vendor/**",
+      "**/node_modules/**",
+      "**/fixtures/**",
+      "**/tools/browser-compatibility/**",
+      "security/provider/**",
+      "build-support/tls-armv7/**",
+      "requirements-mercedes.txt",
+      "requirements-tls.txt",
+      "requirements-tls-armv7.txt",
+      ".github/requirements-bandit-1.9.2.txt"
+    ]
+  },
+  "ignoreDeps": [
+    "cryptography",
+    "cffi",
+    "pycparser"
+  ],
+  "description": [
+    "TLS wheel closure upgrades require source verification, reproducible ARMv7 build and native validation; the reviewed cryptography, cffi and pycparser set stays on that source workflow."
+  ],
+  "pip-compile": {
+    "managerFilePatterns": [
+      "/^\\.github/requirements\\-bandit\\-1\\.9\\.2\\.txt$/"
+    ]
+  }
 }
