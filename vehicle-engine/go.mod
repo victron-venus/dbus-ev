@@ -17,21 +17,6 @@ require (
 	github.com/andig/gosunspec v0.0.0-20260705113727-6d585e133512 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
-	github.com/aws/aws-sdk-go-v2 v1.45.1 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.33.2 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.2 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.19.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/cognitoidentity v1.40.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.19 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.36.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.41.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.48.0 // indirect
-	github.com/aws/smithy-go v1.28.1 // indirect
 	github.com/basgys/goxml2json v1.1.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -53,7 +38,6 @@ require (
 	github.com/enbility/ship-go v0.6.1-0.20260720110450-0aa90f64ac76 // indirect
 	github.com/enbility/spine-go v0.7.1-0.20260629113257-b3bcc643f323 // indirect
 	github.com/enbility/zeroconf/v2 v2.0.0-20240920094356-be1cae74fda6 // indirect
-	github.com/evcc-io/tesla-proxy-client v0.0.0-20260722080120-05ada06c7368 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
@@ -64,7 +48,6 @@ require (
 	github.com/godbus/dbus/v5 v5.2.4 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golanguzb70/lrucache v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
@@ -144,12 +127,12 @@ require (
 )
 
 // Match the pinned upstream module: dependency replace directives are not inherited.
-replace github.com/grid-x/modbus => github.com/evcc-io/modbus v0.0.0-20250326091001-7af143daf9d2
+replace github.com/grid-x/modbus => github.com/evcc-io/modbus v0.0.0-20250501165638-8b6f1fbdb7ea
 
 replace github.com/lorenzodonini/ocpp-go => github.com/evcc-io/ocpp-go v0.0.0-20260812074841-a8aa5fef8a9e
 
-replace github.com/enbility/spine-go => github.com/andig/spine-go v0.7.1-0.20260831112011-ff669af44e3c
+replace github.com/enbility/spine-go => github.com/andig/spine-go v0.7.1-0.20261105090651-157b61ff0ace
 
-replace github.com/enbility/eebus-go => github.com/andig/eebus-go v0.0.0-20260731142702-0aa83d264add
+replace github.com/enbility/eebus-go => github.com/andig/eebus-go v0.0.0-20260930172701-f8d6395986ba
 
-replace github.com/enbility/ship-go => github.com/andig/ship-go v0.6.1-0.20260831113647-df9fdf640498
+replace github.com/enbility/ship-go => github.com/andig/ship-go v0.6.1-0.20261105091126-6d7902ac41a1

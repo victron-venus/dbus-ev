@@ -97,6 +97,24 @@ def go_arguments(argv=None):
     return command
 
 
+def module_replacements(path):
+    metadata = json.loads(subprocess.check_output(["go", "mod", "edit", "-json", str(path)]))
+    return sorted(
+        (
+            item["Old"]["Path"],
+            item["Old"].get("Version", ""),
+            item["New"]["Path"],
+            item["New"].get("Version", ""),
+        )
+        for item in metadata.get("Replace") or []
+    )
+
+
+def validate_replacements(root, source):
+    if module_replacements(root / "go.mod") != module_replacements(source / "go.mod"):
+        raise SystemExit("Engine replacements differ from the pinned upstream module")
+
+
 def main():
     # Validate before downloading modules or invoking any process.
     command = go_arguments()
@@ -106,6 +124,7 @@ def main():
         subprocess.check_output(["go", "mod", "download", "-json", "github.com/evcc-io/evcc"])
     )
     source = Path(module["Dir"])
+    validate_replacements(root, source)
     inputs = json.loads((root / "patches/inputs.json").read_text())
     with tempfile.TemporaryDirectory(prefix="dbus-ev-engine-") as temporary:
         stage = Path(temporary) / "upstream"
