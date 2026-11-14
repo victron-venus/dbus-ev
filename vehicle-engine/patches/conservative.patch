@@ -118,7 +118,7 @@
 +}
 --- a/vehicle/bluelink/cci.go
 +++ b/vehicle/bluelink/cci.go
-@@ -431,6 +431,10 @@
+@@ -576,6 +576,10 @@
  		E: e,
  	}
  
@@ -150,15 +150,15 @@
  	}
 --- a/vehicle/bmw/cardata/mqtt.go
 +++ b/vehicle/bmw/cardata/mqtt.go
-@@ -16,6 +16,7 @@
- 	"github.com/eclipse/paho.mqtt.golang/packets"
- 	"github.com/evcc-io/evcc/api"
+@@ -18,6 +18,7 @@
+ 	pluginmqtt "github.com/evcc-io/evcc/plugin/mqtt"
  	"github.com/evcc-io/evcc/util"
+ 	"github.com/evcc-io/evcc/util/request"
 +	"github.com/evcc-io/evcc/util/transport"
  	"golang.org/x/oauth2"
  )
  
-@@ -132,7 +133,7 @@
+@@ -165,7 +166,7 @@
  }
  
  func (v *MqttConnector) run(ctx context.Context, ts oauth2.TokenSource) {
@@ -167,7 +167,7 @@
  
  	for ctx.Err() == nil {
  		time.Sleep(bo.NextBackOff())
-@@ -167,8 +168,9 @@
+@@ -200,8 +201,9 @@
  
  	paho := mqtt.NewClient(
  		mqtt.NewClientOptions().
@@ -180,15 +180,24 @@
  
 --- a/vehicle/bmw/cardata/provider.go
 +++ b/vehicle/bmw/cardata/provider.go
-@@ -72,7 +72,7 @@
+@@ -90,7 +90,7 @@
+ 		return c.State == "ACTIVE" && c.Name == containerName && c.Purpose == requiredVersion
+ 	}); i >= 0 {
+ 		// obsolete containers keep streaming, resulting in duplicate messages
+-		v.deleteObsoleteContainers(containers)
++		// dbus-ev does not delete containers owned by other installations.
+ 		return containers[i].ContainerId, nil
  	}
  
- 	// obsolete containers keep streaming, resulting in duplicate messages
--	defer v.deleteObsoleteContainers(containers)
+@@ -104,7 +104,7 @@
+ 		return "", err
+ 	}
+ 
+-	v.deleteObsoleteContainers(containers)
 +	// dbus-ev does not delete containers owned by other installations.
  
- 	if i := slices.IndexFunc(containers, func(c Container) bool {
- 		return c.Name == containerName && c.Purpose == requiredVersion
+ 	return res.ContainerId, nil
+ }
 --- a/vehicle/carwings.go
 +++ b/vehicle/carwings.go
 @@ -10,6 +10,7 @@
@@ -258,7 +267,7 @@
  		"locale":              "de_de", // only required for pinAuth
 --- a/vehicle/fiat/identity.go
 +++ b/vehicle/fiat/identity.go
-@@ -152,7 +152,7 @@
+@@ -151,7 +151,7 @@
  	headers := map[string]string{
  		"Content-Type":        "application/json",
  		"X-Clientapp-Version": "1.0",
@@ -266,15 +275,6 @@
 +		"ClientRequestId":     util.CryptoRandomString(16, lo.LettersCharset),
  		"X-Api-Key":           XApiKey,
  		"X-Originator-Type":   "web",
- 	}
-@@ -162,7 +162,7 @@
- 		return err
- 	}
- 
--	cfg, err := config.LoadDefaultConfig(v.ctx, config.WithRegion(Region))
-+	cfg, err := config.LoadDefaultConfig(v.ctx, config.WithRegion(Region), config.WithHTTPClient(v.Client))
- 	if err != nil {
- 		return err
  	}
 --- a/vehicle/fiat.go
 +++ b/vehicle/fiat.go
@@ -305,10 +305,10 @@
  
  import (
 -	"fmt"
+ 	"math"
  	"time"
  
- 	"github.com/evcc-io/evcc/api"
-@@ -38,46 +37,9 @@
+@@ -39,46 +38,9 @@
  	return impl
  }
  
@@ -442,12 +442,12 @@
 -		}
 -		return err
 +	return &Provider{
-+		status:  util.Cached(func() (Status, error) { return api.Status(vin) }, cache),
++		status:  util.ResettableCached(func() (Status, error) { return api.Status(vin) }, cache),
 +		refresh: func() error { return api.RefreshStatus(vin) },
  	}
 -
 -	impl := &Provider{
--		status: util.Cached(func() (Status, error) {
+-		status: util.ResettableCached(func() (Status, error) {
 -			res, err := api.Status(vin)
 -			if err != nil {
 -				return res, err
@@ -475,7 +475,7 @@
  var _ api.Resurrector = (*Provider)(nil)
 --- a/vehicle/vag/vwidentity/endpoint.go
 +++ b/vehicle/vag/vwidentity/endpoint.go
-@@ -90,7 +90,7 @@
+@@ -92,7 +92,7 @@
  
  	// add nonce and state
  	query := url.Values{
@@ -486,7 +486,7 @@
  
 --- a/vehicle/vw/eudataact/api.go
 +++ b/vehicle/vw/eudataact/api.go
-@@ -129,7 +129,7 @@
+@@ -167,7 +167,7 @@
  		"state":         {fmt.Sprintf("de__en__%s", v.brand.state)},
  		"redirect_uri":  {RedirectURI},
  		"prompt":        {"login"},
@@ -494,4 +494,4 @@
 +		"nonce":         {util.CryptoRandomString(43, lo.LettersCharset)},
  	}
  
- 	resp, err := v.Get(vwidentity.Config.AuthURL + "?" + q.Encode())
+ 	resp, err := client.Get(vwidentity.Config.AuthURL + "?" + q.Encode())
