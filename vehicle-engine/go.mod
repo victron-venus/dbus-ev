@@ -3,7 +3,7 @@ module github.com/victron-venus/dbus-ev/vehicle-engine
 go 1.27.3
 
 require (
-	github.com/evcc-io/evcc v0.0.0-20261113171011-6b1f9584286f
+	github.com/evcc-io/evcc v0.0.0-20261114120602-7b590b84e364
 	golang.org/x/oauth2 v0.38.0
 )
 
@@ -127,12 +127,12 @@ require (
 )
 
 // Match the pinned upstream module: dependency replace directives are not inherited.
-replace github.com/grid-x/modbus => github.com/evcc-io/modbus v0.0.0-20250501165638-8b6f1fbdb7ea
+replace github.com/grid-x/modbus => github.com/evcc-io/modbus v0.0.0-20250326091001-7af143daf9d2
 
 replace github.com/lorenzodonini/ocpp-go => github.com/evcc-io/ocpp-go v0.0.0-20260812074841-a8aa5fef8a9e
 
-replace github.com/enbility/spine-go => github.com/andig/spine-go v0.7.1-0.20261105090651-157b61ff0ace
+replace github.com/enbility/spine-go => github.com/andig/spine-go v0.7.1-0.20260831112011-ff669af44e3c
 
-replace github.com/enbility/eebus-go => github.com/andig/eebus-go v0.0.0-20260930172701-f8d6395986ba
+replace github.com/enbility/eebus-go => github.com/andig/eebus-go v0.0.0-20260731142702-0aa83d264add
 
-replace github.com/enbility/ship-go => github.com/andig/ship-go v0.6.1-0.20261105091126-6d7902ac41a1
+replace github.com/enbility/ship-go => github.com/andig/ship-go v0.6.1-0.20260831113647-df9fdf640498
