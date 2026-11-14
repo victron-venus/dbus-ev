@@ -92,3 +92,59 @@ def test_fuzz_limits_preserve_patched_module_wrapper(builder):
         "-timeout=120s",
         ".",
     ]
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        "replace example.com/source => example.com/fork v1.0.1",
+        "replace example.com/source => example.com/other v1.0.0",
+        "",
+        "replace example.com/source => example.com/fork v1.0.0\nreplace example.com/extra => example.com/other v1.0.0",
+    ],
+)
+def test_replacement_drift_is_rejected_by_real_go_parser(builder, tmp_path, replacement):
+    engine, source = tmp_path / "engine", tmp_path / "upstream"
+    engine.mkdir()
+    source.mkdir()
+    prefix = "module example.com/fixture\ngo 1.20\n"
+    (engine / "go.mod").write_text(prefix + replacement + "\n")
+    (source / "go.mod").write_text(
+        prefix + "replace example.com/source => example.com/fork v1.0.0\n"
+    )
+    with pytest.raises(SystemExit, match="replacements differ"):
+        builder["validate_replacements"](engine, source)
+
+
+def test_replacement_guard_accepts_equivalent_directive_order(builder, tmp_path):
+    engine, source = tmp_path / "engine", tmp_path / "upstream"
+    engine.mkdir()
+    source.mkdir()
+    first = "replace example.com/a => example.com/fork-a v1.0.0\n"
+    second = "replace example.com/b => example.com/fork-b v2.0.0\n"
+    prefix = "module example.com/fixture\ngo 1.20\n"
+    (engine / "go.mod").write_text(prefix + first + second)
+    (source / "go.mod").write_text(prefix + second + first)
+    builder["validate_replacements"](engine, source)
+
+
+def test_build_rejects_replacement_drift_before_staging_or_compilation(
+    builder, tmp_path, monkeypatch
+):
+    source = tmp_path / "upstream"
+    source.mkdir()
+    (source / "go.mod").write_text("module example.com/fixture\ngo 1.20\n")
+    real_output = builder["subprocess"].check_output
+
+    def download(command, *args, **kwargs):
+        if command[:3] == ["go", "mod", "download"]:
+            return builder["json"].dumps({"Dir": str(source)}).encode()
+        return real_output(command, *args, **kwargs)
+
+    copy = MagicMock()
+    monkeypatch.setattr(builder["subprocess"], "check_output", download)
+    monkeypatch.setattr(builder["shutil"], "copytree", copy)
+    monkeypatch.setattr(sys, "argv", ["build.py", "test"])
+    with pytest.raises(SystemExit, match="replacements differ"):
+        builder["main"]()
+    copy.assert_not_called()

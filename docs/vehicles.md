@@ -2,7 +2,7 @@
 
 `DATA_SOURCE = "evcc"` selects an optional persistent vehicle engine built from
 [evcc](https://github.com/evcc-io/evcc) commit
-`0bd94d01de8d4d5702a8727a6ec3144313d7a246` (2026-09-20).
+`6b1f9584286fd4ab9a702b1e77e5aede8e967300` (2026-11-13).
 The engine uses the vehicle libraries directly; it does not run the evcc site,
 loadpoint controller, web server or Home Assistant integration. Mercedes keeps
 its existing client, MQTT schema and authorization independently of this option.
@@ -84,9 +84,17 @@ supported options (`-trimpath`, `-ldflags='-s -w'`, `--output`, `-race`, `-count
 rejects arbitrary Go flags, including module/overlay overrides and executable
 hooks, before downloading dependencies or starting any process.
 
+An upstream dependency update must port the conservative patch before refreshing
+`vehicle-engine/patches/inputs.json`. Recheck every changed input against the
+exact module source, retain wrapped transports and cryptographic nonces, and
+preserve the ban on implicit vehicle wake-ups and deleting other installations'
+cloud containers. Run the patched engine tests and normal CI before merging;
+updating hash expectations alone does not qualify an upstream change.
+
 The build uses a temporary copy of the verified upstream module, applies the
 reviewable patches and leaves the Go module cache untouched. Its module
-replacements match the pinned upstream dependency replacements. The MIT notice
+replacements are verified against the pinned upstream module before staging or
+compilation; dependency replacement drift is rejected. The MIT notice
 is retained in `vehicle-engine/patches/LICENSE.evcc`; Go dependency licenses and
 notices remain applicable when distributing the executable.
 
