@@ -171,8 +171,12 @@ def test_renovate_engine_replacements_follow_the_pinned_upstream():
     assert len(disabled_go_rules) == 1
     rule = disabled_go_rules[0]
     assert set(rule) == {
-        "description", "matchManagers", "matchFileNames", "matchDepTypes",
-        "matchDepNames", "enabled",
+        "description",
+        "matchManagers",
+        "matchFileNames",
+        "matchDepTypes",
+        "matchDepNames",
+        "enabled",
     }
     assert rule["matchManagers"] == ["gomod"]
     assert rule["matchFileNames"] == ["vehicle-engine/go.mod"]
