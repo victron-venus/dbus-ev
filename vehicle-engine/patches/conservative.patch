@@ -131,7 +131,7 @@
  		return "", err
 --- a/vehicle/bluelink/identity.go
 +++ b/vehicle/bluelink/identity.go
-@@ -15,7 +15,6 @@
+@@ -16,7 +16,6 @@
  	"github.com/evcc-io/evcc/util"
  	"github.com/evcc-io/evcc/util/oauth"
  	"github.com/evcc-io/evcc/util/request"
@@ -139,7 +139,31 @@
  	"golang.org/x/oauth2"
  )
  
-@@ -81,7 +80,7 @@
+@@ -74,9 +73,13 @@
+ 	return v
+ }
+ 
++type identityKey struct {
++	uri, brand, user, password string
++}
++
+ var (
+ 	mu         sync.Mutex
+-	identities = make(map[string]*Identity)
++	identities = make(map[identityKey]*Identity)
+ )
+ 
+ // LoginIdentity returns the logged-in identity of the account. Vehicles of the same
+@@ -87,7 +90,7 @@
+ 	defer mu.Unlock()
+ 
+ 	// same spelling as the persisted token, a changed password logs in again
+-	key := strings.Join([]string{config.URI, brand, user, password}, ".")
++	key := identityKey{uri: config.URI, brand: brand, user: user, password: password}
+ 
+ 	// reuse identity instance
+ 	if v := identities[key]; v != nil {
+@@ -113,7 +116,7 @@
  
  	id := uuid.New().String()
  	data := map[string]any{

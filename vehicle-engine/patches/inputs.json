@@ -13,7 +13,7 @@
   },
   {
     "path": "vehicle/bluelink/identity.go",
-    "sha256": "514cdaa5555f8045fd15155ce61d9f59511525d835356e91f7a7292988ea580d"
+    "sha256": "426899b1e06cbbf52f4da720fc5bdc05696df4b395ed266119f6eb89885afdcd"
   },
   {
     "path": "vehicle/bmw/cardata/mqtt.go",
@@ -49,7 +49,7 @@
   },
   {
     "path": "vehicle/saic/api.go",
-    "sha256": "5370756189323cd4a7038174321443ea9bb2a51ccd2fcb279271c40f67395e11"
+    "sha256": "10542dcc84625fcce2924c6bfab8bcc6ceb312f8757da4ac393f846d20125a3d"
   },
   {
     "path": "vehicle/saic/identity.go",
