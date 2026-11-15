@@ -85,6 +85,26 @@
         "protobuf"
       ],
       "allowedVersions": ">=6.31.1 <7"
+    },
+    {
+      "description": "Update experimental engine replacement revisions together with the pinned evcc source and reviewed patches.",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchFileNames": [
+        "vehicle-engine/go.mod"
+      ],
+      "matchDepTypes": [
+        "replace"
+      ],
+      "matchDepNames": [
+        "github.com/evcc-io/modbus",
+        "github.com/evcc-io/ocpp-go",
+        "github.com/andig/spine-go",
+        "github.com/andig/eebus-go",
+        "github.com/andig/ship-go"
+      ],
+      "enabled": false
     }
   ],
   "pip_requirements": {
