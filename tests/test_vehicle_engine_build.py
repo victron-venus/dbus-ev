@@ -148,3 +148,35 @@ def test_build_rejects_replacement_drift_before_staging_or_compilation(
     with pytest.raises(SystemExit, match="replacements differ"):
         builder["main"]()
     copy.assert_not_called()
+
+
+def test_renovate_engine_replacements_follow_the_pinned_upstream():
+    import json
+    import re
+
+    root = Path(__file__).resolve().parents[1]
+    config = json.loads((root / "renovate.json").read_text())
+    replacements = re.findall(
+        r"^replace \S+ => (\S+) \S+$",
+        (root / "vehicle-engine/go.mod").read_text(),
+        re.MULTILINE,
+    )
+    assert len(replacements) == len(set(replacements)) == 5
+    disabled_go_rules = [
+        rule
+        for rule in config["packageRules"]
+        if rule.get("enabled") is False
+        and ("matchManagers" not in rule or "gomod" in rule["matchManagers"])
+    ]
+    assert len(disabled_go_rules) == 1
+    rule = disabled_go_rules[0]
+    assert set(rule) == {
+        "description", "matchManagers", "matchFileNames", "matchDepTypes",
+        "matchDepNames", "enabled",
+    }
+    assert rule["matchManagers"] == ["gomod"]
+    assert rule["matchFileNames"] == ["vehicle-engine/go.mod"]
+    assert rule["matchDepTypes"] == ["replace"]
+    assert len(rule["matchDepNames"]) == 5
+    assert set(rule["matchDepNames"]) == set(replacements)
+    assert "github.com/evcc-io/evcc" not in rule["matchDepNames"]
