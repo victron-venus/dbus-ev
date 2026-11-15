@@ -2,15 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 
 	"github.com/evcc-io/evcc/util"
+	"github.com/evcc-io/evcc/util/request"
 	"github.com/evcc-io/evcc/vehicle/bluelink"
 )
 
@@ -41,6 +44,7 @@ func TestBlueLinkIdentityCacheKeepsCredentialFieldsSeparate(t *testing.T) {
 	})
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
+	installIdentityCacheFixtureTransport(t, server)
 	config := bluelink.Config{
 		Brand: "identity-cache-fixture", URI: server.URL, LoginFormHost: server.URL,
 		CCSPServiceID: "fixture-service", CCSPServiceSecret: "fixture-secret",
@@ -94,5 +98,96 @@ func TestBlueLinkIdentityCacheKeepsCredentialFieldsSeparate(t *testing.T) {
 	close(failures)
 	if len(failures) != 0 || logins.Load() != 2 {
 		t.Fatal("concurrent same-account requests did not share the existing identity")
+	}
+}
+
+// The request hook is process-global, so these fixture cases intentionally run serially.
+type identityCacheFixtureRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f identityCacheFixtureRoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func installIdentityCacheFixtureTransport(t *testing.T, server *httptest.Server) {
+	t.Helper()
+	endpoint, err := url.Parse(server.URL)
+	if err != nil || endpoint.Scheme != "http" || endpoint.Host == "" || endpoint.User != nil {
+		t.Fatal("invalid owned identity-cache fixture endpoint")
+	}
+	previous := request.DBusEVTransport
+	request.DBusEVTransport = func(base http.RoundTripper) http.RoundTripper {
+		return identityCacheFixtureRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if req == nil || req.URL == nil || req.URL.Scheme != endpoint.Scheme ||
+				req.URL.Host != endpoint.Host || req.URL.User != nil {
+				return nil, errors.New("identity-cache fixture destination denied")
+			}
+			return base.RoundTrip(req)
+		})
+	}
+	t.Cleanup(func() { request.DBusEVTransport = previous })
+}
+
+func TestIdentityCacheFixtureTransportConfinesAndRestoresHook(t *testing.T) {
+	var allowedHits, otherHits, delegated, previousCalls atomic.Int32
+	allowed := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		allowedHits.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(allowed.Close)
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		otherHits.Add(1)
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(other.Close)
+	original := request.DBusEVTransport
+	request.DBusEVTransport = func(base http.RoundTripper) http.RoundTripper {
+		previousCalls.Add(1)
+		return base
+	}
+	t.Cleanup(func() { request.DBusEVTransport = original })
+	base := identityCacheFixtureRoundTripFunc(func(req *http.Request) (*http.Response, error) {
+		delegated.Add(1)
+		return http.DefaultTransport.RoundTrip(req)
+	})
+	t.Run("only the owned authority and scheme", func(t *testing.T) {
+		installIdentityCacheFixtureTransport(t, allowed)
+		scoped := request.DBusEVTransport(base)
+		req, err := http.NewRequest(http.MethodGet, allowed.URL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		response, err := scoped.RoundTrip(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusNoContent || allowedHits.Load() != 1 || delegated.Load() != 1 {
+			t.Fatal("owned fixture request did not use its delegated transport")
+		}
+		for _, target := range []string{other.URL, strings.Replace(allowed.URL, "http:", "https:", 1)} {
+			req, err := http.NewRequest(http.MethodGet, target, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if response, err := scoped.RoundTrip(req); err == nil || response != nil {
+				t.Fatal("fixture hook allowed a different destination")
+			}
+		}
+		req, err = http.NewRequest(http.MethodGet, allowed.URL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.URL.User = url.User("fixture")
+		if response, err := scoped.RoundTrip(req); err == nil || response != nil {
+			t.Fatal("fixture hook accepted URL credentials")
+		}
+		if otherHits.Load() != 0 || delegated.Load() != 1 {
+			t.Fatal("denied fixture destination reached the delegate")
+		}
+	})
+	// The nested cleanup must restore the exact previous factory behavior.
+	_ = request.DBusEVTransport(base)
+	if previousCalls.Load() != 1 {
+		t.Fatal("fixture hook did not restore the preexisting factory")
 	}
 }
