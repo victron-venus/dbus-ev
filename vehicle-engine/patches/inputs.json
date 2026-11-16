@@ -40,6 +40,10 @@
     "sha256": "c7867918768ed59017b01f61b1ff66a9969bfd9f1193a591e8326dcd87fb6b80"
   },
   {
+    "path": "vehicle/mazda_identity.go",
+    "sha256": "4d84d4bdd9f25c304d2ae4fe5fe6c7e8681a01dcd2910b3a3ae81f04bed0151a"
+  },
+  {
     "path": "vehicle/nissan/identity.go",
     "sha256": "827848ac5c49b645670114e9fe933cf220f39251f59840600f11285dd30c96b4"
   },
