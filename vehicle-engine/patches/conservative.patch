@@ -311,6 +311,18 @@
  		v.Controller = fiat.NewController(v.Provider, api, log, cc.VIN, cc.PIN)
  	}
  
+--- a/vehicle/mazda_identity.go
++++ b/vehicle/mazda_identity.go
+@@ -101,7 +101,8 @@
+ 
++	// Gate authentication without NewTripper's request/response body logging.
+ 	authHTTP := &http.Client{
+ 		Timeout:   request.Timeout,
+-		Transport: transport.Default(),
++		Transport: request.DBusEVTransport(transport.Default()),
+ 	}
+ 
+ 	o := &mazdaIdentity{
 --- a/vehicle/nissan/identity.go
 +++ b/vehicle/nissan/identity.go
 @@ -128,7 +128,7 @@
