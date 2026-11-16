@@ -3,7 +3,7 @@ module github.com/victron-venus/dbus-ev/vehicle-engine
 go 1.27.3
 
 require (
-	github.com/evcc-io/evcc v0.0.0-20261115154911-e77efc77e094
+	github.com/evcc-io/evcc v0.0.0-20261116192102-83686756a244
 	golang.org/x/oauth2 v0.38.0
 )
 
