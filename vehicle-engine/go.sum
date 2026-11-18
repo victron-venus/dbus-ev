@@ -75,6 +75,8 @@ github.com/evcc-io/evcc v0.0.0-20261115154911-e77efc77e094 h1:D7qBRAnVJscJjIcl2L
 github.com/evcc-io/evcc v0.0.0-20261115154911-e77efc77e094/go.mod h1:Lf9nhUp/vzEY8inzv7lLgo2w8fdHYRqw5oDOMInjMxs=
 github.com/evcc-io/evcc v0.0.0-20261116192102-83686756a244 h1:ZmCoSVfu0P+mchsbS3qyEKTCeWdZbZPg4zbfLmmocCI=
 github.com/evcc-io/evcc v0.0.0-20261116192102-83686756a244/go.mod h1:Lf9nhUp/vzEY8inzv7lLgo2w8fdHYRqw5oDOMInjMxs=
+github.com/evcc-io/evcc v0.0.0-20261117181408-b213e423ae69 h1:Pn+rXv4jOyncUH4ilnLwvXhRbOrGNivJ1gIbmzxJZL8=
+github.com/evcc-io/evcc v0.0.0-20261117181408-b213e423ae69/go.mod h1:Lf9nhUp/vzEY8inzv7lLgo2w8fdHYRqw5oDOMInjMxs=
 github.com/evcc-io/modbus v0.0.0-20250501165638-8b6f1fbdb7ea h1:F6eyC8V8wvc3ranlsR4coAls+OPBkVvxyX0a2VqdlPc=
 github.com/evcc-io/modbus v0.0.0-20250501165638-8b6f1fbdb7ea/go.mod h1:swrNGAVgI1r/3d/sEKE7qgujdRR9aHVPYKyc3gvpVTc=
 github.com/evcc-io/ocpp-go v0.0.0-20260812074841-a8aa5fef8a9e h1:NHimNp7oIn4YERnF9ZL8LqYABq6nGU47LO0cNiyxgOQ=
