@@ -1,5 +1,7 @@
 """The engine build CLI cannot override mandatory patches or invoke Go hooks."""
 
+import json
+import re
 import runpy
 import sys
 from pathlib import Path
@@ -150,10 +152,7 @@ def test_build_rejects_replacement_drift_before_staging_or_compilation(
     copy.assert_not_called()
 
 
-def test_renovate_engine_replacements_follow_the_pinned_upstream():
-    import json
-    import re
-
+def test_renovate_keeps_the_engine_source_and_replacements_coupled():
     root = Path(__file__).resolve().parents[1]
     config = json.loads((root / "renovate.json").read_text())
     replacements = re.findall(
@@ -168,8 +167,20 @@ def test_renovate_engine_replacements_follow_the_pinned_upstream():
         if rule.get("enabled") is False
         and ("matchManagers" not in rule or "gomod" in rule["matchManagers"])
     ]
-    assert len(disabled_go_rules) == 1
-    rule = disabled_go_rules[0]
+    assert len(disabled_go_rules) == 2
+    (source_rule,) = [rule for rule in disabled_go_rules if "matchDepTypes" not in rule]
+    assert set(source_rule) == {
+        "description",
+        "matchManagers",
+        "matchFileNames",
+        "matchDepNames",
+        "enabled",
+    }
+    assert source_rule["matchManagers"] == ["gomod"]
+    assert source_rule["matchFileNames"] == ["vehicle-engine/go.mod"]
+    assert source_rule["matchDepNames"] == ["github.com/evcc-io/evcc"]
+
+    (rule,) = [rule for rule in disabled_go_rules if "matchDepTypes" in rule]
     assert set(rule) == {
         "description",
         "matchManagers",
