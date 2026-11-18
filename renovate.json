@@ -87,6 +87,19 @@
       "allowedVersions": ">=6.31.1 <7"
     },
     {
+      "description": "Update the experimental evcc source only with reviewed changes to the mandatory patch and its input hashes.",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchFileNames": [
+        "vehicle-engine/go.mod"
+      ],
+      "matchDepNames": [
+        "github.com/evcc-io/evcc"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Update experimental engine replacement revisions together with the pinned evcc source and reviewed patches.",
       "matchManagers": [
         "gomod"

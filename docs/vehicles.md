@@ -90,6 +90,8 @@ exact module source, retain wrapped transports and cryptographic nonces, and
 preserve the ban on implicit vehicle wake-ups and deleting other installations'
 cloud containers. Run the patched engine tests and normal CI before merging;
 updating hash expectations alone does not qualify an upstream change.
+Renovate leaves the pinned evcc module and its coupled replacement revisions to
+this review. Other Go dependencies remain eligible for automated updates.
 
 The build uses a temporary copy of the verified upstream module, applies the
 reviewable patches and leaves the Go module cache untouched. Its module
