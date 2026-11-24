@@ -1,7 +1,30 @@
 # Changelog
 
-## [0.2.14] - Unreleased
+## [0.2.15] - Unreleased
 
+### Changed
+
+- Follow the VW Group EU Data Act portal move (#186).
+- Keep the evcc source upgrade coupled to its patch (#185).
+- keep local instruction files out of git.
+- add a navigation index for docs/.
+- Prevent BlueLink account cache aliases in the evcc update (#182).
+- Keep experimental engine replacements aligned with upstream (#181).
+- verify the current default branch before reviewed merges.
+- preserve automerge withdrawal after base advances (#169).
+- reevaluate reviewed dependency merges after CI (#168).
+- cover ordinary documentation without weakening validation (#166).
+
+### Upgrade
+
+Use the existing update procedure and preserve local configuration. No configuration migration is required. Offline engine tests and package checks do not establish live vehicle, account or hardware acceptance.
+
+### Security
+
+- Update the optional vehicle engine to `golang.org/x/net` 0.62.0 and its required compatible Go module dependencies, fixing the HTML parser and renderer issues GO-2026-6860 and GO-2026-6866 in its provider dependency graph.
+- Retain the exact reviewed provider source and conservative patches, TLS verification, and hash-verified optional runtime assets.
+
+## [0.2.14] - 2026-11-02
 ### Security
 
 - Update the optional vehicle engine to `golang.org/x/net` 0.62.0 and its required compatible Go module dependencies, fixing the HTML parser and renderer issues GO-2026-6860 and GO-2026-6866 in its provider dependency graph.
